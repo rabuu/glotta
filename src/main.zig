@@ -1,5 +1,9 @@
+const std = @import("std");
+
+const Token = @import("./parsing/lexing/Token.zig");
+
 pub fn main() void {
-    std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
+    std.debug.print("{?s}\n", .{Token.Tag.assign.toString()});
 }
 
 test "simple test" {
@@ -19,5 +23,3 @@ test "fuzz example" {
     };
     try std.testing.fuzz(Context{}, Context.testOne, .{});
 }
-
-const std = @import("std");
