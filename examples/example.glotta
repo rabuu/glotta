@@ -1,0 +1,6 @@
+fn main(): Int = {
+	a := add(1, 2);
+	a + 1
+}
+
+fn add(x: Int, y: Int): Int = x + y
