@@ -37,7 +37,7 @@ pub const Tag = enum {
 
     invalid,
 
-    pub fn toString(self: Tag) ?[]const u8 {
+    pub fn toString(self: Tag) []const u8 {
         return switch (self) {
             .kw_fn => "fn",
             .kw_int => "Int",
