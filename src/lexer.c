@@ -1,6 +1,6 @@
 /* LEXER
  * -----
- * The lexer is based on Zig's tokenizier:
+ * The lexer is based on Zig's tokenizer:
  * https://github.com/ziglang/zig/blob/master/lib/std/zig/tokenizer.zig
  *
  */
@@ -11,6 +11,9 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+
+bool is_alpha(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
+bool is_digit(char c) { return c >= '0' && c <= '9'; }
 
 Lexer lexer_init(char *buffer) {
     size_t len = strlen(buffer);
@@ -30,10 +33,6 @@ typedef enum {
     STATE_INT,
     STATE_INVALID,
 } State;
-
-bool is_alpha(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
-
-bool is_digit(char c) { return c >= '0' && c <= '9'; }
 
 Token lexer_next(Lexer *lexer) {
     Token result;
