@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char* read_file_to_string(const char *filename) {
+char *read_file_to_string(const char *filename) {
     FILE *f = fopen(filename, "rb");
     if (!f) {
         perror("Failed to open file");
@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
     char *path = argv[1];
     printf("PATH: %s\n------------------------\n", path);
 
-    char* source = read_file_to_string(path);
+    char *source = read_file_to_string(path);
     printf("%s\n------------------------\n", source);
 
     Lexer lexer = lexer_init(source);

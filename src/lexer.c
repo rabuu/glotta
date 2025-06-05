@@ -153,9 +153,7 @@ Token lexer_next(Lexer *lexer) {
             lexer->index++;
             c = lexer->buffer[lexer->index];
             if (c == 0) {
-                if (lexer->index == lexer->len) {
-                    result.tag = TOK_INVALID;
-                }
+                if (lexer->index == lexer->len) { result.tag = TOK_INVALID; }
                 state = STATE_INVALID;
                 continue;
             } else if (c == '\n') {
@@ -208,6 +206,4 @@ char *token_tag_to_string(TokenTag tag) {
     }
 }
 
-char* debug_token(Token *token) {
-    return token_tag_to_string(token->tag);
-}
+char *debug_token(Token *token) { return token_tag_to_string(token->tag); }
