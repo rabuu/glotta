@@ -2,7 +2,3 @@
 /src/*.o
 /compile_commands.json
 /.cache
-
-# zig
-/zig/zig-out
-/zig/.zig-cache

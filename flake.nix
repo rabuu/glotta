@@ -20,9 +20,6 @@
 						gnumake
 						bear
 						lldb
-
-						zig
-						zls
 					];
 				};
 			});
