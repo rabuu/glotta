@@ -6,11 +6,12 @@
  */
 
 #include "lexer.h"
-#include "util.h"
 
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "util.h"
 
 /**
  * If is `str` is a valid keyword, set `tag` to corresponding value.

@@ -1,6 +1,7 @@
-#include "lexer.h"
 #include <stdio.h>
 #include <stdlib.h>
+
+#include "lexer.h"
 
 char *read_file_to_string(const char *filename) {
     FILE *f = fopen(filename, "rb");

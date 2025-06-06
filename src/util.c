@@ -1,4 +1,5 @@
 #include "util.h"
+
 #include <stdio.h>
 #include <string.h>
 
@@ -8,7 +9,6 @@ Slice slice(char *str, size_t start, size_t len) {
         .len = len,
     };
 }
-
 
 Slice slice_from_source(char *source, SourcePosition pos) {
     size_t len = pos.end - pos.start;
