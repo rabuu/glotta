@@ -96,6 +96,8 @@ typedef enum {
     STATE_START,
     STATE_IDENT,
     STATE_INT,
+    STATE_SLASH,
+    STATE_COMMENT,
     STATE_INVALID,
 } State;
 
@@ -129,6 +131,10 @@ Token lexer_next(Lexer *lexer) {
                 result.pos.start = lexer->index;
 
                 state = STATE_START;
+                continue;
+
+            case '/':
+                state = STATE_SLASH;
                 continue;
 
             case '(':
@@ -208,6 +214,30 @@ Token lexer_next(Lexer *lexer) {
                 continue;
             }
             break;
+
+        case STATE_SLASH:
+            lexer->index++;
+            c = lexer->buffer[lexer->index];
+            if (c == '/') {
+                state = STATE_COMMENT;
+                continue;
+            }
+
+            result.tag = TOK_INVALID; /* TODO: Replace with TOK_SLASH */
+            break;
+
+        case STATE_COMMENT:
+            lexer->index++;
+            c = lexer->buffer[lexer->index];
+            if (c == '\n') {
+                lexer->index++;
+                result.pos.start = lexer->index;
+                state = STATE_START;
+                continue;
+            }
+
+            state = STATE_COMMENT;
+            continue;
 
         case STATE_INVALID:
             lexer->index++;

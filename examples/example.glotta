@@ -5,4 +5,5 @@ fun main(): Int = {
 	b + 1
 }
 
+// This is a comment!
 fun add(x: Int, y: Int): Int = x + y
