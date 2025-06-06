@@ -24,6 +24,10 @@ bool token_tag_keyword_from_slice(Slice str, TokenTag *tag) {
         *tag = TOK_KW_FUN;
     } else if (slice_eq_str(str, "Int")) {
         *tag = TOK_KW_INT;
+    } else if (slice_eq_str(str, "Unit")) {
+        *tag = TOK_KW_UNIT;
+    } else if (slice_eq_str(str, "unit")) {
+        *tag = TOK_KW_UNIT_EXPR;
     } else if (slice_eq_str(str, "val")) {
         *tag = TOK_KW_VAL;
     } else if (slice_eq_str(str, "var")) {
@@ -39,6 +43,8 @@ char *token_tag_to_str(TokenTag tag) {
     switch (tag) {
     case TOK_KW_FUN:
     case TOK_KW_INT:
+    case TOK_KW_UNIT:
+    case TOK_KW_UNIT_EXPR:
     case TOK_KW_VAL:
     case TOK_KW_VAR:
         return "KEYWORD";

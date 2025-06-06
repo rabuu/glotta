@@ -15,6 +15,8 @@ typedef struct {
 typedef enum {
     TOK_KW_FUN,
     TOK_KW_INT,
+    TOK_KW_UNIT,
+    TOK_KW_UNIT_EXPR,
     TOK_KW_VAL,
     TOK_KW_VAR,
 

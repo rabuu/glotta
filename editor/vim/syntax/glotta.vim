@@ -3,7 +3,8 @@ if exists("b:current_syntax")
 end
 
 syn keyword glottaKeyword fun val var
-syn keyword glottaDataType Int Bool
+syn keyword glottaDataType Int Bool Unit
+syn keyword glottaUnitExpression unit
 syn keyword glottaConditional if then else
 syn keyword glottaBoolean true false
 syn match glottaNumber "-\=\<[0-9]*\>"
@@ -12,6 +13,7 @@ syn region glottaComment start="//" end="\n"
 
 hi def link glottaKeyword Keyword
 hi def link glottaDataType Type
+hi def link glottaUnitExpression Special
 hi def link glottaConditional Conditional
 hi def link glottaBoolean Boolean
 hi def link glottaNumber Number
