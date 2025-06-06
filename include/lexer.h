@@ -13,8 +13,10 @@ typedef struct {
 } Lexer;
 
 typedef enum {
-    TOK_KW_FN,
+    TOK_KW_FUN,
     TOK_KW_INT,
+    TOK_KW_VAL,
+    TOK_KW_VAR,
 
     TOK_LIT_INT,
 

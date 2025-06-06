@@ -2,7 +2,7 @@ if exists("b:current_syntax")
 	finish
 end
 
-syn keyword glottaKeyword fn
+syn keyword glottaKeyword fun val var
 syn keyword glottaDataType Int Bool
 syn keyword glottaConditional if then else
 syn keyword glottaBoolean true false

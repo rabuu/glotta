@@ -1,6 +1,8 @@
-fn main(): Int = {
-	a := add(1, 2);
-	a + 1
+fun main(): Int = {
+	val a := add(1, 2);
+	var b : Int = 12;
+	b = a + b;
+	b + 1
 }
 
-fn add(x: Int, y: Int): Int = x + y
+fun add(x: Int, y: Int): Int = x + y

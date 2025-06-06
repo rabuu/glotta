@@ -19,11 +19,15 @@
  *
  * Return `true` if `tag` was changed, `false` otherwise.
  */
-bool token_tag_from_slice(Slice str, TokenTag *tag) {
-    if (slice_eq_str(str, "fn")) {
-        *tag = TOK_KW_FN;
+bool token_tag_keyword_from_slice(Slice str, TokenTag *tag) {
+    if (slice_eq_str(str, "fun")) {
+        *tag = TOK_KW_FUN;
     } else if (slice_eq_str(str, "Int")) {
         *tag = TOK_KW_INT;
+    } else if (slice_eq_str(str, "val")) {
+        *tag = TOK_KW_VAL;
+    } else if (slice_eq_str(str, "var")) {
+        *tag = TOK_KW_VAR;
     } else {
         return false;
     }
@@ -33,8 +37,10 @@ bool token_tag_from_slice(Slice str, TokenTag *tag) {
 
 char *token_tag_to_str(TokenTag tag) {
     switch (tag) {
-    case TOK_KW_FN:
+    case TOK_KW_FUN:
     case TOK_KW_INT:
+    case TOK_KW_VAL:
+    case TOK_KW_VAR:
         return "KEYWORD";
     case TOK_LIT_INT:
         return "INTEGER";
@@ -184,7 +190,7 @@ Token lexer_next(Lexer *lexer) {
             }
 
             Slice ident = slice(lexer->buffer, result.pos.start, lexer->index - result.pos.start);
-            token_tag_from_slice(ident, &result.tag);
+            token_tag_keyword_from_slice(ident, &result.tag);
             break;
 
         case STATE_INT:
