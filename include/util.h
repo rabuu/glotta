@@ -13,6 +13,6 @@ typedef struct {
 } Slice;
 
 Slice slice(char *str, size_t start, size_t len);
-bool slice_eq_str(Slice *slice, char *str);
+bool slice_eq_str(Slice slice, char *str);
 
 #endif // UTIL_H_

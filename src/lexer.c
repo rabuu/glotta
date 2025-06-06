@@ -12,6 +12,59 @@
 #include <stdio.h>
 #include <string.h>
 
+/**
+ * If is `str` is a valid keyword, set `tag` to corresponding value.
+ * Otherwise, do nothing.
+ *
+ * Return `true` if `tag` was changed, `false` otherwise.
+ */
+bool token_tag_from_slice(Slice str, TokenTag *tag) {
+    if (slice_eq_str(str, "fn")) {
+        *tag = TOK_KW_FN;
+    } else if (slice_eq_str(str, "Int")) {
+        *tag = TOK_KW_INT;
+    } else {
+        return false;
+    }
+
+    return true;
+}
+
+char *token_tag_to_str(TokenTag tag) {
+    switch (tag) {
+    case TOK_KW_FN:
+        return "fn";
+    case TOK_KW_INT:
+        return "Int";
+    case TOK_LIT_INT:
+        return "INTEGER";
+    case TOK_IDENT:
+        return "IDENTIFIER";
+    case TOK_PAREN_OPEN:
+        return "(";
+    case TOK_PAREN_CLOSE:
+        return ")";
+    case TOK_CURLY_OPEN:
+        return "{";
+    case TOK_CURLY_CLOSE:
+        return "}";
+    case TOK_COMMA:
+        return ",";
+    case TOK_COLON:
+        return ":";
+    case TOK_SEMICOLON:
+        return ";";
+    case TOK_ASSIGN:
+        return "=";
+    case TOK_PLUS:
+        return "+";
+    case TOK_EOF:
+        return "EOF";
+    case TOK_INVALID:
+        return "INVALID";
+    }
+}
+
 bool is_alpha(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
 bool is_digit(char c) { return c >= '0' && c <= '9'; }
 
@@ -131,11 +184,7 @@ Token lexer_next(Lexer *lexer) {
             }
 
             Slice ident = slice(lexer->buffer, result.pos.start, lexer->index - result.pos.start);
-            if (slice_eq_str(&ident, "fn")) {
-                result.tag = TOK_KW_FN;
-            } else if (slice_eq_str(&ident, "Int")) {
-                result.tag = TOK_KW_INT;
-            }
+            token_tag_from_slice(ident, &result.tag);
             break;
 
         case STATE_INT:
@@ -170,39 +219,4 @@ Token lexer_next(Lexer *lexer) {
     return result;
 }
 
-char *token_tag_to_string(TokenTag tag) {
-    switch (tag) {
-    case TOK_KW_FN:
-        return "fn";
-    case TOK_KW_INT:
-        return "Int";
-    case TOK_LIT_INT:
-        return "INTEGER";
-    case TOK_IDENT:
-        return "IDENTIFIER";
-    case TOK_PAREN_OPEN:
-        return "(";
-    case TOK_PAREN_CLOSE:
-        return ")";
-    case TOK_CURLY_OPEN:
-        return "{";
-    case TOK_CURLY_CLOSE:
-        return "}";
-    case TOK_COMMA:
-        return ",";
-    case TOK_COLON:
-        return ":";
-    case TOK_SEMICOLON:
-        return ";";
-    case TOK_ASSIGN:
-        return "=";
-    case TOK_PLUS:
-        return "+";
-    case TOK_EOF:
-        return "EOF";
-    case TOK_INVALID:
-        return "INVALID";
-    }
-}
-
-char *debug_token(Token *token) { return token_tag_to_string(token->tag); }
+char *debug_token(Token *token) { return token_tag_to_str(token->tag); }

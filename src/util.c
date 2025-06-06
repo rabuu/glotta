@@ -8,7 +8,7 @@ Slice slice(char *str, size_t start, size_t len) {
     };
 }
 
-bool slice_eq_str(Slice *slice, char *str) {
-    if (slice->len != strlen(str)) { return false; }
-    return memcmp(slice->ptr, str, slice->len) == 0;
+bool slice_eq_str(Slice slice, char *str) {
+    if (slice.len != strlen(str)) { return false; }
+    return memcmp(slice.ptr, str, slice.len) == 0;
 }
