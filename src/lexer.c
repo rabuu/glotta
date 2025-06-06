@@ -211,13 +211,11 @@ Token lexer_next(Lexer *lexer) {
 
         case STATE_INVALID:
             lexer->index++;
+
             c = lexer->buffer[lexer->index];
-            if (c == 0) {
-                if (lexer->index == lexer->len) { result.tag = TOK_INVALID; }
-                state = STATE_INVALID;
-                continue;
-            } else if (c == '\n') {
+            if ((c == 0 && lexer->index == lexer->len) || c == '\n') {
                 result.tag = TOK_INVALID;
+                break;
             }
 
             state = STATE_INVALID;
