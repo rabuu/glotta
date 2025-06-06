@@ -33,31 +33,30 @@ bool token_tag_from_slice(Slice str, TokenTag *tag) {
 char *token_tag_to_str(TokenTag tag) {
     switch (tag) {
     case TOK_KW_FN:
-        return "fn";
     case TOK_KW_INT:
-        return "Int";
+        return "KEYWORD";
     case TOK_LIT_INT:
         return "INTEGER";
     case TOK_IDENT:
         return "IDENTIFIER";
     case TOK_PAREN_OPEN:
-        return "(";
+        return "PAREN_OPEN";
     case TOK_PAREN_CLOSE:
-        return ")";
+        return "PAREN_CLOSE";
     case TOK_CURLY_OPEN:
-        return "{";
+        return "CURLY_OPEN";
     case TOK_CURLY_CLOSE:
-        return "}";
+        return "CURLY_CLOSE";
     case TOK_COMMA:
-        return ",";
+        return "COMMA";
     case TOK_COLON:
-        return ":";
+        return "COLON";
     case TOK_SEMICOLON:
-        return ";";
+        return "SEMICOLON";
     case TOK_ASSIGN:
-        return "=";
+        return "ASSIGN";
     case TOK_PLUS:
-        return "+";
+        return "PLUS";
     case TOK_EOF:
         return "EOF";
     case TOK_INVALID:
@@ -219,4 +218,14 @@ Token lexer_next(Lexer *lexer) {
     return result;
 }
 
-char *debug_token(Token *token) { return token_tag_to_str(token->tag); }
+void debug_token(Token *token, char *source) {
+    char *tag = token_tag_to_str(token->tag);
+    Slice lexeme = slice_from_source(source, token->pos);
+
+    printf("%s", tag);
+    if (lexeme.len > 0) {
+        printf(": ");
+        slice_print(lexeme);
+    }
+    printf("\n");
+}

@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
     Token tok;
     do {
         tok = lexer_next(&lexer);
-        printf("%s\n", debug_token(&tok));
+        debug_token(&tok, source);
     } while (tok.tag != TOK_EOF);
 
     return 0;

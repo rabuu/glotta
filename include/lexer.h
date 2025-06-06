@@ -43,6 +43,6 @@ typedef struct {
 Lexer lexer_init(char *buffer);
 Token lexer_next(Lexer *lexer);
 
-char *debug_token(Token *token);
+void debug_token(Token *token, char *source);
 
 #endif // LEXER_H_
