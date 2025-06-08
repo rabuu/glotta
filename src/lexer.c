@@ -259,6 +259,13 @@ Token lexer_next(Lexer *lexer) {
     return result;
 }
 
+Token lexer_peek(Lexer *lexer) {
+    size_t index = lexer->index;
+    Token peek = lexer_next(lexer);
+    lexer->index = index;
+    return peek;
+}
+
 void debug_token(Token *token, char *source) {
     char *tag = token_tag_to_str(token->tag);
     Slice lexeme = slice_from_source(source, token->pos);
