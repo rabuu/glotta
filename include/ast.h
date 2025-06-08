@@ -16,8 +16,8 @@ typedef struct ParameterList ParameterList;
 typedef struct Function Function;
 
 enum Type {
-    UNIT,
-    INT,
+    TYPE_UNIT,
+    TYPE_INT,
 };
 
 struct TypeAnnotation {

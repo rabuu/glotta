@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "lexer.h"
+#include "parser.h"
 
 char *read_file_to_string(const char *filename) {
     FILE *f = fopen(filename, "rb");
@@ -58,11 +59,7 @@ int main(int argc, char **argv) {
 
     Lexer lexer = lexer_init(source);
 
-    Token tok;
-    do {
-        tok = lexer_next(&lexer);
-        debug_token(&tok, source);
-    } while (tok.tag != TOK_EOF);
+    parse_function(&lexer);
 
     return 0;
 }

@@ -42,34 +42,39 @@ bool token_tag_keyword_from_slice(Slice str, TokenTag *tag) {
 char *token_tag_to_str(TokenTag tag) {
     switch (tag) {
     case TOK_KW_FUN:
+        return "fun";
     case TOK_KW_INT:
+        return "Int";
     case TOK_KW_UNIT:
+        return "Unit";
     case TOK_KW_UNIT_EXPR:
+        return "unit";
     case TOK_KW_VAL:
+        return "val";
     case TOK_KW_VAR:
-        return "KEYWORD";
+        return "var";
     case TOK_LIT_INT:
         return "INTEGER";
     case TOK_IDENT:
         return "IDENTIFIER";
     case TOK_PAREN_OPEN:
-        return "PAREN_OPEN";
+        return "(";
     case TOK_PAREN_CLOSE:
-        return "PAREN_CLOSE";
+        return ")";
     case TOK_CURLY_OPEN:
-        return "CURLY_OPEN";
+        return "{";
     case TOK_CURLY_CLOSE:
-        return "CURLY_CLOSE";
+        return "}";
     case TOK_COMMA:
-        return "COMMA";
+        return ",";
     case TOK_COLON:
-        return "COLON";
+        return ":";
     case TOK_SEMICOLON:
-        return "SEMICOLON";
+        return ";";
     case TOK_ASSIGN:
-        return "ASSIGN";
+        return "=";
     case TOK_PLUS:
-        return "PLUS";
+        return "+";
     case TOK_EOF:
         return "EOF";
     case TOK_INVALID:
@@ -272,7 +277,7 @@ void debug_token(Token *token, char *source) {
 
     printf("%s", tag);
     if (lexeme.len > 0) {
-        printf(": ");
+        printf(" from source text: ");
         slice_print(lexeme);
     }
     printf("\n");
