@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#include "util.h"
+#include "util/slice.h"
 
 typedef enum Type Type;
 typedef struct TypeAnnotation TypeAnnotation;

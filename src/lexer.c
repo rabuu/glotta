@@ -11,7 +11,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "util.h"
+#include "util/slice.h"
 
 /**
  * If is `str` is a valid keyword, set `tag` to corresponding value.
@@ -108,7 +108,7 @@ typedef enum {
 
 Token lexer_next(Lexer *lexer) {
     Token result;
-    result.pos.start = lexer->index;
+    result.loc.start = lexer->index;
 
     State state = STATE_START;
     char c = lexer->buffer[lexer->index];
@@ -121,7 +121,7 @@ Token lexer_next(Lexer *lexer) {
                 if (lexer->index == lexer->len) {
                     return (Token){
                         .tag = TOK_EOF,
-                        .pos = {.start = lexer->index, .end = lexer->index},
+                        .loc = {.start = lexer->index, .end = lexer->index},
                     };
                 }
 
@@ -133,7 +133,7 @@ Token lexer_next(Lexer *lexer) {
             case '\t':
             case '\r':
                 lexer->index++;
-                result.pos.start = lexer->index;
+                result.loc.start = lexer->index;
 
                 state = STATE_START;
                 continue;
@@ -206,7 +206,7 @@ Token lexer_next(Lexer *lexer) {
                 continue;
             }
 
-            Slice ident = slice(lexer->buffer, result.pos.start, lexer->index - result.pos.start);
+            Slice ident = slice(lexer->buffer, result.loc.start, lexer->index - result.loc.start);
             token_tag_keyword_from_slice(ident, &result.tag);
             break;
 
@@ -236,7 +236,7 @@ Token lexer_next(Lexer *lexer) {
             c = lexer->buffer[lexer->index];
             if (c == '\n') {
                 lexer->index++;
-                result.pos.start = lexer->index;
+                result.loc.start = lexer->index;
                 state = STATE_START;
                 continue;
             }
@@ -260,7 +260,7 @@ Token lexer_next(Lexer *lexer) {
         break;
     }
 
-    result.pos.end = lexer->index;
+    result.loc.end = lexer->index;
     return result;
 }
 
@@ -273,7 +273,7 @@ Token lexer_peek(Lexer *lexer) {
 
 void debug_token(Token *token, char *source) {
     char *tag = token_tag_to_str(token->tag);
-    Slice lexeme = slice_from_source(source, token->pos);
+    Slice lexeme = slice_from_source(source, token->loc);
 
     printf("%s", tag);
     if (lexeme.len > 0) {

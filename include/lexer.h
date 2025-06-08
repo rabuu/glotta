@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#include "util.h"
+#include "util/location.h"
 
 typedef struct {
     char *buffer;
@@ -41,7 +41,7 @@ typedef enum {
 
 typedef struct {
     TokenTag tag;
-    SourcePosition pos;
+    Location loc;
 } Token;
 
 Lexer lexer_init(char *buffer);

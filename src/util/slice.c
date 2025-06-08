@@ -1,4 +1,4 @@
-#include "util.h"
+#include "util/slice.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -10,9 +10,9 @@ Slice slice(char *str, size_t start, size_t len) {
     };
 }
 
-Slice slice_from_source(char *source, SourcePosition pos) {
-    size_t len = pos.end - pos.start;
-    return slice(source, pos.start, len);
+Slice slice_from_source(char *source, Location loc) {
+    size_t len = loc.end - loc.start;
+    return slice(source, loc.start, len);
 }
 
 bool slice_eq_str(Slice slice, char *str) {
