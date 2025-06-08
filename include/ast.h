@@ -8,6 +8,8 @@
 typedef enum Type Type;
 typedef struct TypeAnnotation TypeAnnotation;
 typedef struct BinaryOp BinaryOp;
+typedef struct ArgumentList ArgumentList;
+typedef struct FunctionCall FunctionCall;
 typedef struct Assignment Assignment;
 typedef struct Block Block;
 typedef struct Expression Expression;
@@ -31,6 +33,16 @@ struct BinaryOp {
     } kind;
     Expression *lhs;
     Expression *rhs;
+};
+
+struct ArgumentList {
+    Expression *head;
+    struct ArgumentList *tail;
+};
+
+struct FunctionCall {
+    Slice function;
+    ArgumentList args;
 };
 
 struct Assignment {
@@ -58,6 +70,7 @@ struct Expression {
         int32_t integer;
         Slice variable;
         BinaryOp binop;
+        FunctionCall funcall;
         Assignment assignment;
         Block block;
     };
