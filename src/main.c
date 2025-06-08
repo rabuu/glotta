@@ -3,6 +3,7 @@
 
 #include "lexer.h"
 #include "parser.h"
+#include "util/source.h"
 
 char *read_file_to_string(const char *filename) {
     FILE *f = fopen(filename, "rb");
@@ -57,8 +58,17 @@ int main(int argc, char **argv) {
     char *source = read_file_to_string(path);
     printf("%s\n------------------------\n", source);
 
-    Lexer lexer = lexer_init(source);
+    SourceContext source_ctx = source_context(source, path);
+    Lexer lexer = lexer_init(source_ctx);
 
+    Token tok;
+    do {
+        tok = lexer_next(&lexer);
+        token_debug(&tok, source_ctx);
+    } while (tok.tag != TOK_EOF);
+    printf("------------------------\n");
+
+    lexer.index = 0;
     parse_function(&lexer);
 
     return 0;

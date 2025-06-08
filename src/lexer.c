@@ -9,9 +9,9 @@
 
 #include <stddef.h>
 #include <stdio.h>
-#include <string.h>
 
 #include "util/slice.h"
+#include "util/source.h"
 
 /**
  * If is `str` is a valid keyword, set `tag` to corresponding value.
@@ -85,17 +85,16 @@ char *token_tag_to_str(TokenTag tag) {
 bool is_alpha(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
 bool is_digit(char c) { return c >= '0' && c <= '9'; }
 
-Lexer lexer_init(char *buffer) {
-    size_t len = strlen(buffer);
-
+Lexer lexer_init(SourceContext source) {
     return (Lexer){
-        .buffer = buffer,
-        .len = len,
+        .source = source,
 
         /* NOTE: we may want to skip a potential UTF-8 BOM here */
         .index = 0,
     };
 }
+
+char lexer_current(Lexer *lexer) { return lexer->source.buffer[lexer->index]; }
 
 typedef enum {
     STATE_START,
@@ -111,14 +110,14 @@ Token lexer_next(Lexer *lexer) {
     result.loc.start = lexer->index;
 
     State state = STATE_START;
-    char c = lexer->buffer[lexer->index];
+    char c = lexer_current(lexer);
     for (;;) {
         switch (state) {
         case STATE_START:
-            c = lexer->buffer[lexer->index];
+            c = lexer_current(lexer);
             switch (c) {
             case 0:
-                if (lexer->index == lexer->len) {
+                if (lexer->index == lexer->source.len) {
                     return (Token){
                         .tag = TOK_EOF,
                         .loc = {.start = lexer->index, .end = lexer->index},
@@ -180,7 +179,7 @@ Token lexer_next(Lexer *lexer) {
                 break;
 
             default:
-                c = lexer->buffer[lexer->index];
+                c = lexer_current(lexer);
                 if (is_alpha(c) || c == '_') {
                     result.tag = TOK_IDENT;
 
@@ -200,18 +199,19 @@ Token lexer_next(Lexer *lexer) {
 
         case STATE_IDENT:
             lexer->index++;
-            c = lexer->buffer[lexer->index];
+            c = lexer_current(lexer);
             if (is_alpha(c) || is_digit(c) || c == '_') {
                 state = STATE_IDENT;
                 continue;
             }
 
-            Slice ident = slice(lexer->buffer, result.loc.start, lexer->index - result.loc.start);
+            size_t ident_len = lexer->index - result.loc.start;
+            Slice ident = slice(lexer->source.buffer, result.loc.start, ident_len);
             token_tag_keyword_from_slice(ident, &result.tag);
             break;
 
         case STATE_INT:
-            c = lexer->buffer[lexer->index];
+            c = lexer_current(lexer);
             if (c == '_' || is_digit(c)) {
                 lexer->index++;
 
@@ -222,7 +222,7 @@ Token lexer_next(Lexer *lexer) {
 
         case STATE_SLASH:
             lexer->index++;
-            c = lexer->buffer[lexer->index];
+            c = lexer_current(lexer);
             if (c == '/') {
                 state = STATE_COMMENT;
                 continue;
@@ -233,7 +233,7 @@ Token lexer_next(Lexer *lexer) {
 
         case STATE_COMMENT:
             lexer->index++;
-            c = lexer->buffer[lexer->index];
+            c = lexer_current(lexer);
             if (c == '\n') {
                 lexer->index++;
                 result.loc.start = lexer->index;
@@ -247,8 +247,8 @@ Token lexer_next(Lexer *lexer) {
         case STATE_INVALID:
             lexer->index++;
 
-            c = lexer->buffer[lexer->index];
-            if ((c == 0 && lexer->index == lexer->len) || c == '\n') {
+            c = lexer_current(lexer);
+            if ((c == 0 && lexer->index == lexer->source.len) || c == '\n') {
                 result.tag = TOK_INVALID;
                 break;
             }
@@ -271,14 +271,14 @@ Token lexer_peek(Lexer *lexer) {
     return peek;
 }
 
-void debug_token(Token *token, char *source) {
+void token_debug(Token *token, SourceContext source) {
     char *tag = token_tag_to_str(token->tag);
-    Slice lexeme = slice_from_source(source, token->loc);
+    Slice lexeme = slice_from_location(source.buffer, token->loc);
 
-    printf("%s", tag);
     if (lexeme.len > 0) {
-        printf(" from source text: ");
+        printf("`");
         slice_print(lexeme);
+        printf("` -> ");
     }
-    printf("\n");
+    printf("%s\n", tag);
 }

@@ -3,12 +3,10 @@
 
 #include <stddef.h>
 
-#include "util/location.h"
+#include "util/source.h"
 
 typedef struct {
-    char *buffer;
-    const size_t len;
-
+    SourceContext source;
     size_t index;
 } Lexer;
 
@@ -44,11 +42,12 @@ typedef struct {
     Location loc;
 } Token;
 
-Lexer lexer_init(char *buffer);
+Lexer lexer_init(SourceContext source);
+char lexer_current(Lexer *lexer);
 Token lexer_next(Lexer *lexer);
 Token lexer_peek(Lexer *lexer);
 
 char *token_tag_to_str(TokenTag tag);
-void debug_token(Token *token, char *source);
+void token_debug(Token *token, SourceContext source);
 
 #endif // LEXER_H_
