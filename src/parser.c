@@ -61,6 +61,11 @@ Block *parse_block_inner(Lexer *lexer, Arena *a) {
     return block;
 }
 
+FunctionCall parse_funcall(Lexer *lexer, Arena *a) {
+    /* TODO */
+    return (FunctionCall){0};
+}
+
 Expression *_parse_expr(Lexer *lexer, size_t min_bp, Arena *a) {
     Expression *e;
 
@@ -75,6 +80,17 @@ Expression *_parse_expr(Lexer *lexer, size_t min_bp, Arena *a) {
         e->tag = EXPR_INTEGER;
         e->integer = 0; /* FIXME: assign correct value */
         break;
+    case TOK_IDENT:
+        e = expr_init(a);
+        if (lexer_peek(lexer).tag == TOK_PAREN_OPEN) {
+            e->tag = EXPR_FUNCALL;
+            e->funcall = parse_funcall(lexer, a);
+        } else {
+            e->tag = EXPR_VARIABLE;
+            e->variable = slice_from_location(lexer->source.buffer, tok.loc);
+        }
+        break;
+
     case TOK_PAREN_OPEN:
         e = parse_expr(lexer, a);
         Token close = lexer_next(lexer);
