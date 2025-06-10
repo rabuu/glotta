@@ -100,7 +100,7 @@ ArgumentList *parse_args(Lexer *lexer, Arena *a, bool first) {
     return args;
 }
 
-Assignment parse_assignment(Lexer *lexer, Arena *a, bool mutable) {
+VariableDefinition parse_vardef(Lexer *lexer, Arena *a, bool mutable) {
     Token variable = lexer_next(lexer);
     expect(&variable, TOK_IDENT, lexer->source);
 
@@ -122,7 +122,7 @@ Assignment parse_assignment(Lexer *lexer, Arena *a, bool mutable) {
 
     Expression *expr = parse_expr(lexer, a);
 
-    return (Assignment){
+    return (VariableDefinition){
         .name = slice_from_location(lexer->source.buffer, variable.loc),
         .type_annotation = annotation,
         .expr = expr,
@@ -165,14 +165,14 @@ Expression *_parse_expr(Lexer *lexer, size_t min_bp, Arena *a) {
 
     case TOK_KW_VAL:
         e = expr_init(a);
-        e->tag = EXPR_ASSIGNMENT;
-        e->assignment = parse_assignment(lexer, a, false);
+        e->tag = EXPR_VARDEF;
+        e->vardef = parse_vardef(lexer, a, false);
         break;
 
     case TOK_KW_VAR:
         e = expr_init(a);
-        e->tag = EXPR_ASSIGNMENT;
-        e->assignment = parse_assignment(lexer, a, true);
+        e->tag = EXPR_VARDEF;
+        e->vardef = parse_vardef(lexer, a, true);
         break;
 
     case TOK_PAREN_OPEN:

@@ -30,20 +30,20 @@ void print_binop(BinaryOp binop) {
     printf(")");
 }
 
-void print_assignment(Assignment ass) {
-    ass.mutable ? printf("var") : printf("val");
+void print_vardef(VariableDefinition vardef) {
+    vardef.mutable ? printf("var") : printf("val");
     printf(" ");
-    slice_print(ass.name);
+    slice_print(vardef.name);
     printf(" :");
 
-    if (ass.type_annotation.annotated) {
+    if (vardef.type_annotation.annotated) {
         printf(" ");
-        print_type(ass.type_annotation.type);
+        print_type(vardef.type_annotation.type);
         printf(" ");
     }
 
     printf("= ");
-    print_expression(ass.expr);
+    print_expression(vardef.expr);
 }
 
 void print_args(ArgumentList *args) {
@@ -96,8 +96,8 @@ void print_expression(Expression *expr) {
     case EXPR_FUNCALL:
         print_funcall(expr->funcall);
         break;
-    case EXPR_ASSIGNMENT:
-        print_assignment(expr->assignment);
+    case EXPR_VARDEF:
+        print_vardef(expr->vardef);
         break;
     case EXPR_BLOCK:
         print_block(expr->block);

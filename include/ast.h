@@ -10,7 +10,7 @@ typedef struct TypeAnnotation TypeAnnotation;
 typedef struct BinaryOp BinaryOp;
 typedef struct ArgumentList ArgumentList;
 typedef struct FunctionCall FunctionCall;
-typedef struct Assignment Assignment;
+typedef struct VariableDefinition VariableDefinition;
 typedef struct Block Block;
 typedef struct Expression Expression;
 typedef struct Parameter Parameter;
@@ -45,7 +45,7 @@ struct FunctionCall {
     ArgumentList *args;
 };
 
-struct Assignment {
+struct VariableDefinition {
     Slice name;
     TypeAnnotation type_annotation;
     Expression *expr;
@@ -64,7 +64,7 @@ struct Expression {
         EXPR_VARIABLE,
         EXPR_BINOP,
         EXPR_FUNCALL,
-        EXPR_ASSIGNMENT,
+        EXPR_VARDEF,
         EXPR_BLOCK,
     } tag;
     union {
@@ -72,7 +72,7 @@ struct Expression {
         Slice variable;
         BinaryOp binop;
         FunctionCall funcall;
-        Assignment assignment;
+        VariableDefinition vardef;
         Block *block;
     };
 };
