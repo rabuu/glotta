@@ -61,10 +61,14 @@ bool infix_bp(TokenTag op, size_t *l, size_t *r) {
 }
 
 Block *parse_block_inner(Lexer *lexer, Arena *a) {
-    Block *block = nullptr;
-    if (lexer_peek(lexer).tag == TOK_CURLY_CLOSE) { return block; };
+    Block *block = (Block *)arena_alloc(a, sizeof(Block));
+    if (lexer_peek(lexer).tag == TOK_CURLY_CLOSE) {
+        Expression *unit_expr = expr_init(a);
+        unit_expr->tag = EXPR_UNIT;
 
-    block = (Block *)arena_alloc(a, sizeof(Block));
+        block->head = unit_expr;
+        return block;
+    };
 
     block->head = parse_expr(lexer, a);
 
