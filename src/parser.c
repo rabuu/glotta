@@ -32,6 +32,21 @@ void expect(Token *token, TokenTag tag, SourceContext source) {
 
 Expression *expr_init(Arena *a) { return arena_alloc(a, sizeof(Expression)); }
 
+Type parse_type(Lexer *lexer) {
+    Token type = lexer_next(lexer);
+
+    switch (type.tag) {
+    case TOK_KW_UNIT:
+        return TYPE_UNIT;
+    case TOK_KW_INT:
+        return TYPE_INT;
+    default:
+        error_prefix(type.loc.start, lexer->source);
+        fprintf(stderr, "Expected type but got `%s`.\n", token_tag_to_str(type.tag));
+        exit(1);
+    }
+}
+
 bool infix_bp(TokenTag op, size_t *l, size_t *r) {
     switch (op) {
     case TOK_PLUS:
@@ -81,6 +96,36 @@ ArgumentList *parse_args(Lexer *lexer, Arena *a, bool first) {
     return args;
 }
 
+Assignment parse_assignment(Lexer *lexer, Arena *a, bool mutable) {
+    Token variable = lexer_next(lexer);
+    expect(&variable, TOK_IDENT, lexer->source);
+
+    Token colon = lexer_next(lexer);
+    expect(&colon, TOK_COLON, lexer->source);
+
+    Token maybe_type = lexer_peek(lexer);
+    TypeAnnotation annotation;
+    if (maybe_type.tag == TOK_ASSIGN) {
+        lexer_next(lexer);
+        annotation.annotated = false;
+    } else {
+        annotation.type = parse_type(lexer);
+        annotation.annotated = true;
+
+        Token assign = lexer_next(lexer);
+        expect(&assign, TOK_ASSIGN, lexer->source);
+    }
+
+    Expression *expr = parse_expr(lexer, a);
+
+    return (Assignment){
+        .name = slice_from_location(lexer->source.buffer, variable.loc),
+        .type_annotation = annotation,
+        .expr = expr,
+        .mutable = mutable,
+    };
+}
+
 Expression *_parse_expr(Lexer *lexer, size_t min_bp, Arena *a) {
     Expression *e;
 
@@ -112,6 +157,18 @@ Expression *_parse_expr(Lexer *lexer, size_t min_bp, Arena *a) {
             e->tag = EXPR_VARIABLE;
             e->variable = slice_from_location(lexer->source.buffer, tok.loc);
         }
+        break;
+
+    case TOK_KW_VAL:
+        e = expr_init(a);
+        e->tag = EXPR_ASSIGNMENT;
+        e->assignment = parse_assignment(lexer, a, false);
+        break;
+
+    case TOK_KW_VAR:
+        e = expr_init(a);
+        e->tag = EXPR_ASSIGNMENT;
+        e->assignment = parse_assignment(lexer, a, true);
         break;
 
     case TOK_PAREN_OPEN:
@@ -171,21 +228,6 @@ Expression *_parse_expr(Lexer *lexer, size_t min_bp, Arena *a) {
 }
 
 Expression *parse_expr(Lexer *lexer, Arena *a) { return _parse_expr(lexer, 0, a); }
-
-Type parse_type(Lexer *lexer) {
-    Token type = lexer_next(lexer);
-
-    switch (type.tag) {
-    case TOK_KW_UNIT:
-        return TYPE_UNIT;
-    case TOK_KW_INT:
-        return TYPE_INT;
-    default:
-        error_prefix(type.loc.start, lexer->source);
-        fprintf(stderr, "Expected type but got `%s`.\n", token_tag_to_str(type.tag));
-        exit(1);
-    }
-}
 
 ParameterList *parse_params(Lexer *lexer, Arena *a, bool first) {
     if (lexer_peek(lexer).tag == TOK_PAREN_CLOSE) { return nullptr; }
