@@ -1,0 +1,35 @@
+program = { function };
+
+type = "Unit" | "Int";
+
+function = "fun", IDENT, "(", params, ")", ":", type, "=", expr;
+
+params_nonempty = IDENT, ":", type, [ ",", params_nonempty ];
+params = [ params_nonempty, [ "," ] ];
+
+expr = INTEGER
+     | IDENT
+	 | prefix_op, expr
+     | expr, infix_op, expr
+	 | expr, suffix_op
+	 | assignment
+	 | funcall
+	 | (expr)
+	 | block
+	 ;
+
+prefix_op = "-";
+infix_op = "+";
+suffix_op = "!";
+
+assigment_qualifier = "val" | "var";
+assignment = assigment_qualifier, IDENT, ":", [ type ], "=", expr;
+
+funcall = IDENT, "(", args, ")";
+
+args_nonempty = expr, [ ",", args_nonempty ];
+args = [ args_nonempty, [ "," ] ];
+
+block = "{", block_inner, "}";
+
+block_inner = [ expr, [ ";", block_inner ] ];
