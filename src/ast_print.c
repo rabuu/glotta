@@ -20,7 +20,7 @@ void print_binop(BinaryOp binop) {
     printf("(");
     switch (binop.kind) {
     case BINOP_ADD:
-        printf("add");
+        printf("ADD");
         break;
     }
     printf(" ");
@@ -31,19 +31,19 @@ void print_binop(BinaryOp binop) {
 }
 
 void print_assignment(Assignment ass) {
-    printf("(");
     ass.mutable ? printf("var") : printf("val");
     printf(" ");
     slice_print(ass.name);
+    printf(" :");
 
     if (ass.type_annotation.annotated) {
-        printf(": ");
+        printf(" ");
         print_type(ass.type_annotation.type);
+        printf(" ");
     }
 
-    printf(" = ");
+    printf("= ");
     print_expression(ass.expr);
-    printf(")");
 }
 
 void print_args(ArgumentList *args) {
