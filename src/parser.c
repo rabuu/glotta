@@ -61,9 +61,24 @@ Block *parse_block_inner(Lexer *lexer, Arena *a) {
     return block;
 }
 
-FunctionCall parse_funcall(Lexer *lexer, Arena *a) {
-    /* TODO */
-    return (FunctionCall){0};
+ArgumentList *parse_args(Lexer *lexer, Arena *a, bool first) {
+    if (lexer_peek(lexer).tag == TOK_PAREN_CLOSE) { return nullptr; }
+
+    if (!first) {
+        Token comma = lexer_next(lexer);
+        expect(&comma, TOK_COMMA, lexer->source);
+
+        if (lexer_peek(lexer).tag == TOK_PAREN_CLOSE) { return nullptr; }
+    }
+
+    Expression *e = parse_expr(lexer, a);
+
+    ArgumentList *tail = parse_args(lexer, a, false);
+
+    ArgumentList *args = (ArgumentList *)arena_alloc(a, sizeof(ArgumentList));
+    args->head = e;
+    args->tail = tail;
+    return args;
 }
 
 Expression *_parse_expr(Lexer *lexer, size_t min_bp, Arena *a) {
@@ -83,8 +98,16 @@ Expression *_parse_expr(Lexer *lexer, size_t min_bp, Arena *a) {
     case TOK_IDENT:
         e = expr_init(a);
         if (lexer_peek(lexer).tag == TOK_PAREN_OPEN) {
+            lexer_next(lexer);
+            ArgumentList *args = parse_args(lexer, a, true);
+            Token close_args = lexer_next(lexer);
+            expect(&close_args, TOK_PAREN_CLOSE, lexer->source);
+
             e->tag = EXPR_FUNCALL;
-            e->funcall = parse_funcall(lexer, a);
+            e->funcall = (FunctionCall){
+                .function = slice_from_location(lexer->source.buffer, tok.loc),
+                .args = args,
+            };
         } else {
             e->tag = EXPR_VARIABLE;
             e->variable = slice_from_location(lexer->source.buffer, tok.loc);
