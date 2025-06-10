@@ -42,7 +42,7 @@ struct ArgumentList {
 
 struct FunctionCall {
     Slice function;
-    ArgumentList args;
+    ArgumentList *args;
 };
 
 struct Assignment {
