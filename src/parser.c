@@ -148,6 +148,43 @@ Type parse_type(Lexer *lexer) {
     }
 }
 
+ParameterList *parse_params(Lexer *lexer, Arena *a, bool first) {
+    if (lexer_peek(lexer).tag == TOK_PAREN_CLOSE) { return nullptr; }
+
+    if (!first) {
+        Token comma = lexer_next(lexer);
+        expect(&comma, TOK_COMMA, lexer->source);
+
+        if (lexer_peek(lexer).tag == TOK_PAREN_CLOSE) { return nullptr; }
+    }
+
+    Parameter param = {0};
+
+    Token maybe_var = lexer_peek(lexer);
+    if (maybe_var.tag == TOK_KW_VAR) {
+        param.mutable = true;
+        lexer_next(lexer);
+    } else if (maybe_var.tag == TOK_KW_VAL) {
+        lexer_next(lexer);
+    }
+
+    Token param_name = lexer_next(lexer);
+    expect(&param_name, TOK_IDENT, lexer->source);
+    param.name = slice_from_location(lexer->source.buffer, param_name.loc);
+
+    Token colon = lexer_next(lexer);
+    expect(&colon, TOK_COLON, lexer->source);
+
+    param.type = parse_type(lexer);
+
+    ParameterList *tail = parse_params(lexer, a, false);
+
+    ParameterList *params = (ParameterList *)arena_alloc(a, sizeof(ParameterList));
+    params->head = param;
+    params->tail = tail;
+    return params;
+}
+
 Function parse_function(Lexer *lexer, Arena *a) {
     Function f = {0};
 
@@ -161,44 +198,7 @@ Function parse_function(Lexer *lexer, Arena *a) {
     Token open = lexer_next(lexer);
     expect(&open, TOK_PAREN_OPEN, lexer->source);
 
-    ParameterList *params = nullptr;
-
-    bool first_param = true;
-    for (;;) {
-        Token peek = lexer_peek(lexer);
-        if (peek.tag == TOK_PAREN_CLOSE) { break; }
-
-        if (!first_param) {
-            Token comma = lexer_next(lexer);
-            expect(&comma, TOK_COMMA, lexer->source);
-        }
-        first_param = false;
-
-        Parameter param = {0};
-
-        Token maybe_var = lexer_peek(lexer);
-        if (maybe_var.tag == TOK_KW_VAR) {
-            param.mutable = true;
-            lexer_next(lexer);
-        } else if (maybe_var.tag == TOK_KW_VAL) {
-            lexer_next(lexer);
-        }
-
-        Token param_name = lexer_next(lexer);
-        expect(&param_name, TOK_IDENT, lexer->source);
-        param.name = slice_from_location(lexer->source.buffer, param_name.loc);
-
-        Token colon = lexer_next(lexer);
-        expect(&colon, TOK_COLON, lexer->source);
-
-        param.type = parse_type(lexer);
-
-        ParameterList *new_params = (ParameterList *)arena_alloc(a, sizeof(ParameterList));
-        new_params->head = param;
-        new_params->tail = params;
-        params = new_params;
-    }
-    f.params = params;
+    f.params = parse_params(lexer, a, true);
 
     Token close = lexer_next(lexer);
     expect(&close, TOK_PAREN_CLOSE, lexer->source);

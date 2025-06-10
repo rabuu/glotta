@@ -73,7 +73,7 @@ int main(int argc, char **argv) {
     lexer.index = 0;
     Arena ast_arena = {0};
     Function fun = parse_function(&lexer, &ast_arena);
-    print_expression(fun.body);
+    print_function(&fun);
 
     return 0;
 }
