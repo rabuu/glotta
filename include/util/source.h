@@ -4,9 +4,9 @@
 #include <stddef.h>
 
 typedef struct {
-    const char *filename;
-    const char *buffer;
-    const size_t len;
+    char *filename;
+    char *buffer;
+    size_t len;
 } SourceContext;
 
 typedef struct {

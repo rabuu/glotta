@@ -3,14 +3,14 @@
 #include <stdio.h>
 #include <string.h>
 
-Slice slice(const char *str, size_t start, size_t len) {
+Slice slice(char *str, size_t start, size_t len) {
     return (Slice){
         .ptr = str + start,
         .len = len,
     };
 }
 
-Slice slice_from_location(const char *buffer, Location loc) {
+Slice slice_from_location(char *buffer, Location loc) {
     size_t len = loc.end - loc.start;
     return slice(buffer, loc.start, len);
 }

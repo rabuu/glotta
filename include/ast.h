@@ -59,6 +59,7 @@ struct Block {
 
 struct Expression {
     enum {
+        EXPR_UNIT,
         EXPR_INTEGER,
         EXPR_VARIABLE,
         EXPR_BINOP,
@@ -72,7 +73,7 @@ struct Expression {
         BinaryOp binop;
         FunctionCall funcall;
         Assignment assignment;
-        Block block;
+        Block *block;
     };
 };
 
@@ -89,7 +90,7 @@ struct ParameterList {
 
 struct Function {
     Slice name;
-    ParameterList params;
+    ParameterList *params;
     Type return_type;
     Expression *body;
 };
