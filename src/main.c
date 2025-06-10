@@ -3,6 +3,7 @@
 
 #include "lexer.h"
 #include "parser.h"
+#include "util/arena.h"
 #include "util/source.h"
 
 char *read_file_to_string(const char *filename) {
@@ -69,7 +70,8 @@ int main(int argc, char **argv) {
     printf("------------------------\n");
 
     lexer.index = 0;
-    parse_function(&lexer);
+    Arena ast_arena = {0};
+    parse_function(&lexer, &ast_arena);
 
     return 0;
 }
