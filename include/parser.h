@@ -5,6 +5,7 @@
 #include "lexer.h"
 #include "util/arena.h"
 
+Program *parse_program(Lexer *lexer, Arena *a);
 Function parse_function(Lexer *lexer, Arena *a);
 Expression *parse_expr(Lexer *lexer, Arena *a);
 

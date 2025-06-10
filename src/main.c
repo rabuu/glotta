@@ -72,8 +72,8 @@ int main(int argc, char **argv) {
 
     lexer.index = 0;
     Arena ast_arena = {0};
-    Function fun = parse_function(&lexer, &ast_arena);
-    print_function(&fun);
+    Program *ast = parse_program(&lexer, &ast_arena);
+    print_program(ast);
 
     return 0;
 }

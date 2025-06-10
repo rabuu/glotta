@@ -137,3 +137,11 @@ void print_function(Function *fun) {
     print_expression(fun->body);
     printf("\n");
 }
+
+void print_program(Program *program) {
+    if (!program) { return; }
+
+    print_function(&program->head);
+    printf("\n");
+    print_program(program->tail);
+}

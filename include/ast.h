@@ -16,6 +16,7 @@ typedef struct Expression Expression;
 typedef struct Parameter Parameter;
 typedef struct ParameterList ParameterList;
 typedef struct Function Function;
+typedef struct Program Program;
 
 enum Type {
     TYPE_UNIT,
@@ -94,6 +95,11 @@ struct Function {
     ParameterList *params;
     Type return_type;
     Expression *body;
+};
+
+struct Program {
+    Function head;
+    Program *tail;
 };
 
 #endif // AST_H_

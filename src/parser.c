@@ -307,3 +307,16 @@ Function parse_function(Lexer *lexer, Arena *a) {
 
     return f;
 }
+
+Program *parse_program(Lexer *lexer, Arena *a) {
+    if (lexer_peek(lexer).tag == TOK_EOF) { return nullptr; }
+
+    Function f = parse_function(lexer, a);
+    Program *tail = parse_program(lexer, a);
+
+    Program *p = (Program *)arena_alloc(a, sizeof(Program));
+    p->head = f;
+    p->tail = tail;
+
+    return p;
+}
