@@ -47,19 +47,6 @@ Type parse_type(Lexer *lexer) {
     }
 }
 
-bool infix_bp(TokenTag op, size_t *l, size_t *r) {
-    switch (op) {
-    case TOK_PLUS:
-        *l = 1;
-        *r = 2;
-        break;
-    default:
-        return false;
-    }
-
-    return true;
-}
-
 Block *parse_block_inner(Lexer *lexer, Arena *a) {
     Block *block = (Block *)arena_alloc(a, sizeof(Block));
     if (lexer_peek(lexer).tag == TOK_CURLY_CLOSE) {
@@ -128,6 +115,23 @@ VariableDefinition parse_vardef(Lexer *lexer, Arena *a, bool mutable) {
         .expr = expr,
         .mutable = mutable,
     };
+}
+
+bool infix_bp(TokenTag op, size_t *l, size_t *r) {
+    switch (op) {
+    case TOK_ASSIGN:
+        *l = 2;
+        *r = 1;
+        break;
+    case TOK_PLUS:
+        *l = 3;
+        *r = 4;
+        break;
+    default:
+        return false;
+    }
+
+    return true;
 }
 
 Expression *_parse_expr(Lexer *lexer, size_t min_bp, Arena *a) {
@@ -214,6 +218,9 @@ Expression *_parse_expr(Lexer *lexer, size_t min_bp, Arena *a) {
             switch (op.tag) {
             case TOK_PLUS:
                 lhs->binop.kind = BINOP_ADD;
+                break;
+            case TOK_ASSIGN:
+                lhs->binop.kind = BINOP_ASSIGN;
                 break;
             default:
                 fprintf(stderr, "unreachable, _parse_expr, infix");

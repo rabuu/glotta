@@ -19,6 +19,9 @@ void print_type(Type type) {
 void print_binop(BinaryOp binop) {
     printf("(");
     switch (binop.kind) {
+    case BINOP_ASSIGN:
+        printf("ASSIGN");
+        break;
     case BINOP_ADD:
         printf("ADD");
         break;

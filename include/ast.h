@@ -29,6 +29,7 @@ struct TypeAnnotation {
 
 struct BinaryOp {
     enum {
+        BINOP_ASSIGN,
         BINOP_ADD,
     } kind;
     Expression *lhs;
