@@ -130,7 +130,7 @@ void print_function(Function *fun) {
     print_params(fun->params);
     printf("): ");
     print_type(fun->return_type);
-    printf(" =\n\t");
+    printf(" =\n    ");
     print_expression(fun->body);
     printf("\n");
 }
