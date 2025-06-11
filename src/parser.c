@@ -7,11 +7,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "ast.h"
 #include "lexer.h"
 #include "source.h"
 #include "util/arena.h"
+#include "util/slice.h"
 
 void error_prefix(size_t index, SourceContext source) {
     FileLocation floc = file_location(index, source);
@@ -30,6 +32,22 @@ void expect(Token *token, TokenTag tag, SourceContext source) {
 }
 
 Expression *expr_init(Arena *a) { return arena_alloc(a, sizeof(Expression)); }
+
+bool parse_int(Slice slice, int *out) {
+    char buf[64];
+    if (slice.len >= sizeof(buf)) { return false; }
+
+    memcpy(buf, slice.ptr, slice.len);
+    buf[slice.len] = '\0';
+
+    char *end;
+    long val = strtol(buf, &end, 10);
+
+    if (end != buf + slice.len) { return false; }
+
+    *out = (int)val;
+    return true;
+}
 
 Type parse_type(Lexer *lexer) {
     Token type = lexer_next(lexer);
@@ -145,7 +163,11 @@ Expression *_parse_expr(Lexer *lexer, size_t min_bp, Arena *a) {
     case TOK_LIT_INT:
         e = expr_init(a);
         e->tag = EXPR_INTEGER;
-        e->integer = 0; /* FIXME: assign correct value */
+        if (!parse_int(slice_from_location(lexer->source.buffer, tok.loc), &e->integer)) {
+            error_prefix(tok.loc.start, lexer->source);
+            fprintf(stderr, "Parsing of integer failed");
+            exit(1);
+        }
         break;
     case TOK_IDENT:
         e = expr_init(a);
