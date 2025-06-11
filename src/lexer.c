@@ -8,7 +8,6 @@
 #include "lexer.h"
 
 #include <stddef.h>
-#include <stdio.h>
 
 #include "util/slice.h"
 #include "util/source.h"
@@ -269,16 +268,4 @@ Token lexer_peek(Lexer *lexer) {
     Token peek = lexer_next(lexer);
     lexer->index = index;
     return peek;
-}
-
-void token_debug(Token *token, SourceContext source) {
-    char *tag = token_tag_to_str(token->tag);
-    Slice lexeme = slice_from_location(source.buffer, token->loc);
-
-    if (lexeme.len > 0) {
-        printf("`");
-        slice_print(lexeme);
-        printf("` -> ");
-    }
-    printf("%s\n", tag);
 }

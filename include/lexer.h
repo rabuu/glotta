@@ -48,6 +48,5 @@ Token lexer_next(Lexer *lexer);
 Token lexer_peek(Lexer *lexer);
 
 char *token_tag_to_str(TokenTag tag);
-void token_debug(Token *token, SourceContext source);
 
 #endif // LEXER_H_

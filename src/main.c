@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "ast_print.h"
 #include "lexer.h"
 #include "parser.h"
+#include "print.h"
 #include "util/arena.h"
 #include "util/source.h"
 
@@ -66,7 +66,7 @@ int main(int argc, char **argv) {
     Token tok;
     do {
         tok = lexer_next(&lexer);
-        token_debug(&tok, source_ctx);
+        print_token(&tok, source_ctx);
     } while (tok.tag != TOK_EOF);
     printf("------------------------\n");
 

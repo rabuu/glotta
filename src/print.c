@@ -1,9 +1,23 @@
-#include "ast_print.h"
+#include "print.h"
 
 #include <stdio.h>
 
 #include "ast.h"
 #include "util/slice.h"
+
+void print_slice(Slice slice) { printf("%.*s", (int)slice.len, slice.ptr); }
+
+void print_token(Token *token, SourceContext source) {
+    char *tag = token_tag_to_str(token->tag);
+    Slice lexeme = slice_from_location(source.buffer, token->loc);
+
+    if (lexeme.len > 0) {
+        printf("`");
+        print_slice(lexeme);
+        printf("` -> ");
+    }
+    printf("%s\n", tag);
+}
 
 void print_type(Type type) {
     switch (type) {
@@ -36,7 +50,7 @@ void print_binop(BinaryOp binop) {
 void print_vardef(VariableDefinition vardef) {
     vardef.mutable ? printf("var") : printf("val");
     printf(" ");
-    slice_print(vardef.name);
+    print_slice(vardef.name);
     printf(" :");
 
     if (vardef.type_annotation.annotated) {
@@ -60,7 +74,7 @@ void print_args(ArgumentList *args) {
 }
 
 void print_funcall(FunctionCall funcall) {
-    slice_print(funcall.function);
+    print_slice(funcall.function);
     printf("(");
     print_args(funcall.args);
     printf(")");
@@ -91,7 +105,7 @@ void print_expression(Expression *expr) {
         printf("%d", expr->integer);
         break;
     case EXPR_VARIABLE:
-        slice_print(expr->variable);
+        print_slice(expr->variable);
         break;
     case EXPR_BINOP:
         print_binop(expr->binop);
@@ -111,7 +125,7 @@ void print_expression(Expression *expr) {
 void print_param(Parameter param) {
     if (param.mutable) { printf("var "); }
 
-    slice_print(param.name);
+    print_slice(param.name);
     printf(": ");
     print_type(param.type);
 }
@@ -128,7 +142,7 @@ void print_params(ParameterList *params) {
 
 void print_function(Function *fun) {
     printf("fun ");
-    slice_print(fun->name);
+    print_slice(fun->name);
     printf("(");
     print_params(fun->params);
     printf("): ");
