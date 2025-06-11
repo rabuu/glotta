@@ -10,9 +10,8 @@
 
 #include "ast.h"
 #include "lexer.h"
+#include "source.h"
 #include "util/arena.h"
-#include "util/slice.h"
-#include "util/source.h"
 
 void error_prefix(size_t index, SourceContext source) {
     FileLocation floc = file_location(index, source);

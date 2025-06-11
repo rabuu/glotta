@@ -3,8 +3,8 @@
 
 #include "ast.h"
 #include "lexer.h"
+#include "source.h"
 #include "util/slice.h"
-#include "util/source.h"
 
 void print_slice(Slice slice);
 

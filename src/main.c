@@ -4,8 +4,8 @@
 #include "lexer.h"
 #include "parser.h"
 #include "print.h"
+#include "source.h"
 #include "util/arena.h"
-#include "util/source.h"
 
 char *read_file_to_string(const char *filename) {
     FILE *f = fopen(filename, "rb");

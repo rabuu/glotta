@@ -9,8 +9,8 @@
 
 #include <stddef.h>
 
+#include "source.h"
 #include "util/slice.h"
-#include "util/source.h"
 
 /**
  * If is `str` is a valid keyword, set `tag` to corresponding value.

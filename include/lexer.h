@@ -3,7 +3,7 @@
 
 #include <stddef.h>
 
-#include "util/source.h"
+#include "source.h"
 
 typedef struct {
     SourceContext source;
