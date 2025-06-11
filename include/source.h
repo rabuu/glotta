@@ -20,4 +20,6 @@ typedef struct {
 SourceContext source_context(char *buffer, char *filename);
 FileLocation file_location(size_t index, SourceContext source);
 
+SourceContext read_source_from_file(char *path);
+
 #endif // SOURCE_H_
