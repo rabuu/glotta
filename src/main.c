@@ -6,6 +6,7 @@
 #include "parser.h"
 #include "print.h"
 #include "source.h"
+#include "typer.h"
 #include "util/arena.h"
 
 int main(int argc, char **argv) {
@@ -32,8 +33,9 @@ int main(int argc, char **argv) {
     lexer.index = 0;
     Arena ast_arena = {0};
     Program *ast = parse_program(&lexer, &ast_arena);
-    resolve_names(ast);
+    SymbolId symbol_num = resolve_names(ast);
     print_program(ast);
+    resolve_types(ast, symbol_num);
 
     return 0;
 }
