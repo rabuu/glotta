@@ -8,10 +8,12 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 
 ArenaRegion *arena_region(size_t cap) {
     size_t size_bytes = sizeof(ArenaRegion) + sizeof(uintptr_t) * cap;
-    ArenaRegion *region = (ArenaRegion *)malloc(size_bytes);
+    ArenaRegion *region = malloc(size_bytes);
+    memset(region, 0, size_bytes);
 
     region->next = nullptr;
     region->count = 0;
