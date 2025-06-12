@@ -7,6 +7,7 @@
 #include "util/slice.h"
 
 void print_slice(Slice slice);
+void print_slice_err(Slice slice);
 
 void print_token(Token *token, SourceContext source);
 

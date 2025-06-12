@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include "lexer.h"
+#include "namer.h"
 #include "parser.h"
 #include "print.h"
 #include "source.h"
@@ -31,6 +32,7 @@ int main(int argc, char **argv) {
     lexer.index = 0;
     Arena ast_arena = {0};
     Program *ast = parse_program(&lexer, &ast_arena);
+    resolve_names(ast);
     print_program(ast);
 
     return 0;

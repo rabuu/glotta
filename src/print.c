@@ -5,7 +5,12 @@
 #include "ast.h"
 #include "util/slice.h"
 
+void print_symbol(SymbolId id) {
+    if (id != 0) { printf("#%zu", id); }
+}
+
 void print_slice(Slice slice) { printf("%.*s", (int)slice.len, slice.ptr); }
+void print_slice_err(Slice slice) { fprintf(stderr, "%.*s", (int)slice.len, slice.ptr); }
 
 void print_token(Token *token, SourceContext source) {
     char *tag = token_tag_to_str(token->tag);
@@ -51,6 +56,7 @@ void print_vardef(VariableDefinition vardef) {
     vardef.mutable ? printf("var") : printf("val");
     printf(" ");
     print_slice(vardef.name);
+    print_symbol(vardef.symbol);
     printf(" :");
 
     if (vardef.type_annotation.annotated) {
@@ -75,6 +81,7 @@ void print_args(ArgumentList *args) {
 
 void print_funcall(FunctionCall funcall) {
     print_slice(funcall.function);
+    print_symbol(funcall.symbol);
     printf("(");
     print_args(funcall.args);
     printf(")");
@@ -105,7 +112,8 @@ void print_expression(Expression *expr) {
         printf("%d", expr->integer);
         break;
     case EXPR_VARIABLE:
-        print_slice(expr->variable);
+        print_slice(expr->variable.name);
+        print_symbol(expr->variable.symbol);
         break;
     case EXPR_BINOP:
         print_binop(expr->binop);
@@ -126,6 +134,7 @@ void print_param(Parameter param) {
     if (param.mutable) { printf("var "); }
 
     print_slice(param.name);
+    print_symbol(param.symbol);
     printf(": ");
     print_type(param.type);
 }
@@ -143,6 +152,7 @@ void print_params(ParameterList *params) {
 void print_function(Function *fun) {
     printf("fun ");
     print_slice(fun->name);
+    print_symbol(fun->symbol);
     printf("(");
     print_params(fun->params);
     printf("): ");

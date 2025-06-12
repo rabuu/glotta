@@ -184,7 +184,7 @@ Expression *_parse_expr(Lexer *lexer, size_t min_bp, Arena *a) {
             };
         } else {
             e->tag = EXPR_VARIABLE;
-            e->variable = slice_from_location(lexer->source.buffer, tok.loc);
+            e->variable.name = slice_from_location(lexer->source.buffer, tok.loc);
         }
         break;
 

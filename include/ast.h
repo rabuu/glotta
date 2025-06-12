@@ -5,6 +5,8 @@
 
 #include "util/slice.h"
 
+typedef size_t SymbolId;
+
 typedef enum Type Type;
 typedef struct TypeAnnotation TypeAnnotation;
 typedef struct BinaryOp BinaryOp;
@@ -44,11 +46,13 @@ struct ArgumentList {
 
 struct FunctionCall {
     Slice function;
+    SymbolId symbol;
     ArgumentList *args;
 };
 
 struct VariableDefinition {
     Slice name;
+    SymbolId symbol;
     TypeAnnotation type_annotation;
     Expression *expr;
     bool mutable;
@@ -71,7 +75,10 @@ struct Expression {
     } tag;
     union {
         int32_t integer;
-        Slice variable;
+        struct {
+            Slice name;
+            SymbolId symbol;
+        } variable;
         BinaryOp binop;
         FunctionCall funcall;
         VariableDefinition vardef;
@@ -81,6 +88,7 @@ struct Expression {
 
 struct Parameter {
     Slice name;
+    SymbolId symbol;
     Type type;
     bool mutable;
 };
@@ -92,6 +100,7 @@ struct ParameterList {
 
 struct Function {
     Slice name;
+    SymbolId symbol;
     ParameterList *params;
     Type return_type;
     Expression *body;
