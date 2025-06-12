@@ -288,7 +288,8 @@ ParameterList *parse_params(Lexer *lexer, Arena *a, bool first) {
     Token colon = lexer_next(lexer);
     expect(&colon, TOK_COLON, lexer->source);
 
-    param.type = parse_type(lexer);
+    param.type_annotation.type = parse_type(lexer);
+    param.type_annotation.annotated = true;
 
     ParameterList *tail = parse_params(lexer, a, false);
 
@@ -319,7 +320,8 @@ Function parse_function(Lexer *lexer, Arena *a) {
     Token colon = lexer_next(lexer);
     expect(&colon, TOK_COLON, lexer->source);
 
-    f.return_type = parse_type(lexer);
+    f.return_type_annotation.type = parse_type(lexer);
+    f.return_type_annotation.annotated = true;
 
     Token assign = lexer_next(lexer);
     expect(&assign, TOK_ASSIGN, lexer->source);

@@ -82,7 +82,7 @@ struct Expression {
 typedef struct {
     Slice name;
     SymbolId symbol;
-    Type type;
+    TypeAnnotation type_annotation;
     bool mutable;
 } Parameter;
 
@@ -96,7 +96,7 @@ typedef struct {
     Slice name;
     SymbolId symbol;
     ParameterList *params;
-    Type return_type;
+    TypeAnnotation return_type_annotation;
     Expression *body;
 } Function;
 

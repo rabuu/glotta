@@ -136,7 +136,7 @@ void print_param(Parameter param) {
     print_slice(param.name);
     print_symbol(param.symbol);
     printf(": ");
-    print_type(param.type);
+    print_type(param.type_annotation.type);
 }
 
 void print_params(ParameterList *params) {
@@ -156,7 +156,7 @@ void print_function(Function *fun) {
     printf("(");
     print_params(fun->params);
     printf("): ");
-    print_type(fun->return_type);
+    print_type(fun->return_type_annotation.type);
     printf(" =\n    ");
     print_expression(fun->body);
     printf("\n");
