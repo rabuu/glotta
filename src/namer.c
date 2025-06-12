@@ -7,13 +7,35 @@
 #include "ast.h"
 #include "print.h"
 #include "util/arena.h"
+#include "util/slice.h"
 
-/* forward declarations */
+#define DEFAULT_SYMBOL_TABLE_CAP 4
+
+typedef enum {
+    SYMBOL_FUNCTION,
+    SYMBOL_VARIABLE,
+} SymbolKind;
+
+typedef struct Scope Scope;
+typedef struct {
+    SymbolKind kind;
+    SymbolId id;
+    Slice name;
+} Symbol;
+
+struct Scope {
+    struct Scope *parent;
+
+    Symbol *symbols;
+
+    size_t count;
+    size_t cap;
+};
+
 typedef struct {
     Arena arena;
     SymbolId new_symbol;
 } Namer;
-void resolve_names_in_expr(Expression *expr, Scope *scope, Namer *namer);
 
 Scope *scope_fork(Scope *parent, Arena *a) {
     Scope *scope = (Scope *)arena_alloc(a, sizeof(Scope));
@@ -60,6 +82,8 @@ SymbolId scope_lookup(Scope *scope, Slice name, SymbolKind kind) {
 
     return scope_lookup(scope->parent, name, kind);
 }
+
+void resolve_names_in_expr(Expression *expr, Scope *scope, Namer *namer);
 
 void resolve_names_in_params(ParameterList *params, Scope *scope, Namer *namer) {
     if (!params) { return; }
