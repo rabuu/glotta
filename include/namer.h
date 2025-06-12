@@ -3,6 +3,6 @@
 
 #include "ast.h"
 
-void resolve_names(Program *program);
+SymbolId resolve_names(Program *program);
 
 #endif // NAMER_H_

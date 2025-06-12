@@ -189,7 +189,7 @@ void _resolve_names(Program *program, Scope *scope, Namer *namer) {
     _resolve_names(program->tail, scope, namer);
 }
 
-void resolve_names(Program *program) {
+SymbolId resolve_names(Program *program) {
     Namer namer = {
         .arena = {0},
         .new_symbol = 1,
@@ -199,4 +199,6 @@ void resolve_names(Program *program) {
 
     _resolve_names(program, global_scope, &namer);
     arena_free(&namer.arena);
+
+    return namer.new_symbol;
 }
