@@ -9,7 +9,11 @@
 #include "util/arena.h"
 
 /* forward declarations */
-void resolve_names_in_expr(Expression *expr, Scope *scope, SymbolId *new_symbol, Arena *a);
+typedef struct {
+    Arena arena;
+    SymbolId new_symbol;
+} Namer;
+void resolve_names_in_expr(Expression *expr, Scope *scope, Namer *namer);
 
 Scope *scope_fork(Scope *parent, Arena *a) {
     Scope *scope = (Scope *)arena_alloc(a, sizeof(Scope));
@@ -57,7 +61,7 @@ SymbolId scope_lookup(Scope *scope, Slice name, SymbolKind kind) {
     return scope_lookup(scope->parent, name, kind);
 }
 
-void scope_add_params(Scope *scope, ParameterList *params, SymbolId *new_symbol, Arena *a) {
+void resolve_names_in_params(ParameterList *params, Scope *scope, Namer *namer) {
     if (!params) { return; }
 
     if (scope_lookup_single(scope, params->head.name, SYMBOL_VARIABLE)) {
@@ -70,26 +74,26 @@ void scope_add_params(Scope *scope, ParameterList *params, SymbolId *new_symbol,
     Symbol symbol = {
         .kind = SYMBOL_VARIABLE,
         .name = params->head.name,
-        .id = *new_symbol,
+        .id = namer->new_symbol,
     };
-    params->head.symbol = *new_symbol;
-    *new_symbol += 1;
+    params->head.symbol = namer->new_symbol;
+    namer->new_symbol += 1;
 
-    scope_add_symbol(scope, symbol, a);
-    scope_add_params(scope, params->tail, new_symbol, a);
+    scope_add_symbol(scope, symbol, &namer->arena);
+    resolve_names_in_params(params->tail, scope, namer);
 }
 
-void resolve_names_in_block(Block *block, Scope *scope, SymbolId *new_symbol, Arena *a) {
+void resolve_names_in_block(Block *block, Scope *scope, Namer *namer) {
     if (!block) { return; }
-    resolve_names_in_expr(block->head, scope, new_symbol, a);
-    resolve_names_in_block(block->tail, scope, new_symbol, a);
+    resolve_names_in_expr(block->head, scope, namer);
+    resolve_names_in_block(block->tail, scope, namer);
 }
 
-void resolve_names_in_expr(Expression *expr, Scope *scope, SymbolId *new_symbol, Arena *a) {
+void resolve_names_in_expr(Expression *expr, Scope *scope, Namer *namer) {
     switch (expr->tag) {
     case EXPR_BLOCK:
-        Scope *block_scope = scope_fork(scope, a);
-        resolve_names_in_block(expr->block, block_scope, new_symbol, a);
+        Scope *block_scope = scope_fork(scope, &namer->arena);
+        resolve_names_in_block(expr->block, block_scope, namer);
         break;
     case EXPR_VARIABLE:
         SymbolId symbol_var = scope_lookup(scope, expr->variable.name, SYMBOL_VARIABLE);
@@ -115,15 +119,15 @@ void resolve_names_in_expr(Expression *expr, Scope *scope, SymbolId *new_symbol,
         Symbol symbol_vardef = {
             .kind = SYMBOL_VARIABLE,
             .name = expr->vardef.name,
-            .id = *new_symbol,
+            .id = namer->new_symbol,
         };
-        expr->vardef.symbol = *new_symbol;
-        *new_symbol += 1;
-        scope_add_symbol(scope, symbol_vardef, a);
+        expr->vardef.symbol = namer->new_symbol;
+        namer->new_symbol += 1;
+        scope_add_symbol(scope, symbol_vardef, &namer->arena);
         break;
     case EXPR_BINOP:
-        resolve_names_in_expr(expr->binop.lhs, scope, new_symbol, a);
-        resolve_names_in_expr(expr->binop.rhs, scope, new_symbol, a);
+        resolve_names_in_expr(expr->binop.lhs, scope, namer);
+        resolve_names_in_expr(expr->binop.rhs, scope, namer);
         break;
     case EXPR_UNIT:
     case EXPR_INTEGER:
@@ -131,7 +135,7 @@ void resolve_names_in_expr(Expression *expr, Scope *scope, SymbolId *new_symbol,
     }
 }
 
-void resolve_names_in_function(Function *fun, Scope *scope, SymbolId *new_symbol, Arena *a) {
+void resolve_names_in_function(Function *fun, Scope *scope, Namer *namer) {
     if (scope_lookup(scope, fun->name, SYMBOL_FUNCTION)) {
         fprintf(stderr, "ERROR: Function `");
         print_slice_err(fun->name);
@@ -142,29 +146,33 @@ void resolve_names_in_function(Function *fun, Scope *scope, SymbolId *new_symbol
     Symbol function_symbol = {
         .kind = SYMBOL_FUNCTION,
         .name = fun->name,
-        .id = *new_symbol,
+        .id = namer->new_symbol,
     };
-    fun->symbol = *new_symbol;
-    *new_symbol += 1;
-    scope_add_symbol(scope, function_symbol, a);
+    fun->symbol = namer->new_symbol;
+    namer->new_symbol += 1;
+    scope_add_symbol(scope, function_symbol, &namer->arena);
 
-    Scope *param_scope = scope_fork(scope, a);
-    scope_add_params(param_scope, fun->params, new_symbol, a);
+    Scope *param_scope = scope_fork(scope, &namer->arena);
+    resolve_names_in_params(fun->params, param_scope, namer);
 
-    Scope *function_scope = scope_fork(param_scope, a);
-    resolve_names_in_expr(fun->body, function_scope, new_symbol, a);
+    Scope *function_scope = scope_fork(param_scope, &namer->arena);
+    resolve_names_in_expr(fun->body, function_scope, namer);
 }
 
-void _resolve_names(Program *program, Scope *scope, SymbolId *new_symbol, Arena *a) {
+void _resolve_names(Program *program, Scope *scope, Namer *namer) {
     if (!program) { return; }
-    resolve_names_in_function(&program->head, scope, new_symbol, a);
-    _resolve_names(program->tail, scope, new_symbol, a);
+    resolve_names_in_function(&program->head, scope, namer);
+    _resolve_names(program->tail, scope, namer);
 }
 
 void resolve_names(Program *program) {
-    Arena namer_arena = {0};
-    Scope *global_scope = scope_fork(nullptr, &namer_arena);
-    SymbolId new_symbol = 1;
-    _resolve_names(program, global_scope, &new_symbol, &namer_arena);
-    arena_free(&namer_arena);
+    Namer namer = {
+        .arena = {0},
+        .new_symbol = 1,
+    };
+
+    Scope *global_scope = scope_fork(nullptr, &namer.arena);
+
+    _resolve_names(program, global_scope, &namer);
+    arena_free(&namer.arena);
 }
