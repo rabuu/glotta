@@ -118,6 +118,7 @@ VariableDefinition parse_vardef(Lexer *lexer, Arena *a, bool mutable) {
         annotation.annotated = false;
     } else {
         annotation.type = parse_type(lexer);
+        annotation.pos = file_position(maybe_type.loc.start, lexer->source);
         annotation.annotated = true;
 
         Token assign = lexer_next(lexer);
@@ -220,6 +221,8 @@ Expression *_parse_expr(Lexer *lexer, size_t min_bp, Arena *a) {
         exit(1);
     }
 
+    e->pos = file_position(tok.loc.start, lexer->source);
+
     for (;;) {
         Token op = lexer_peek(lexer);
         if (op.tag == TOK_EOF) { break; }
@@ -288,8 +291,11 @@ ParameterList *parse_params(Lexer *lexer, Arena *a, bool first) {
     Token colon = lexer_next(lexer);
     expect(&colon, TOK_COLON, lexer->source);
 
+    param.type_annotation.pos = file_position(lexer->index, lexer->source);
     param.type_annotation.type = parse_type(lexer);
     param.type_annotation.annotated = true;
+
+    param.pos = file_position(param_name.loc.start, lexer->source);
 
     ParameterList *tail = parse_params(lexer, a, false);
 
@@ -320,6 +326,7 @@ Function parse_function(Lexer *lexer, Arena *a) {
     Token colon = lexer_next(lexer);
     expect(&colon, TOK_COLON, lexer->source);
 
+    f.return_type_annotation.pos = file_position(lexer->index, lexer->source);
     f.return_type_annotation.type = parse_type(lexer);
     f.return_type_annotation.annotated = true;
 
@@ -327,6 +334,8 @@ Function parse_function(Lexer *lexer, Arena *a) {
     expect(&assign, TOK_ASSIGN, lexer->source);
 
     f.body = parse_expr(lexer, a);
+
+    f.pos = file_position(fun.loc.start, lexer->source);
 
     return f;
 }

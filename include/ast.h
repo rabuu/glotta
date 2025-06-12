@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#include "source.h"
 #include "util/slice.h"
 
 typedef size_t SymbolId;
@@ -17,6 +18,7 @@ typedef enum {
 typedef struct {
     bool annotated;
     Type type;
+    FilePosition pos;
 } TypeAnnotation;
 
 typedef struct {
@@ -77,6 +79,7 @@ struct Expression {
         VariableDefinition vardef;
         Block *block;
     };
+    FilePosition pos;
 };
 
 typedef struct {
@@ -84,6 +87,7 @@ typedef struct {
     SymbolId symbol;
     TypeAnnotation type_annotation;
     bool mutable;
+    FilePosition pos;
 } Parameter;
 
 typedef struct ParameterList ParameterList;
@@ -98,6 +102,7 @@ typedef struct {
     ParameterList *params;
     TypeAnnotation return_type_annotation;
     Expression *body;
+    FilePosition pos;
 } Function;
 
 typedef struct Program Program;
