@@ -16,8 +16,8 @@
 #include "util/slice.h"
 
 void error_prefix(size_t index, SourceContext source) {
-    FileLocation floc = file_location(index, source);
-    fprintf(stderr, "ERROR[%s:%zu:%zu]: ", source.filename, floc.row, floc.column);
+    FilePosition fpos = file_position(index, source);
+    fprintf(stderr, "ERROR[%s:%zu:%zu]: ", source.filename, fpos.row, fpos.column);
 }
 
 void expect(Token *token, TokenTag tag, SourceContext source) {

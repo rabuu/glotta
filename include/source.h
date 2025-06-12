@@ -15,10 +15,10 @@ typedef struct {
 
 typedef struct {
     size_t row, column;
-} FileLocation;
+} FilePosition;
 
 SourceContext source_context(char *buffer, char *filename);
-FileLocation file_location(size_t index, SourceContext source);
+FilePosition file_position(size_t index, SourceContext source);
 
 SourceContext read_source_from_file(char *path);
 

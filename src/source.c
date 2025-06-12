@@ -13,7 +13,7 @@ SourceContext source_context(char *buffer, char *filename) {
     };
 }
 
-FileLocation file_location(size_t index, SourceContext source) {
+FilePosition file_position(size_t index, SourceContext source) {
     size_t row = 1;
     size_t column = 1;
 
@@ -29,7 +29,7 @@ FileLocation file_location(size_t index, SourceContext source) {
         }
     }
 
-    return (FileLocation){
+    return (FilePosition){
         .row = row,
         .column = column,
     };
