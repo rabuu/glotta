@@ -33,9 +33,13 @@ int main(int argc, char **argv) {
     lexer.index = 0;
     Arena ast_arena = {0};
     Program *ast = parse_program(&lexer, &ast_arena);
+    print_program(ast);
+    printf("------------------------\n");
+
     SymbolId symbol_num = resolve_names(ast);
     print_program(ast);
     printf("--------------------------\n");
+
     resolve_types(ast, symbol_num);
     print_program(ast);
 
