@@ -323,12 +323,14 @@ Function parse_function(Lexer *lexer, Arena *a) {
     Token close = lexer_next(lexer);
     expect(&close, TOK_PAREN_CLOSE, lexer->source);
 
-    Token colon = lexer_next(lexer);
-    expect(&colon, TOK_COLON, lexer->source);
-
-    f.return_type_annotation.pos = file_position(lexer->index, lexer->source);
-    f.return_type_annotation.type = parse_type(lexer);
-    f.return_type_annotation.annotated = true;
+    if (lexer_peek(lexer).tag == TOK_COLON) {
+        lexer_next(lexer);
+        f.return_type_annotation.pos = file_position(lexer->index, lexer->source);
+        f.return_type_annotation.type = parse_type(lexer);
+        f.return_type_annotation.annotated = true;
+    } else {
+        f.return_type_annotation.annotated = false;
+    }
 
     Token assign = lexer_next(lexer);
     expect(&assign, TOK_ASSIGN, lexer->source);

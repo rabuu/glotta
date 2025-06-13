@@ -159,8 +159,13 @@ void resolve_types_in_params(ParameterList *params, Typer *typer) {
 void gather_function_prototype_information(Program *program, Typer *typer) {
     if (!program) { return; }
 
-    assert(program->head.return_type_annotation.annotated);
-    Type return_type = program->head.return_type_annotation.type;
+    Type return_type;
+    if (program->head.return_type_annotation.annotated) {
+        return_type = program->head.return_type_annotation.type;
+    } else {
+        return_type = TYPE_UNIT;
+    }
+
     typer->lookups[program->head.symbol].type = return_type;
     typer->lookups[program->head.symbol].resolved = true;
 
