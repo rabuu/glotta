@@ -113,6 +113,12 @@ void resolve_names_in_block(Block *block, Scope *scope, Namer *namer) {
     resolve_names_in_block(block->tail, scope, namer);
 }
 
+void resolve_names_in_args(ArgumentList *args, Scope *scope, Namer *namer) {
+    if (!args) { return; }
+    resolve_names_in_expr(args->head, scope, namer);
+    resolve_names_in_args(args->tail, scope, namer);
+}
+
 void resolve_names_in_expr(Expression *expr, Scope *scope, Namer *namer) {
     switch (expr->tag) {
     case EXPR_BLOCK:
@@ -138,8 +144,12 @@ void resolve_names_in_expr(Expression *expr, Scope *scope, Namer *namer) {
             exit(1);
         }
         expr->funcall.symbol = symbol_funcall;
+
+        resolve_names_in_args(expr->funcall.args, scope, namer);
         break;
     case EXPR_VARDEF:
+        resolve_names_in_expr(expr->vardef.expr, scope, namer);
+
         Symbol symbol_vardef = {
             .kind = SYMBOL_VARIABLE,
             .name = expr->vardef.name,
@@ -160,6 +170,24 @@ void resolve_names_in_expr(Expression *expr, Scope *scope, Namer *namer) {
 }
 
 void resolve_names_in_function(Function *fun, Scope *scope, Namer *namer) {
+    Scope *param_scope = scope_fork(scope, &namer->arena);
+    resolve_names_in_params(fun->params, param_scope, namer);
+
+    Scope *function_scope = scope_fork(param_scope, &namer->arena);
+    resolve_names_in_expr(fun->body, function_scope, namer);
+}
+
+void _resolve_names(Program *program, Scope *scope, Namer *namer) {
+    if (!program) { return; }
+    resolve_names_in_function(&program->head, scope, namer);
+    _resolve_names(program->tail, scope, namer);
+}
+
+void resolve_top_level_names(Program *program, Scope *scope, Namer *namer) {
+    if (!program) { return; }
+
+    Function *fun = &program->head;
+
     if (scope_lookup(scope, fun->name, SYMBOL_FUNCTION)) {
         fprintf(stderr, "ERROR: Function `");
         print_slice_err(fun->name);
@@ -176,17 +204,7 @@ void resolve_names_in_function(Function *fun, Scope *scope, Namer *namer) {
     namer->new_symbol += 1;
     scope_add_symbol(scope, function_symbol, &namer->arena);
 
-    Scope *param_scope = scope_fork(scope, &namer->arena);
-    resolve_names_in_params(fun->params, param_scope, namer);
-
-    Scope *function_scope = scope_fork(param_scope, &namer->arena);
-    resolve_names_in_expr(fun->body, function_scope, namer);
-}
-
-void _resolve_names(Program *program, Scope *scope, Namer *namer) {
-    if (!program) { return; }
-    resolve_names_in_function(&program->head, scope, namer);
-    _resolve_names(program->tail, scope, namer);
+    resolve_top_level_names(program->tail, scope, namer);
 }
 
 SymbolId resolve_names(Program *program) {
@@ -197,6 +215,7 @@ SymbolId resolve_names(Program *program) {
 
     Scope *global_scope = scope_fork(nullptr, &namer.arena);
 
+    resolve_top_level_names(program, global_scope, &namer);
     _resolve_names(program, global_scope, &namer);
     arena_free(&namer.arena);
 
