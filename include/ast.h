@@ -22,6 +22,11 @@ typedef struct {
 } TypeAnnotation;
 
 typedef struct {
+    bool resolved;
+    Type type;
+} InferredType;
+
+typedef struct {
     Slice name;
     SymbolId symbol;
 } Variable;
@@ -80,6 +85,7 @@ struct Expression {
         Block *block;
     };
     FilePosition pos;
+    InferredType inferred_type;
 };
 
 typedef struct {

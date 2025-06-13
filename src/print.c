@@ -35,6 +35,13 @@ void print_type(Type type) {
     }
 }
 
+void print_inferred_type(InferredType inferred_type) {
+    if (inferred_type.resolved) {
+        printf("$");
+        print_type(inferred_type.type);
+    }
+}
+
 void print_binop(BinaryOp binop) {
     printf("(");
     switch (binop.kind) {
@@ -53,6 +60,7 @@ void print_binop(BinaryOp binop) {
 }
 
 void print_vardef(VariableDefinition vardef) {
+    printf("(");
     vardef.mutable ? printf("var") : printf("val");
     printf(" ");
     print_slice(vardef.name);
@@ -67,6 +75,7 @@ void print_vardef(VariableDefinition vardef) {
 
     printf("= ");
     print_expression(vardef.expr);
+    printf(")");
 }
 
 void print_args(ArgumentList *args) {
@@ -128,6 +137,7 @@ void print_expression(Expression *expr) {
         print_block(expr->block);
         break;
     }
+    print_inferred_type(expr->inferred_type);
 }
 
 void print_param(Parameter param) {

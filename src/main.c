@@ -35,7 +35,9 @@ int main(int argc, char **argv) {
     Program *ast = parse_program(&lexer, &ast_arena);
     SymbolId symbol_num = resolve_names(ast);
     print_program(ast);
+    printf("--------------------------\n");
     resolve_types(ast, symbol_num);
+    print_program(ast);
 
     return 0;
 }
