@@ -20,3 +20,4 @@ fun add(x: Int, y: Int): Int = x + y
 - [Lexer](./src/lexer.c)
 - [Parser](./src/parser.c)
 - [Namer](./src/namer.c)
+- [Typer](./src/typer.c)
