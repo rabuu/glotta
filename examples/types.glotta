@@ -1,0 +1,42 @@
+// newtype
+typ Str = *Byte
+
+// alias
+typ BytePtr = alias *Byte
+
+typ Option(T) = sum [
+	none,
+	some: T,
+]
+
+fun [Option(typ T)] replace(self, new: T): Option(T) = match self {
+	none => Option.none,
+	some(_) => Option.some(new),
+}
+
+typ Person = prod [
+	name: Str,
+	var age: Nat,
+]
+
+fun [Person] born(name: Str): Person = Person [
+	name: name,
+	age: 0,
+]
+
+fun [Person] say_hello(self) = {
+	print("Hello, I am ");
+	println(self.name);
+}
+
+fun main() = {
+	val x : Option(Nat) = Option.none;
+	val y : Option(Nat) = Option.some(42);
+
+	var joe := Person [
+		name: "Joe",
+		age: 42,
+	];
+
+	joe.age += 1;
+}
