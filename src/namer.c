@@ -68,7 +68,7 @@ SymbolId scope_lookup_single(Scope *scope, StrSlice name, SymbolKind kind) {
     for (size_t i = 0; i < scope->count; ++i) {
         size_t idx = scope->count - i - 1;
         Symbol lookup = scope->symbols[idx];
-        if (lookup.kind == kind && strslice_eq(lookup.name, name)) { return lookup.id; }
+        if (lookup.kind == kind && slice_eq(lookup.name, name)) { return lookup.id; }
     }
 
     return 0;
