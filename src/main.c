@@ -16,31 +16,33 @@ int main(int argc, char **argv) {
     }
 
     char *path = argv[1];
-    printf("PATH: %s\n------------------------\n", path);
-
     SourceContext source = read_source_from_file(path);
-    printf("%s\n------------------------\n", source.buffer);
+    printf("------- SOURCE ---------\n");
+    printf("%s\n", source.buffer);
 
     Lexer lexer = lexer_init(source);
 
+#if 0
+    printf("\n------- LEXING ---------\n");
     Token tok;
     do {
         tok = lexer_next(&lexer);
         print_token(&tok, source);
     } while (tok.tag != TOK_EOF);
     printf("------------------------\n");
-
     lexer.index = 0;
+#endif
 
+    printf("\n--------- AST ----------\n");
     Arena ast_arena = {0};
     Program ast = parse_program(&lexer, &ast_arena);
     print_program(&ast);
-    printf("------------------------\n");
 
+    printf("\n-------- NAMING --------\n");
     SymbolId symbol_num = resolve_names(&ast);
     print_program(&ast);
-    printf("--------------------------\n");
 
+    printf("\n-------- TYPING ----------\n");
     resolve_types(&ast, symbol_num);
     print_program(&ast);
 
