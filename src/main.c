@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "lexer.h"
-#include "namer.h"
-#include "parser.h"
+#include "lexing.h"
+#include "naming.h"
+#include "parsing.h"
 #include "print.h"
 #include "source.h"
-#include "typer.h"
+#include "typing.h"
 #include "util/arena.h"
 
 int main(int argc, char **argv) {

@@ -3,7 +3,7 @@
  * Pratt parsing: https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
  */
 
-#include "parser.h"
+#include "parsing.h"
 
 #include <stddef.h>
 #include <stdio.h>
@@ -11,7 +11,7 @@
 #include <string.h>
 
 #include "ast.h"
-#include "lexer.h"
+#include "lexing.h"
 #include "source.h"
 #include "util/arena.h"
 #include "util/slice.h"

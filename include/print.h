@@ -2,7 +2,7 @@
 #define PRINT_H_
 
 #include "ast.h"
-#include "lexer.h"
+#include "lexing.h"
 #include "source.h"
 #include "util/slice.h"
 

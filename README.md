@@ -17,7 +17,7 @@ fun add(x: Int, y: Int): Int = x + y
 ```
 
 ## Progess
-- [Lexer](./src/lexer.c)
-- [Parser](./src/parser.c)
-- [Namer](./src/namer.c)
-- [Typer](./src/typer.c)
+- [Lexing](./src/lexing.c)
+- [Parsing](./src/parsing.c)
+- [Naming](./src/naming.c)
+- [Typing](./src/typing.c)

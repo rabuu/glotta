@@ -5,7 +5,7 @@
  *
  */
 
-#include "lexer.h"
+#include "lexing.h"
 
 #include <stddef.h>
 
