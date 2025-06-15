@@ -1,5 +1,6 @@
 #include "namer.h"
 
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -68,7 +69,7 @@ SymbolId scope_lookup_single(Scope *scope, StrSlice name, SymbolKind kind) {
     for (size_t i = 0; i < scope->count; ++i) {
         size_t idx = scope->count - i - 1;
         Symbol lookup = scope->symbols[idx];
-        if (lookup.kind == kind && slice_eq(lookup.name, name)) { return lookup.id; }
+        if (lookup.kind == kind && strslice_eq(lookup.name, name)) { return lookup.id; }
     }
 
     return 0;
@@ -85,45 +86,36 @@ SymbolId scope_lookup(Scope *scope, StrSlice name, SymbolKind kind) {
 
 void resolve_names_in_expr(Expression *expr, Scope *scope, Namer *namer);
 
-void resolve_names_in_params(ParameterList *params, Scope *scope, Namer *namer) {
-    if (!params) { return; }
+void resolve_names_in_params(Parameters *params, Scope *scope, Namer *namer) {
+    for (size_t i = 0; i < params->len; ++i) {
+        Parameter *param = &params->items[i];
 
-    if (scope_lookup_single(scope, params->head.name, SYMBOL_VARIABLE)) {
-        fprintf(stderr, "ERROR: Parameter `");
-        print_strslice_err(params->head.name);
-        fprintf(stderr, "` already defined.\n");
-        exit(1);
+        if (scope_lookup_single(scope, param->name, SYMBOL_VARIABLE)) {
+            fprintf(stderr, "ERROR: Parameter `");
+            print_strslice_err(param->name);
+            fprintf(stderr, "` already defined.\n");
+            exit(1);
+        }
+
+        Symbol symbol = {
+            .kind = SYMBOL_VARIABLE,
+            .name = param->name,
+            .id = namer->new_symbol,
+        };
+        param->symbol = namer->new_symbol;
+        namer->new_symbol += 1;
+
+        scope_add_symbol(scope, symbol, &namer->arena);
     }
-
-    Symbol symbol = {
-        .kind = SYMBOL_VARIABLE,
-        .name = params->head.name,
-        .id = namer->new_symbol,
-    };
-    params->head.symbol = namer->new_symbol;
-    namer->new_symbol += 1;
-
-    scope_add_symbol(scope, symbol, &namer->arena);
-    resolve_names_in_params(params->tail, scope, namer);
-}
-
-void resolve_names_in_block(Block *block, Scope *scope, Namer *namer) {
-    if (!block) { return; }
-    resolve_names_in_expr(block->head, scope, namer);
-    resolve_names_in_block(block->tail, scope, namer);
-}
-
-void resolve_names_in_args(ArgumentList *args, Scope *scope, Namer *namer) {
-    if (!args) { return; }
-    resolve_names_in_expr(args->head, scope, namer);
-    resolve_names_in_args(args->tail, scope, namer);
 }
 
 void resolve_names_in_expr(Expression *expr, Scope *scope, Namer *namer) {
     switch (expr->tag) {
     case EXPR_BLOCK:
         Scope *block_scope = scope_fork(scope, &namer->arena);
-        resolve_names_in_block(expr->block, block_scope, namer);
+        for (size_t i = 0; i < expr->block.len; ++i) {
+            resolve_names_in_expr(expr->block.items[i], block_scope, namer);
+        }
         break;
     case EXPR_VARIABLE:
         SymbolId symbol_var = scope_lookup(scope, expr->variable.name, SYMBOL_VARIABLE);
@@ -145,7 +137,9 @@ void resolve_names_in_expr(Expression *expr, Scope *scope, Namer *namer) {
         }
         expr->funcall.symbol = symbol_funcall;
 
-        resolve_names_in_args(expr->funcall.args, scope, namer);
+        for (size_t i = 0; i < expr->funcall.args.len; ++i) {
+            resolve_names_in_expr(expr->funcall.args.items[i], scope, namer);
+        }
         break;
     case EXPR_VARDEF:
         resolve_names_in_expr(expr->vardef.expr, scope, namer);
@@ -171,40 +165,33 @@ void resolve_names_in_expr(Expression *expr, Scope *scope, Namer *namer) {
 
 void resolve_names_in_function(Function *fun, Scope *scope, Namer *namer) {
     Scope *param_scope = scope_fork(scope, &namer->arena);
-    resolve_names_in_params(fun->params, param_scope, namer);
+    resolve_names_in_params(&fun->params, param_scope, namer);
 
     Scope *function_scope = scope_fork(param_scope, &namer->arena);
     resolve_names_in_expr(fun->body, function_scope, namer);
 }
 
-void _resolve_names(Program *program, Scope *scope, Namer *namer) {
-    if (!program) { return; }
-    resolve_names_in_function(&program->head, scope, namer);
-    _resolve_names(program->tail, scope, namer);
-}
-
 void resolve_top_level_names(Program *program, Scope *scope, Namer *namer) {
-    if (!program) { return; }
+    for (size_t i = 0; i < program->function_count; ++i) {
+        Function *fun = &program->functions[i];
 
-    Function *fun = &program->head;
+        if (scope_lookup(scope, fun->name, SYMBOL_FUNCTION)) {
+            fprintf(stderr, "ERROR: Function `");
+            print_strslice_err(fun->name);
+            fprintf(stderr, "` already defined.\n");
+            exit(1);
+        }
 
-    if (scope_lookup(scope, fun->name, SYMBOL_FUNCTION)) {
-        fprintf(stderr, "ERROR: Function `");
-        print_strslice_err(fun->name);
-        fprintf(stderr, "` already defined.\n");
-        exit(1);
+        Symbol function_symbol = {
+            .kind = SYMBOL_FUNCTION,
+            .name = fun->name,
+            .id = namer->new_symbol,
+        };
+
+        fun->symbol = namer->new_symbol;
+        namer->new_symbol += 1;
+        scope_add_symbol(scope, function_symbol, &namer->arena);
     }
-
-    Symbol function_symbol = {
-        .kind = SYMBOL_FUNCTION,
-        .name = fun->name,
-        .id = namer->new_symbol,
-    };
-    fun->symbol = namer->new_symbol;
-    namer->new_symbol += 1;
-    scope_add_symbol(scope, function_symbol, &namer->arena);
-
-    resolve_top_level_names(program->tail, scope, namer);
 }
 
 SymbolId resolve_names(Program *program) {
@@ -216,7 +203,11 @@ SymbolId resolve_names(Program *program) {
     Scope *global_scope = scope_fork(nullptr, &namer.arena);
 
     resolve_top_level_names(program, global_scope, &namer);
-    _resolve_names(program, global_scope, &namer);
+
+    for (size_t i = 0; i < program->function_count; ++i) {
+        resolve_names_in_function(&program->functions[i], global_scope, &namer);
+    }
+
     arena_free(&namer.arena);
 
     return namer.new_symbol;
