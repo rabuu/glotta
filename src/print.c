@@ -78,37 +78,23 @@ void print_vardef(VariableDefinition vardef) {
     printf(")");
 }
 
-void print_args(ArgumentList *args) {
-    if (!args) { return; }
-
-    print_expression(args->head);
-    if (args->tail) {
-        printf(", ");
-        print_args(args->tail);
-    }
-}
-
 void print_funcall(FunctionCall funcall) {
     print_strslice(funcall.function);
     print_symbol(funcall.symbol);
     printf("(");
-    print_args(funcall.args);
+    for (size_t i = 0; i < funcall.args.len; ++i) {
+        if (i != 0) { printf(", "); }
+        print_expression(funcall.args.items[i]);
+    }
     printf(")");
 }
 
-void print_block_inner(Block *block) {
-    if (!block) { return; }
-
-    print_expression(block->head);
-    if (block->tail) {
-        printf("; ");
-        print_block_inner(block->tail);
-    }
-}
-
-void print_block(Block *block) {
+void print_block(Block block) {
     printf("{ ");
-    print_block_inner(block);
+    for (size_t i = 0; i < block.len; ++i) {
+        if (i != 0) { printf("; "); }
+        print_expression(block.items[i]);
+    }
     printf(" }");
 }
 
@@ -149,22 +135,15 @@ void print_param(Parameter param) {
     print_type(param.type_annotation.type);
 }
 
-void print_params(ParameterList *params) {
-    if (!params) { return; }
-
-    print_param(params->head);
-    if (params->tail) {
-        printf(", ");
-        print_params(params->tail);
-    }
-}
-
 void print_function(Function *fun) {
     printf("fun ");
     print_strslice(fun->name);
     print_symbol(fun->symbol);
     printf("(");
-    print_params(fun->params);
+    for (size_t i = 0; i < fun->params.len; ++i) {
+        if (i != 0) { printf(", "); }
+        print_param(fun->params.items[i]);
+    }
     printf("): ");
     print_type(fun->return_type_annotation.type);
     printf(" =\n    ");
@@ -173,9 +152,8 @@ void print_function(Function *fun) {
 }
 
 void print_program(Program *program) {
-    if (!program) { return; }
-
-    print_function(&program->head);
-    printf("\n");
-    print_program(program->tail);
+    for (size_t i = 0; i < program->function_count; ++i) {
+        if (i != 0) { printf("\n"); }
+        print_function(&program->functions[i]);
+    }
 }

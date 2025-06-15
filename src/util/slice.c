@@ -14,6 +14,11 @@ StrSlice strslice_from_loc(char *buffer, Location loc) {
     return strslice(buffer, loc.start, len);
 }
 
+bool strslice_eq(StrSlice a, StrSlice b) {
+    if (a.len != b.len) { return false; }
+    return memcmp(a.ptr, b.ptr, a.len) == 0;
+}
+
 bool strslice_eq_str(StrSlice slice, char *str) {
     if (slice.len != strlen(str)) { return false; }
     return memcmp(slice.ptr, str, slice.len) == 0;
