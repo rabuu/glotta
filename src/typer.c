@@ -1,27 +1,29 @@
 #include "typer.h"
 
 #include <assert.h>
+#include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 
 #include "ast.h"
-#include "print.h"
 
 typedef struct {
     bool resolved;
     Type type;
 
     /* only for functions */
-    ParameterList *params;
+    Parameters *params;
 } Lookup;
 
 typedef struct {
     Lookup *lookups;
-    size_t cap;
+    size_t lookup_count;
 } Typer;
 
+#if 0
+#include "print.h"
 void debug_typer(Typer *typer) {
-    for (size_t i = 0; i < typer->cap; ++i) {
+    for (size_t i = 0; i < typer->lookup_count; ++i) {
         if (typer->lookups[i].resolved) {
             printf("%zu: ", i);
             print_type(typer->lookups[i].type);
@@ -29,33 +31,27 @@ void debug_typer(Typer *typer) {
         }
     }
 }
+#endif /* if 0 */
 
 Type resolve_types_in_expr(Expression *expr, Typer *typer);
 
-void resolve_types_in_args(ArgumentList *args, ParameterList *params, Typer *typer) {
-    if (!args) {
-        assert(!params);
-        return;
-    } else {
-        assert(params);
+void resolve_types_in_args(Arguments *args, Parameters *params, Typer *typer) {
+    assert(args->len == params->len);
+
+    for (size_t i = 0; i < args->len; ++i) {
+        Type arg_type = resolve_types_in_expr(args->items[i], typer);
+        Type param_type = params->items[i].type_annotation.type;
+        assert(arg_type == param_type);
     }
-
-    Type param_type = params->head.type_annotation.type;
-    Type arg_type = resolve_types_in_expr(args->head, typer);
-    assert(param_type == arg_type);
-
-    resolve_types_in_args(args->tail, params->tail, typer);
 }
 
 Type resolve_types_in_block(Block *block, Typer *typer) {
-    if (!block) { return TYPE_UNIT; }
+    for (size_t i = 0; i < block->len; ++i) {
+        resolve_types_in_expr(block->items[i], typer);
+        assert(block->items[i]->inferred_type.resolved);
+    }
 
-    Type expr_type = resolve_types_in_expr(block->head, typer);
-    assert(block->head->inferred_type.resolved);
-
-    if (block->tail) { return resolve_types_in_block(block->tail, typer); }
-
-    return expr_type;
+    return block->items[block->len - 1]->inferred_type.type;
 }
 
 Type resolve_types_in_expr(Expression *expr, Typer *typer) {
@@ -101,8 +97,8 @@ Type resolve_types_in_expr(Expression *expr, Typer *typer) {
     case EXPR_FUNCALL:
         assert(typer->lookups[expr->funcall.symbol].resolved);
 
-        ParameterList *params = typer->lookups[expr->funcall.symbol].params;
-        resolve_types_in_args(expr->funcall.args, params, typer);
+        Parameters *params = typer->lookups[expr->funcall.symbol].params;
+        resolve_types_in_args(&expr->funcall.args, params, typer);
         inferred_type = typer->lookups[expr->funcall.symbol].type;
         break;
     case EXPR_VARDEF:
@@ -122,7 +118,7 @@ Type resolve_types_in_expr(Expression *expr, Typer *typer) {
         inferred_type = TYPE_UNIT;
         break;
     case EXPR_BLOCK:
-        Type block_type = resolve_types_in_block(expr->block, typer);
+        Type block_type = resolve_types_in_block(&expr->block, typer);
         inferred_type = block_type;
         break;
     }
@@ -139,51 +135,48 @@ void resolve_types_in_function(Function *fun, Typer *typer) {
     assert(inferred == typer->lookups[fun->symbol].type);
 }
 
-void _resolve_types(Program *program, Typer *typer) {
-    if (!program) { return; }
-    resolve_types_in_function(&program->head, typer);
-    _resolve_types(program->tail, typer);
-}
+void resolve_types_in_params(Parameters *params, Typer *typer) {
+    for (size_t i = 0; i < params->len; ++i) {
+        Parameter param = params->items[i];
 
-void resolve_types_in_params(ParameterList *params, Typer *typer) {
-    if (!params) { return; }
-
-    assert(params->head.type_annotation.annotated);
-    Type param_type = params->head.type_annotation.type;
-    typer->lookups[params->head.symbol].type = param_type;
-    typer->lookups[params->head.symbol].resolved = true;
-
-    resolve_types_in_params(params->tail, typer);
+        assert(param.type_annotation.annotated);
+        Type param_type = param.type_annotation.type;
+        typer->lookups[param.symbol].type = param_type;
+        typer->lookups[param.symbol].resolved = true;
+    }
 }
 
 void gather_function_prototype_information(Program *program, Typer *typer) {
-    if (!program) { return; }
+    for (size_t i = 0; i < program->function_count; ++i) {
+        Function *fun = &program->functions[i];
 
-    Type return_type;
-    if (program->head.return_type_annotation.annotated) {
-        return_type = program->head.return_type_annotation.type;
-    } else {
-        return_type = TYPE_UNIT;
+        Type return_type;
+        if (fun->return_type_annotation.annotated) {
+            return_type = fun->return_type_annotation.type;
+        } else {
+            return_type = TYPE_UNIT;
+        }
+
+        typer->lookups[fun->symbol].type = return_type;
+        typer->lookups[fun->symbol].resolved = true;
+
+        resolve_types_in_params(&fun->params, typer);
+        typer->lookups[fun->symbol].params = &fun->params;
     }
-
-    typer->lookups[program->head.symbol].type = return_type;
-    typer->lookups[program->head.symbol].resolved = true;
-
-    resolve_types_in_params(program->head.params, typer);
-    typer->lookups[program->head.symbol].params = program->head.params;
-
-    gather_function_prototype_information(program->tail, typer);
 }
 
 void resolve_types(Program *program, SymbolId symbol_num) {
     Lookup *symbol_lookup = calloc(symbol_num, sizeof(Lookup));
     Typer typer = {
         .lookups = symbol_lookup,
-        .cap = symbol_num,
+        .lookup_count = symbol_num,
     };
 
     gather_function_prototype_information(program, &typer);
-    _resolve_types(program, &typer);
+
+    for (size_t i = 0; i < program->function_count; ++i) {
+        resolve_types_in_function(&program->functions[i], &typer);
+    }
 
     free(typer.lookups);
 }
