@@ -27,7 +27,7 @@ typedef struct {
 } InferredType;
 
 typedef struct {
-    Slice name;
+    StrSlice name;
     SymbolId symbol;
 } Variable;
 
@@ -47,13 +47,13 @@ struct ArgumentList {
 };
 
 typedef struct {
-    Slice function;
+    StrSlice function;
     SymbolId symbol;
     ArgumentList *args;
 } FunctionCall;
 
 typedef struct {
-    Slice name;
+    StrSlice name;
     SymbolId symbol;
     TypeAnnotation type_annotation;
     Expression *expr;
@@ -89,7 +89,7 @@ struct Expression {
 };
 
 typedef struct {
-    Slice name;
+    StrSlice name;
     SymbolId symbol;
     TypeAnnotation type_annotation;
     bool mutable;
@@ -103,7 +103,7 @@ struct ParameterList {
 };
 
 typedef struct {
-    Slice name;
+    StrSlice name;
     SymbolId symbol;
     ParameterList *params;
     TypeAnnotation return_type_annotation;

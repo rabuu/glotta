@@ -20,7 +20,7 @@ typedef struct Scope Scope;
 typedef struct {
     SymbolKind kind;
     SymbolId id;
-    Slice name;
+    StrSlice name;
 } Symbol;
 
 struct Scope {
@@ -64,17 +64,17 @@ void scope_add_symbol(Scope *scope, Symbol symbol, Arena *a) {
     scope->count++;
 }
 
-SymbolId scope_lookup_single(Scope *scope, Slice name, SymbolKind kind) {
+SymbolId scope_lookup_single(Scope *scope, StrSlice name, SymbolKind kind) {
     for (size_t i = 0; i < scope->count; ++i) {
         size_t idx = scope->count - i - 1;
         Symbol lookup = scope->symbols[idx];
-        if (lookup.kind == kind && slice_eq(lookup.name, name)) { return lookup.id; }
+        if (lookup.kind == kind && strslice_eq(lookup.name, name)) { return lookup.id; }
     }
 
     return 0;
 }
 
-SymbolId scope_lookup(Scope *scope, Slice name, SymbolKind kind) {
+SymbolId scope_lookup(Scope *scope, StrSlice name, SymbolKind kind) {
     if (!scope) { return 0; }
 
     SymbolId this_scope = scope_lookup_single(scope, name, kind);
@@ -90,7 +90,7 @@ void resolve_names_in_params(ParameterList *params, Scope *scope, Namer *namer) 
 
     if (scope_lookup_single(scope, params->head.name, SYMBOL_VARIABLE)) {
         fprintf(stderr, "ERROR: Parameter `");
-        print_slice_err(params->head.name);
+        print_strslice_err(params->head.name);
         fprintf(stderr, "` already defined.\n");
         exit(1);
     }
@@ -129,7 +129,7 @@ void resolve_names_in_expr(Expression *expr, Scope *scope, Namer *namer) {
         SymbolId symbol_var = scope_lookup(scope, expr->variable.name, SYMBOL_VARIABLE);
         if (!symbol_var) {
             fprintf(stderr, "ERROR: Variable name `");
-            print_slice_err(expr->variable.name);
+            print_strslice_err(expr->variable.name);
             fprintf(stderr, "` is not bound.\n");
             exit(1);
         }
@@ -139,7 +139,7 @@ void resolve_names_in_expr(Expression *expr, Scope *scope, Namer *namer) {
         SymbolId symbol_funcall = scope_lookup(scope, expr->funcall.function, SYMBOL_FUNCTION);
         if (!symbol_funcall) {
             fprintf(stderr, "ERROR: Function name `");
-            print_slice_err(expr->funcall.function);
+            print_strslice_err(expr->funcall.function);
             fprintf(stderr, "` is not bound.\n");
             exit(1);
         }
@@ -190,7 +190,7 @@ void resolve_top_level_names(Program *program, Scope *scope, Namer *namer) {
 
     if (scope_lookup(scope, fun->name, SYMBOL_FUNCTION)) {
         fprintf(stderr, "ERROR: Function `");
-        print_slice_err(fun->name);
+        print_strslice_err(fun->name);
         fprintf(stderr, "` already defined.\n");
         exit(1);
     }

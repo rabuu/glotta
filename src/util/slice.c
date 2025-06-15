@@ -2,24 +2,24 @@
 
 #include <string.h>
 
-Slice slice(char *str, size_t start, size_t len) {
-    return (Slice){
+StrSlice strslice(char *str, size_t start, size_t len) {
+    return (StrSlice){
         .ptr = str + start,
         .len = len,
     };
 }
 
-Slice slice_from_location(char *buffer, Location loc) {
+StrSlice strslice_from_loc(char *buffer, Location loc) {
     size_t len = loc.end - loc.start;
-    return slice(buffer, loc.start, len);
+    return strslice(buffer, loc.start, len);
 }
 
-bool slice_eq(Slice a, Slice b) {
+bool strslice_eq(StrSlice a, StrSlice b) {
     if (a.len != b.len) { return false; }
     return memcmp(a.ptr, b.ptr, a.len) == 0;
 }
 
-bool slice_eq_str(Slice slice, char *str) {
+bool strslice_eq_str(StrSlice slice, char *str) {
     if (slice.len != strlen(str)) { return false; }
     return memcmp(slice.ptr, str, slice.len) == 0;
 }

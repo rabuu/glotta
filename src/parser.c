@@ -33,7 +33,7 @@ void expect(Token *token, TokenTag tag, SourceContext source) {
 
 Expression *expr_init(Arena *a) { return arena_alloc(a, sizeof(Expression)); }
 
-bool parse_int(Slice slice, int *out) {
+bool parse_int(StrSlice slice, int *out) {
     char buf[64];
     if (slice.len >= sizeof(buf)) { return false; }
 
@@ -128,7 +128,7 @@ VariableDefinition parse_vardef(Lexer *lexer, Arena *a, bool mutable) {
     Expression *expr = parse_expr(lexer, a);
 
     return (VariableDefinition){
-        .name = slice_from_location(lexer->source.buffer, variable.loc),
+        .name = strslice_from_loc(lexer->source.buffer, variable.loc),
         .type_annotation = annotation,
         .expr = expr,
         .mutable = mutable,
@@ -164,7 +164,7 @@ Expression *_parse_expr(Lexer *lexer, size_t min_bp, Arena *a) {
     case TOK_LIT_INT:
         e = expr_init(a);
         e->tag = EXPR_INTEGER;
-        if (!parse_int(slice_from_location(lexer->source.buffer, tok.loc), &e->integer)) {
+        if (!parse_int(strslice_from_loc(lexer->source.buffer, tok.loc), &e->integer)) {
             error_prefix(tok.loc.start, lexer->source);
             fprintf(stderr, "Parsing of integer failed");
             exit(1);
@@ -180,12 +180,12 @@ Expression *_parse_expr(Lexer *lexer, size_t min_bp, Arena *a) {
 
             e->tag = EXPR_FUNCALL;
             e->funcall = (FunctionCall){
-                .function = slice_from_location(lexer->source.buffer, tok.loc),
+                .function = strslice_from_loc(lexer->source.buffer, tok.loc),
                 .args = args,
             };
         } else {
             e->tag = EXPR_VARIABLE;
-            e->variable.name = slice_from_location(lexer->source.buffer, tok.loc);
+            e->variable.name = strslice_from_loc(lexer->source.buffer, tok.loc);
         }
         break;
 
@@ -286,7 +286,7 @@ ParameterList *parse_params(Lexer *lexer, Arena *a, bool first) {
 
     Token param_name = lexer_next(lexer);
     expect(&param_name, TOK_IDENT, lexer->source);
-    param.name = slice_from_location(lexer->source.buffer, param_name.loc);
+    param.name = strslice_from_loc(lexer->source.buffer, param_name.loc);
 
     Token colon = lexer_next(lexer);
     expect(&colon, TOK_COLON, lexer->source);
@@ -313,7 +313,7 @@ Function parse_function(Lexer *lexer, Arena *a) {
 
     Token name = lexer_next(lexer);
     expect(&name, TOK_IDENT, lexer->source);
-    f.name = slice_from_location(lexer->source.buffer, name.loc);
+    f.name = strslice_from_loc(lexer->source.buffer, name.loc);
 
     Token open = lexer_next(lexer);
     expect(&open, TOK_PAREN_OPEN, lexer->source);

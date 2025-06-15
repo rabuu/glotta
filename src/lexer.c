@@ -18,18 +18,18 @@
  *
  * Return `true` if `tag` was changed, `false` otherwise.
  */
-bool token_tag_keyword_from_slice(Slice str, TokenTag *tag) {
-    if (slice_eq_str(str, "fun")) {
+bool token_tag_keyword_from_slice(StrSlice str, TokenTag *tag) {
+    if (strslice_eq_str(str, "fun")) {
         *tag = TOK_KW_FUN;
-    } else if (slice_eq_str(str, "Int")) {
+    } else if (strslice_eq_str(str, "Int")) {
         *tag = TOK_KW_INT;
-    } else if (slice_eq_str(str, "Unit")) {
+    } else if (strslice_eq_str(str, "Unit")) {
         *tag = TOK_KW_UNIT;
-    } else if (slice_eq_str(str, "unit")) {
+    } else if (strslice_eq_str(str, "unit")) {
         *tag = TOK_KW_UNIT_EXPR;
-    } else if (slice_eq_str(str, "val")) {
+    } else if (strslice_eq_str(str, "val")) {
         *tag = TOK_KW_VAL;
-    } else if (slice_eq_str(str, "var")) {
+    } else if (strslice_eq_str(str, "var")) {
         *tag = TOK_KW_VAR;
     } else {
         return false;
@@ -205,7 +205,7 @@ Token lexer_next(Lexer *lexer) {
             }
 
             size_t ident_len = lexer->index - result.loc.start;
-            Slice ident = slice(lexer->source.buffer, result.loc.start, ident_len);
+            StrSlice ident = strslice(lexer->source.buffer, result.loc.start, ident_len);
             token_tag_keyword_from_slice(ident, &result.tag);
             break;
 

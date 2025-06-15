@@ -9,16 +9,16 @@ void print_symbol(SymbolId id) {
     if (id != 0) { printf("#%zu", id); }
 }
 
-void print_slice(Slice slice) { printf("%.*s", (int)slice.len, slice.ptr); }
-void print_slice_err(Slice slice) { fprintf(stderr, "%.*s", (int)slice.len, slice.ptr); }
+void print_strslice(StrSlice slice) { printf("%.*s", (int)slice.len, slice.ptr); }
+void print_strslice_err(StrSlice slice) { fprintf(stderr, "%.*s", (int)slice.len, slice.ptr); }
 
 void print_token(Token *token, SourceContext source) {
     char *tag = token_tag_to_str(token->tag);
-    Slice lexeme = slice_from_location(source.buffer, token->loc);
+    StrSlice lexeme = strslice_from_loc(source.buffer, token->loc);
 
     if (lexeme.len > 0) {
         printf("`");
-        print_slice(lexeme);
+        print_strslice(lexeme);
         printf("` -> ");
     }
     printf("%s\n", tag);
@@ -63,7 +63,7 @@ void print_vardef(VariableDefinition vardef) {
     printf("(");
     vardef.mutable ? printf("var") : printf("val");
     printf(" ");
-    print_slice(vardef.name);
+    print_strslice(vardef.name);
     print_symbol(vardef.symbol);
     printf(" :");
 
@@ -89,7 +89,7 @@ void print_args(ArgumentList *args) {
 }
 
 void print_funcall(FunctionCall funcall) {
-    print_slice(funcall.function);
+    print_strslice(funcall.function);
     print_symbol(funcall.symbol);
     printf("(");
     print_args(funcall.args);
@@ -121,7 +121,7 @@ void print_expression(Expression *expr) {
         printf("%d", expr->integer);
         break;
     case EXPR_VARIABLE:
-        print_slice(expr->variable.name);
+        print_strslice(expr->variable.name);
         print_symbol(expr->variable.symbol);
         break;
     case EXPR_BINOP:
@@ -143,7 +143,7 @@ void print_expression(Expression *expr) {
 void print_param(Parameter param) {
     if (param.mutable) { printf("var "); }
 
-    print_slice(param.name);
+    print_strslice(param.name);
     print_symbol(param.symbol);
     printf(": ");
     print_type(param.type_annotation.type);
@@ -161,7 +161,7 @@ void print_params(ParameterList *params) {
 
 void print_function(Function *fun) {
     printf("fun ");
-    print_slice(fun->name);
+    print_strslice(fun->name);
     print_symbol(fun->symbol);
     printf("(");
     print_params(fun->params);

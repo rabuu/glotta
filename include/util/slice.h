@@ -8,11 +8,11 @@
 typedef struct {
     char *ptr;
     size_t len;
-} Slice;
+} StrSlice;
 
-Slice slice(char *str, size_t start, size_t len);
-Slice slice_from_location(char *buffer, Location loc);
-bool slice_eq(Slice a, Slice b);
-bool slice_eq_str(Slice slice, char *str);
+StrSlice strslice(char *str, size_t start, size_t len);
+StrSlice strslice_from_loc(char *buffer, Location loc);
+bool strslice_eq(StrSlice a, StrSlice b);
+bool strslice_eq_str(StrSlice slice, char *str);
 
 #endif // SLICE_H_
