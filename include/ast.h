@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "source.h"
+#include "util/linkedlist.h"
 #include "util/slice.h"
 
 typedef size_t SymbolId;
@@ -40,11 +41,7 @@ typedef struct {
     Expression *rhs;
 } BinaryOp;
 
-typedef struct ArgumentList ArgumentList;
-struct ArgumentList {
-    Expression *head;
-    struct ArgumentList *tail;
-};
+GENERATE_LINKEDLIST_TYPE(Expression *, ArgumentList, args)
 
 typedef struct {
     StrSlice function;
@@ -60,11 +57,7 @@ typedef struct {
     bool mutable;
 } VariableDefinition;
 
-typedef struct Block Block;
-struct Block {
-    Expression *head;
-    struct Block *tail;
-};
+GENERATE_LINKEDLIST_TYPE(Expression *, Block, block)
 
 struct Expression {
     enum {
@@ -96,11 +89,7 @@ typedef struct {
     FilePosition pos;
 } Parameter;
 
-typedef struct ParameterList ParameterList;
-struct ParameterList {
-    Parameter head;
-    struct ParameterList *tail;
-};
+GENERATE_LINKEDLIST_TYPE(Parameter, ParameterList, params)
 
 typedef struct {
     StrSlice name;
@@ -111,10 +100,6 @@ typedef struct {
     FilePosition pos;
 } Function;
 
-typedef struct Program Program;
-struct Program {
-    Function head;
-    Program *tail;
-};
+GENERATE_LINKEDLIST_TYPE(Function, Program, program)
 
 #endif // AST_H_
