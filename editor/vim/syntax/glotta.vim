@@ -2,8 +2,8 @@ if exists("b:current_syntax")
 	finish
 end
 
-syn keyword glottaKeyword fun val var
-syn keyword glottaDataType Int Bool Unit
+syn keyword glottaKeyword fun val var typ alias variant struct pub use
+syn keyword glottaDataType Unit Bool Nat Int Byte Float Str Slice Option
 syn keyword glottaUnitExpression unit
 syn keyword glottaConditional if then else
 syn keyword glottaBoolean true false
