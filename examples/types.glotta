@@ -4,7 +4,7 @@ typ Str = *Byte
 // alias
 typ BytePtr = alias *Byte
 
-typ Option(T) = sum [
+typ Option(T) = variant [
 	none,
 	some: T,
 ]
@@ -14,7 +14,7 @@ fun [Option(typ T)] replace(self, new: T): Option(T) = match self {
 	some(_) => Option.some(new),
 }
 
-typ Person = prod [
+typ Person = struct [
 	name: Str,
 	var age: Nat,
 ]
