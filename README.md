@@ -4,7 +4,7 @@ My toy language.
 Very much work in progress.
 
 ## Example program
-This is the minimal examples I work on to compile at the moment:
+This is the minimal example I work on to compile at the moment:
 ```
 fun main(): Int = {
     val a := add(1, 2);
