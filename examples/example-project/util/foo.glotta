@@ -1,9 +1,9 @@
 pub typ Foo = struct [
-	a: Nat,
-	b: Int,
+    a: Nat,
+    b: Int,
 ]
 
 pub fun [Foo] new(a: Nat) = Foo [
-	a: a,
-	b: 0,
+    a: a,
+    b: 0,
 ]

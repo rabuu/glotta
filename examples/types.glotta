@@ -5,38 +5,38 @@ typ Str = *Byte
 typ BytePtr = alias *Byte
 
 typ Option(T) = variant [
-	none,
-	some: T,
+    none,
+    some: T,
 ]
 
 fun [Option(typ T)] replace(self, new: T): Option(T) = match self {
-	none => Option.none,
-	some(_) => Option.some(new),
+    none => Option.none,
+    some(_) => Option.some(new),
 }
 
 typ Person = struct [
-	name: Str,
-	var age: Nat,
+    name: Str,
+    var age: Nat,
 ]
 
 fun [Person] born(name: Str): Person = Person [
-	name: name,
-	age: 0,
+    name: name,
+    age: 0,
 ]
 
 fun [Person] say_hello(self) = {
-	print("Hello, I am ");
-	println(self.name);
+    print("Hello, I am ");
+    println(self.name);
 }
 
 fun main() = {
-	val x : Option(Nat) = Option.none;
-	val y : Option(Nat) = Option.some(42);
+    val x : Option(Nat) = Option.none;
+    val y : Option(Nat) = Option.some(42);
 
-	var joe := Person [
-		name: "Joe",
-		age: 42,
-	];
+    var joe := Person [
+        name: "Joe",
+        age: 42,
+    ];
 
-	joe.age += 1;
+    joe.age += 1;
 }

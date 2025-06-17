@@ -4,12 +4,13 @@ My toy language.
 Very much work in progress.
 
 ## Example program
+This is the minimal examples I work on to compile at the moment:
 ```
 fun main(): Int = {
-	val a := add(1, 2);
-	var b : Int = 12;
-	b = a + b;
-	b + 1
+    val a := add(1, 2);
+    var b : Int = 12;
+    b = a + b;
+    b + 1
 }
 
 // This is a comment!
