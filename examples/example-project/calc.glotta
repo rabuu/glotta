@@ -1,0 +1,2 @@
+pub fun add(x: Int, y: Int) = x + y
+pub fun sub(x: Int, y: Int) = x - y
