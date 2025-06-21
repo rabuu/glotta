@@ -25,14 +25,14 @@ typedef struct {
 } Parser;
 
 /* forward declarations */
-Expression *parse_expr(Parser *p);
+static Expression *parse_expr(Parser *p);
 
-void error_prefix(size_t index, SourceContext source) {
+static void error_prefix(size_t index, SourceContext source) {
     FilePosition fpos = file_position(index, source);
     fprintf(stderr, "ERROR[%s:%zu:%zu]: ", source.filename, fpos.row, fpos.column);
 }
 
-void expect(Token *token, TokenTag tag, SourceContext source) {
+static void expect(Token *token, TokenTag tag, SourceContext source) {
     if (token->tag != tag) {
         char *expected = token_tag_to_str(tag);
         char *but_got = token_tag_to_str(token->tag);
@@ -43,9 +43,9 @@ void expect(Token *token, TokenTag tag, SourceContext source) {
     }
 }
 
-Expression *expr_init(Arena *a) { return arena_alloc(a, sizeof(Expression)); }
+static Expression *expr_init(Arena *a) { return arena_alloc(a, sizeof(Expression)); }
 
-bool parse_int(StrSlice slice, int *out) {
+static bool parse_int(StrSlice slice, int *out) {
     char buf[64];
     if (slice.len >= sizeof(buf)) { return false; }
 
@@ -61,7 +61,7 @@ bool parse_int(StrSlice slice, int *out) {
     return true;
 }
 
-Type parse_type(Parser *p) {
+static Type parse_type(Parser *p) {
     Token type = lexer_next(p->l);
 
     switch (type.tag) {
@@ -81,12 +81,12 @@ typedef struct ExprList {
     struct ExprList *tail;
 } ExprList;
 
-size_t exprlist_count(ExprList *list) {
+static size_t exprlist_count(ExprList *list) {
     if (!list) { return 0; }
     return 1 + exprlist_count(list->tail);
 }
 
-ExprList *_parse_block(Parser *p) {
+static ExprList *_parse_block(Parser *p) {
     ExprList *exprs = (ExprList *)arena_alloc(p->tmp, sizeof(ExprList));
     if (lexer_peek(p->l).tag == TOK_CURLY_CLOSE) {
         exprs->head = p->unit_expr;
@@ -103,7 +103,7 @@ ExprList *_parse_block(Parser *p) {
     return exprs;
 }
 
-Block parse_block(Parser *p) {
+static Block parse_block(Parser *p) {
     ExprList *exprs = _parse_block(p);
 
     size_t len = exprlist_count(exprs);
@@ -121,7 +121,7 @@ Block parse_block(Parser *p) {
     return block;
 }
 
-ExprList *_parse_args(Parser *p, bool first) {
+static ExprList *_parse_args(Parser *p, bool first) {
     if (lexer_peek(p->l).tag == TOK_PAREN_CLOSE) { return nullptr; }
 
     if (!first) {
@@ -139,7 +139,7 @@ ExprList *_parse_args(Parser *p, bool first) {
     return args;
 }
 
-Arguments parse_args(Parser *p) {
+static Arguments parse_args(Parser *p) {
     ExprList *args = _parse_args(p, true);
 
     size_t len = exprlist_count(args);
@@ -157,7 +157,7 @@ Arguments parse_args(Parser *p) {
     return arguments;
 }
 
-VariableDefinition parse_vardef(Parser *p, bool mutable) {
+static VariableDefinition parse_vardef(Parser *p, bool mutable) {
     Token variable = lexer_next(p->l);
     expect(&variable, TOK_IDENT, p->l->source);
 
@@ -188,7 +188,7 @@ VariableDefinition parse_vardef(Parser *p, bool mutable) {
     };
 }
 
-bool op_infix(TokenTag op, size_t *l, size_t *r) {
+static bool op_infix(TokenTag op, size_t *l, size_t *r) {
     switch (op) {
     case TOK_ASSIGN:
         *l = 2;
@@ -205,7 +205,7 @@ bool op_infix(TokenTag op, size_t *l, size_t *r) {
     return true;
 }
 
-Expression *_parse_expr(Parser *p, size_t min_bp) {
+static Expression *_parse_expr(Parser *p, size_t min_bp) {
     Expression *e;
 
     Token tok = lexer_next(p->l);
@@ -314,19 +314,19 @@ Expression *_parse_expr(Parser *p, size_t min_bp) {
     return e;
 }
 
-Expression *parse_expr(Parser *p) { return _parse_expr(p, 0); }
+static Expression *parse_expr(Parser *p) { return _parse_expr(p, 0); }
 
 typedef struct ParamList {
     Parameter head;
     struct ParamList *tail;
 } ParamList;
 
-size_t paramlist_count(ParamList *list) {
+static size_t paramlist_count(ParamList *list) {
     if (!list) { return 0; }
     return 1 + paramlist_count(list->tail);
 }
 
-ParamList *_parse_params(Parser *p, bool first) {
+static ParamList *_parse_params(Parser *p, bool first) {
     if (lexer_peek(p->l).tag == TOK_PAREN_CLOSE) { return nullptr; }
 
     if (!first) {
@@ -367,7 +367,7 @@ ParamList *_parse_params(Parser *p, bool first) {
     return params;
 }
 
-Parameters parse_params(Parser *p) {
+static Parameters parse_params(Parser *p) {
     ParamList *params = _parse_params(p, true);
 
     size_t len = paramlist_count(params);
@@ -385,7 +385,7 @@ Parameters parse_params(Parser *p) {
     return parameters;
 }
 
-Function parse_function(Parser *p) {
+static Function parse_function(Parser *p) {
     Function f = {0};
 
     Token fun = lexer_next(p->l);
@@ -427,12 +427,12 @@ typedef struct FunList {
     struct FunList *tail;
 } FunList;
 
-size_t funlist_count(FunList *list) {
+static size_t funlist_count(FunList *list) {
     if (!list) { return 0; }
     return 1 + funlist_count(list->tail);
 }
 
-FunList *_parse_program(Parser *p) {
+static FunList *_parse_program(Parser *p) {
     if (lexer_peek(p->l).tag == TOK_EOF) { return nullptr; }
 
     Function f = parse_function(p);

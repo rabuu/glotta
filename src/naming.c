@@ -38,7 +38,7 @@ typedef struct {
     SymbolId new_symbol;
 } Namer;
 
-Scope *scope_fork(Scope *parent, Arena *a) {
+static Scope *scope_fork(Scope *parent, Arena *a) {
     Scope *scope = (Scope *)arena_alloc(a, sizeof(Scope));
 
     scope->parent = parent;
@@ -49,7 +49,7 @@ Scope *scope_fork(Scope *parent, Arena *a) {
     return scope;
 }
 
-void scope_add_symbol(Scope *scope, Symbol symbol, Arena *a) {
+static void scope_add_symbol(Scope *scope, Symbol symbol, Arena *a) {
     if (scope->count == scope->cap) {
         size_t new_cap = scope->cap * 2;
         if (new_cap == 0) { new_cap = DEFAULT_SYMBOL_TABLE_CAP; }
@@ -65,7 +65,7 @@ void scope_add_symbol(Scope *scope, Symbol symbol, Arena *a) {
     scope->count++;
 }
 
-SymbolId scope_lookup_single(Scope *scope, StrSlice name, SymbolKind kind) {
+static SymbolId scope_lookup_single(Scope *scope, StrSlice name, SymbolKind kind) {
     for (size_t i = 0; i < scope->count; ++i) {
         size_t idx = scope->count - i - 1;
         Symbol lookup = scope->symbols[idx];
@@ -75,7 +75,7 @@ SymbolId scope_lookup_single(Scope *scope, StrSlice name, SymbolKind kind) {
     return 0;
 }
 
-SymbolId scope_lookup(Scope *scope, StrSlice name, SymbolKind kind) {
+static SymbolId scope_lookup(Scope *scope, StrSlice name, SymbolKind kind) {
     if (!scope) { return 0; }
 
     SymbolId this_scope = scope_lookup_single(scope, name, kind);
@@ -84,9 +84,9 @@ SymbolId scope_lookup(Scope *scope, StrSlice name, SymbolKind kind) {
     return scope_lookup(scope->parent, name, kind);
 }
 
-void resolve_names_in_expr(Expression *expr, Scope *scope, Namer *namer);
+static void resolve_names_in_expr(Expression *expr, Scope *scope, Namer *namer);
 
-void resolve_names_in_params(Parameters *params, Scope *scope, Namer *namer) {
+static void resolve_names_in_params(Parameters *params, Scope *scope, Namer *namer) {
     for (size_t i = 0; i < params->len; ++i) {
         Parameter *param = &params->items[i];
 
@@ -109,7 +109,7 @@ void resolve_names_in_params(Parameters *params, Scope *scope, Namer *namer) {
     }
 }
 
-void resolve_names_in_expr(Expression *expr, Scope *scope, Namer *namer) {
+static void resolve_names_in_expr(Expression *expr, Scope *scope, Namer *namer) {
     switch (expr->tag) {
     case EXPR_BLOCK:
         Scope *block_scope = scope_fork(scope, &namer->arena);
@@ -163,7 +163,7 @@ void resolve_names_in_expr(Expression *expr, Scope *scope, Namer *namer) {
     }
 }
 
-void resolve_names_in_function(Function *fun, Scope *scope, Namer *namer) {
+static void resolve_names_in_function(Function *fun, Scope *scope, Namer *namer) {
     Scope *param_scope = scope_fork(scope, &namer->arena);
     resolve_names_in_params(&fun->params, param_scope, namer);
 
@@ -171,7 +171,7 @@ void resolve_names_in_function(Function *fun, Scope *scope, Namer *namer) {
     resolve_names_in_expr(fun->body, function_scope, namer);
 }
 
-void resolve_top_level_names(Program *program, Scope *scope, Namer *namer) {
+static void resolve_top_level_names(Program *program, Scope *scope, Namer *namer) {
     for (size_t i = 0; i < program->function_count; ++i) {
         Function *fun = &program->functions[i];
 

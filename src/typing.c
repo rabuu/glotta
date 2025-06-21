@@ -22,7 +22,7 @@ typedef struct {
 
 #if 0
 #include "print.h"
-void debug_typer(Typer *typer) {
+static void debug_typer(Typer *typer) {
     for (size_t i = 0; i < typer->lookup_count; ++i) {
         if (typer->lookups[i].resolved) {
             printf("%zu: ", i);
@@ -33,9 +33,9 @@ void debug_typer(Typer *typer) {
 }
 #endif /* if 0 */
 
-Type resolve_types_in_expr(Expression *expr, Typer *typer);
+static Type resolve_types_in_expr(Expression *expr, Typer *typer);
 
-void resolve_types_in_args(Arguments *args, Parameters *params, Typer *typer) {
+static void resolve_types_in_args(Arguments *args, Parameters *params, Typer *typer) {
     assert(args->len == params->len);
 
     for (size_t i = 0; i < args->len; ++i) {
@@ -45,7 +45,7 @@ void resolve_types_in_args(Arguments *args, Parameters *params, Typer *typer) {
     }
 }
 
-Type resolve_types_in_block(Block *block, Typer *typer) {
+static Type resolve_types_in_block(Block *block, Typer *typer) {
     for (size_t i = 0; i < block->len; ++i) {
         resolve_types_in_expr(block->items[i], typer);
         assert(block->items[i]->inferred_type.resolved);
@@ -54,7 +54,7 @@ Type resolve_types_in_block(Block *block, Typer *typer) {
     return block->items[block->len - 1]->inferred_type.type;
 }
 
-Type resolve_types_in_expr(Expression *expr, Typer *typer) {
+static Type resolve_types_in_expr(Expression *expr, Typer *typer) {
     Type inferred_type;
     switch (expr->tag) {
     case EXPR_UNIT:
@@ -128,14 +128,14 @@ Type resolve_types_in_expr(Expression *expr, Typer *typer) {
     return inferred_type;
 }
 
-void resolve_types_in_function(Function *fun, Typer *typer) {
+static void resolve_types_in_function(Function *fun, Typer *typer) {
     Type inferred = resolve_types_in_expr(fun->body, typer);
     assert(fun->body->inferred_type.resolved);
     assert(typer->lookups[fun->symbol].resolved);
     assert(inferred == typer->lookups[fun->symbol].type);
 }
 
-void resolve_types_in_params(Parameters *params, Typer *typer) {
+static void resolve_types_in_params(Parameters *params, Typer *typer) {
     for (size_t i = 0; i < params->len; ++i) {
         Parameter param = params->items[i];
 
@@ -146,7 +146,7 @@ void resolve_types_in_params(Parameters *params, Typer *typer) {
     }
 }
 
-void gather_function_prototype_information(Program *program, Typer *typer) {
+static void gather_function_prototype_information(Program *program, Typer *typer) {
     for (size_t i = 0; i < program->function_count; ++i) {
         Function *fun = &program->functions[i];
 

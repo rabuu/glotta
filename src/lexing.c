@@ -18,7 +18,7 @@
  *
  * Return `true` if `tag` was changed, `false` otherwise.
  */
-bool token_tag_keyword_from_slice(StrSlice str, TokenTag *tag) {
+static bool token_tag_keyword_from_slice(StrSlice str, TokenTag *tag) {
     if (strslice_eq_str(str, "fun")) {
         *tag = TOK_KW_FUN;
     } else if (strslice_eq_str(str, "Int")) {
@@ -81,8 +81,8 @@ char *token_tag_to_str(TokenTag tag) {
     }
 }
 
-bool is_alpha(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
-bool is_digit(char c) { return c >= '0' && c <= '9'; }
+static bool is_alpha(char c) { return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'); }
+static bool is_digit(char c) { return c >= '0' && c <= '9'; }
 
 Lexer lexer_init(SourceContext source) {
     return (Lexer){

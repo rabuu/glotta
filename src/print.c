@@ -5,7 +5,7 @@
 #include "ast.h"
 #include "util/slice.h"
 
-void print_symbol(SymbolId id) {
+static void print_symbol(SymbolId id) {
     if (id != 0) { printf("#%zu", id); }
 }
 
@@ -35,14 +35,14 @@ void print_type(Type type) {
     }
 }
 
-void print_inferred_type(InferredType inferred_type) {
+static void print_inferred_type(InferredType inferred_type) {
     if (inferred_type.resolved) {
         printf("$");
         print_type(inferred_type.type);
     }
 }
 
-void print_binop(BinaryOp binop) {
+static void print_binop(BinaryOp binop) {
     printf("(");
     switch (binop.kind) {
     case BINOP_ASSIGN:
@@ -59,7 +59,7 @@ void print_binop(BinaryOp binop) {
     printf(")");
 }
 
-void print_vardef(VariableDefinition vardef) {
+static void print_vardef(VariableDefinition vardef) {
     printf("(");
     vardef.mutable ? printf("var") : printf("val");
     printf(" ");
@@ -78,7 +78,7 @@ void print_vardef(VariableDefinition vardef) {
     printf(")");
 }
 
-void print_funcall(FunctionCall funcall) {
+static void print_funcall(FunctionCall funcall) {
     print_strslice(funcall.function);
     print_symbol(funcall.symbol);
     printf("(");
@@ -89,7 +89,7 @@ void print_funcall(FunctionCall funcall) {
     printf(")");
 }
 
-void print_block(Block block) {
+static void print_block(Block block) {
     printf("{ ");
     for (size_t i = 0; i < block.len; ++i) {
         if (i != 0) { printf("; "); }
@@ -126,7 +126,7 @@ void print_expression(Expression *expr) {
     print_inferred_type(expr->inferred_type);
 }
 
-void print_param(Parameter param) {
+static void print_param(Parameter param) {
     if (param.mutable) { printf("var "); }
 
     print_strslice(param.name);
