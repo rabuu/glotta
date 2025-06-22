@@ -3,6 +3,6 @@
 
 #include "ast.h"
 
-void resolve_types(Program *program, SymbolId symbol_num);
+void resolve_types(AstProgram *program, SymbolId symbol_num);
 
 #endif // TYPER_H_

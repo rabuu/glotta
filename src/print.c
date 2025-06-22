@@ -24,7 +24,7 @@ void print_token(Token *token, SourceContext source) {
     printf("%s\n", tag);
 }
 
-void print_type(Type type) {
+void print_type(AstType type) {
     switch (type) {
     case TYPE_UNIT:
         printf("Unit");
@@ -35,14 +35,14 @@ void print_type(Type type) {
     }
 }
 
-static void print_inferred_type(InferredType inferred_type) {
+static void print_inferred_type(AstInferredType inferred_type) {
     if (inferred_type.resolved) {
         printf("$");
         print_type(inferred_type.type);
     }
 }
 
-static void print_binop(BinaryOp binop) {
+static void print_binop(AstBinaryOp binop) {
     printf("(");
     switch (binop.kind) {
     case BINOP_ASSIGN:
@@ -59,7 +59,7 @@ static void print_binop(BinaryOp binop) {
     printf(")");
 }
 
-static void print_vardef(VariableDefinition vardef) {
+static void print_vardef(AstVarDef vardef) {
     printf("(");
     vardef.mutable ? printf("var") : printf("val");
     printf(" ");
@@ -78,7 +78,7 @@ static void print_vardef(VariableDefinition vardef) {
     printf(")");
 }
 
-static void print_funcall(FunctionCall funcall) {
+static void print_funcall(AstFunCall funcall) {
     print_strslice(funcall.function);
     print_symbol(funcall.symbol);
     printf("(");
@@ -89,7 +89,7 @@ static void print_funcall(FunctionCall funcall) {
     printf(")");
 }
 
-static void print_block(Block block) {
+static void print_block(AstBlock block) {
     printf("{ ");
     for (size_t i = 0; i < block.len; ++i) {
         if (i != 0) { printf("; "); }
@@ -98,7 +98,7 @@ static void print_block(Block block) {
     printf(" }");
 }
 
-void print_expression(Expression *expr) {
+void print_expression(AstExpr *expr) {
     switch (expr->tag) {
     case EXPR_UNIT:
         printf("unit");
@@ -126,7 +126,7 @@ void print_expression(Expression *expr) {
     print_inferred_type(expr->inferred_type);
 }
 
-static void print_param(Parameter param) {
+static void print_param(AstParam param) {
     if (param.mutable) { printf("var "); }
 
     print_strslice(param.name);
@@ -135,7 +135,7 @@ static void print_param(Parameter param) {
     print_type(param.type_annotation.type);
 }
 
-void print_function(Function *fun) {
+void print_function(AstFunction *fun) {
     printf("fun ");
     print_strslice(fun->name);
     print_symbol(fun->symbol);
@@ -151,7 +151,7 @@ void print_function(Function *fun) {
     printf("\n");
 }
 
-void print_program(Program *program) {
+void print_program(AstProgram *program) {
     for (size_t i = 0; i < program->function_count; ++i) {
         if (i != 0) { printf("\n"); }
         print_function(&program->functions[i]);

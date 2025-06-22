@@ -9,10 +9,10 @@
 
 typedef struct {
     bool resolved;
-    Type type;
+    AstType type;
 
     /* only for functions */
-    Parameters *params;
+    AstParameters *params;
 } Lookup;
 
 typedef struct {
@@ -33,19 +33,19 @@ static void debug_typer(Typer *typer) {
 }
 #endif /* if 0 */
 
-static Type resolve_types_in_expr(Expression *expr, Typer *typer);
+static AstType resolve_types_in_expr(AstExpr *expr, Typer *typer);
 
-static void resolve_types_in_args(Arguments *args, Parameters *params, Typer *typer) {
+static void resolve_types_in_args(AstArguments *args, AstParameters *params, Typer *typer) {
     assert(args->len == params->len);
 
     for (size_t i = 0; i < args->len; ++i) {
-        Type arg_type = resolve_types_in_expr(args->items[i], typer);
-        Type param_type = params->items[i].type_annotation.type;
+        AstType arg_type = resolve_types_in_expr(args->items[i], typer);
+        AstType param_type = params->items[i].type_annotation.type;
         assert(arg_type == param_type);
     }
 }
 
-static Type resolve_types_in_block(Block *block, Typer *typer) {
+static AstType resolve_types_in_block(AstBlock *block, Typer *typer) {
     for (size_t i = 0; i < block->len; ++i) {
         resolve_types_in_expr(block->items[i], typer);
         assert(block->items[i]->inferred_type.resolved);
@@ -54,8 +54,8 @@ static Type resolve_types_in_block(Block *block, Typer *typer) {
     return block->items[block->len - 1]->inferred_type.type;
 }
 
-static Type resolve_types_in_expr(Expression *expr, Typer *typer) {
-    Type inferred_type;
+static AstType resolve_types_in_expr(AstExpr *expr, Typer *typer) {
+    AstType inferred_type;
     switch (expr->tag) {
     case EXPR_UNIT:
         inferred_type = TYPE_UNIT;
@@ -70,11 +70,11 @@ static Type resolve_types_in_expr(Expression *expr, Typer *typer) {
     case EXPR_BINOP:
         resolve_types_in_expr(expr->binop.lhs, typer);
         assert(expr->binop.lhs->inferred_type.resolved);
-        Type lhs_type = expr->binop.lhs->inferred_type.type;
+        AstType lhs_type = expr->binop.lhs->inferred_type.type;
 
         resolve_types_in_expr(expr->binop.rhs, typer);
         assert(expr->binop.rhs->inferred_type.resolved);
-        Type rhs_type = expr->binop.rhs->inferred_type.type;
+        AstType rhs_type = expr->binop.rhs->inferred_type.type;
 
         switch (expr->binop.kind) {
         case BINOP_ASSIGN:
@@ -97,14 +97,14 @@ static Type resolve_types_in_expr(Expression *expr, Typer *typer) {
     case EXPR_FUNCALL:
         assert(typer->lookups[expr->funcall.symbol].resolved);
 
-        Parameters *params = typer->lookups[expr->funcall.symbol].params;
+        AstParameters *params = typer->lookups[expr->funcall.symbol].params;
         resolve_types_in_args(&expr->funcall.args, params, typer);
         inferred_type = typer->lookups[expr->funcall.symbol].type;
         break;
     case EXPR_VARDEF:
         resolve_types_in_expr(expr->vardef.expr, typer);
         assert(expr->vardef.expr->inferred_type.resolved);
-        Type vardef_type = expr->vardef.expr->inferred_type.type;
+        AstType vardef_type = expr->vardef.expr->inferred_type.type;
 
         if (expr->vardef.type_annotation.annotated) {
             assert(expr->vardef.type_annotation.type == vardef_type);
@@ -118,7 +118,7 @@ static Type resolve_types_in_expr(Expression *expr, Typer *typer) {
         inferred_type = TYPE_UNIT;
         break;
     case EXPR_BLOCK:
-        Type block_type = resolve_types_in_block(&expr->block, typer);
+        AstType block_type = resolve_types_in_block(&expr->block, typer);
         inferred_type = block_type;
         break;
     }
@@ -128,29 +128,29 @@ static Type resolve_types_in_expr(Expression *expr, Typer *typer) {
     return inferred_type;
 }
 
-static void resolve_types_in_function(Function *fun, Typer *typer) {
-    Type inferred = resolve_types_in_expr(fun->body, typer);
+static void resolve_types_in_function(AstFunction *fun, Typer *typer) {
+    AstType inferred = resolve_types_in_expr(fun->body, typer);
     assert(fun->body->inferred_type.resolved);
     assert(typer->lookups[fun->symbol].resolved);
     assert(inferred == typer->lookups[fun->symbol].type);
 }
 
-static void resolve_types_in_params(Parameters *params, Typer *typer) {
+static void resolve_types_in_params(AstParameters *params, Typer *typer) {
     for (size_t i = 0; i < params->len; ++i) {
-        Parameter param = params->items[i];
+        AstParam param = params->items[i];
 
         assert(param.type_annotation.annotated);
-        Type param_type = param.type_annotation.type;
+        AstType param_type = param.type_annotation.type;
         typer->lookups[param.symbol].type = param_type;
         typer->lookups[param.symbol].resolved = true;
     }
 }
 
-static void gather_function_prototype_information(Program *program, Typer *typer) {
+static void gather_function_prototype_information(AstProgram *program, Typer *typer) {
     for (size_t i = 0; i < program->function_count; ++i) {
-        Function *fun = &program->functions[i];
+        AstFunction *fun = &program->functions[i];
 
-        Type return_type;
+        AstType return_type;
         if (fun->return_type_annotation.annotated) {
             return_type = fun->return_type_annotation.type;
         } else {
@@ -165,7 +165,7 @@ static void gather_function_prototype_information(Program *program, Typer *typer
     }
 }
 
-void resolve_types(Program *program, SymbolId symbol_num) {
+void resolve_types(AstProgram *program, SymbolId symbol_num) {
     Lookup *symbol_lookup = calloc(symbol_num, sizeof(Lookup));
     Typer typer = {
         .lookups = symbol_lookup,
