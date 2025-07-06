@@ -2,24 +2,41 @@ if exists("b:current_syntax")
 	finish
 end
 
-syn keyword glottaKeyword fun val var typ alias variant struct pub use match
-syn keyword glottaSpecial self
-syn keyword glottaDataType Unit Bool Nat Int Byte Float Str Slice Option
-syn keyword glottaUnitExpression unit
-syn keyword glottaConditional if then else
-syn keyword glottaBoolean true false
-syn match glottaNumber "-\=\<[0-9]*\>"
-syn match glottaFloat "-\=\<[0-9]*\.[0-9]*\>"
 syn region glottaComment start="//" end="\n"
 
-hi def link glottaKeyword Keyword
-hi def link glottaDataType Type
-hi def link glottaSpecial Special
-hi def link glottaUnitExpression Special
-hi def link glottaConditional Conditional
-hi def link glottaBoolean Boolean
+syn region glottaString start='"' end='"' skip='\\.' contains=glottaStringEscape oneline
+syn match glottaStringEscape "\\[ntr\\\"']" contained
+syn match glottaStringEscape "\\x[0-9a-fA-F]\{2}" contained
+syn match glottaStringEscape "\\u[0-9a-fA-F]\{4}" contained
+
+syn match glottaNumber "-\=\<[0-9]*\>"
+syn match glottaFloat "-\=\<[0-9]*\.[0-9]*\>"
+syn keyword glottaBoolean true false
+
+syn keyword glottaConditional if then else match
+syn keyword glottaRepeat loop
+syn match glottaOperator "[+*-/<>:=!]"
+syn keyword glottaKeyword fun val var typ pub use return
+
+syn keyword glottaType Unit Bool Byte Nat Int Float Str
+syn keyword glottaStructure struct variant alias
+
+syn keyword glottaSpecial self unit
+syn match glottaDelimiter "[,;.]"
+
+hi def link glottaComment Comment
+hi def link glottaString String
+hi def link glottaStringEscape SpecialChar
 hi def link glottaNumber Number
 hi def link glottaFloat Float
-hi def link glottaComment Comment
+hi def link glottaBoolean Boolean
+hi def link glottaConditional Conditional
+hi def link glottaRepeat Repeat
+hi def link glottaOperator Operator
+hi def link glottaKeyword Keyword
+hi def link glottaType Type
+hi def link glottaStructure Structure
+hi def link glottaSpecial Special
+hi def link glottaDelimiter Delimiter
 
 let b:current_syntax = "glotta"
