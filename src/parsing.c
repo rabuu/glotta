@@ -21,11 +21,11 @@ typedef struct {
     Arena *arena;
     Arena *tmp;
 
-    AstExpr *unit_expr;
+    AST_Expr *unit_expr;
 } Parser;
 
 /* forward declarations */
-static AstExpr *parse_expr(Parser *p);
+static AST_Expr *parse_expr(Parser *p);
 
 static void error_prefix(size_t index, SourceContext source) {
     FilePosition fpos = file_position(index, source);
@@ -43,7 +43,7 @@ static void expect(Token *token, TokenTag tag, SourceContext source) {
     }
 }
 
-static AstExpr *expr_init(Arena *a) { return arena_alloc(a, sizeof(AstExpr)); }
+static AST_Expr *expr_init(Arena *a) { return arena_alloc(a, sizeof(AST_Expr)); }
 
 static bool parse_int(StrSlice slice, int *out) {
     char buf[64];
@@ -61,7 +61,7 @@ static bool parse_int(StrSlice slice, int *out) {
     return true;
 }
 
-static AstType parse_type(Parser *p) {
+static AST_Type parse_type(Parser *p) {
     Token type = lexer_next(p->l);
 
     switch (type.tag) {
@@ -77,7 +77,7 @@ static AstType parse_type(Parser *p) {
 }
 
 typedef struct ExprList {
-    AstExpr *head;
+    AST_Expr *head;
     struct ExprList *tail;
 } ExprList;
 
@@ -103,18 +103,18 @@ static ExprList *_parse_block(Parser *p) {
     return exprs;
 }
 
-static AstBlock parse_block(Parser *p) {
+static AST_Block parse_block(Parser *p) {
     ExprList *exprs = _parse_block(p);
 
     size_t len = exprlist_count(exprs);
-    AstExpr **items = arena_alloc(p->arena, len * sizeof(AstExpr *));
+    AST_Expr **items = arena_alloc(p->arena, len * sizeof(AST_Expr *));
 
     for (size_t i = 0; i < len; ++i) {
         items[i] = exprs->head;
         exprs = exprs->tail;
     }
 
-    AstBlock block = {
+    AST_Block block = {
         .items = items,
         .len = len,
     };
@@ -130,7 +130,7 @@ static ExprList *_parse_args(Parser *p, bool first) {
         if (lexer_peek(p->l).tag == TOK_PAREN_CLOSE) { return nullptr; }
     }
 
-    AstExpr *e = parse_expr(p);
+    AST_Expr *e = parse_expr(p);
     ExprList *tail = _parse_args(p, false);
 
     ExprList *args = (ExprList *)arena_alloc(p->tmp, sizeof(ExprList));
@@ -139,25 +139,25 @@ static ExprList *_parse_args(Parser *p, bool first) {
     return args;
 }
 
-static AstArguments parse_args(Parser *p) {
+static AST_Arguments parse_args(Parser *p) {
     ExprList *args = _parse_args(p, true);
 
     size_t len = exprlist_count(args);
-    AstExpr **items = arena_alloc(p->arena, len * sizeof(AstExpr *));
+    AST_Expr **items = arena_alloc(p->arena, len * sizeof(AST_Expr *));
 
     for (size_t i = 0; i < len; ++i) {
         items[i] = args->head;
         args = args->tail;
     }
 
-    AstArguments arguments = {
+    AST_Arguments arguments = {
         .items = items,
         .len = len,
     };
     return arguments;
 }
 
-static AstVarDef parse_vardef(Parser *p, bool mutable) {
+static AST_VarDef parse_vardef(Parser *p, bool mutable) {
     Token variable = lexer_next(p->l);
     expect(&variable, TOK_IDENT, p->l->source);
 
@@ -165,7 +165,7 @@ static AstVarDef parse_vardef(Parser *p, bool mutable) {
     expect(&colon, TOK_COLON, p->l->source);
 
     Token maybe_type = lexer_peek(p->l);
-    AstTypeAnnotation annotation;
+    AST_TypeAnnotation annotation;
     if (maybe_type.tag == TOK_ASSIGN) {
         lexer_next(p->l);
         annotation.annotated = false;
@@ -178,9 +178,9 @@ static AstVarDef parse_vardef(Parser *p, bool mutable) {
         expect(&assign, TOK_ASSIGN, p->l->source);
     }
 
-    AstExpr *expr = parse_expr(p);
+    AST_Expr *expr = parse_expr(p);
 
-    return (AstVarDef){
+    return (AST_VarDef){
         .name = strslice_from_loc(p->l->source.buffer, variable.loc),
         .type_annotation = annotation,
         .expr = expr,
@@ -205,8 +205,8 @@ static bool op_infix(TokenTag op, size_t *l, size_t *r) {
     return true;
 }
 
-static AstExpr *_parse_expr(Parser *p, size_t min_bp) {
-    AstExpr *e;
+static AST_Expr *_parse_expr(Parser *p, size_t min_bp) {
+    AST_Expr *e;
 
     Token tok = lexer_next(p->l);
     switch (tok.tag) {
@@ -226,12 +226,12 @@ static AstExpr *_parse_expr(Parser *p, size_t min_bp) {
         e = expr_init(p->arena);
         if (lexer_peek(p->l).tag == TOK_PAREN_OPEN) {
             lexer_next(p->l);
-            AstArguments args = parse_args(p);
+            AST_Arguments args = parse_args(p);
             Token close_args = lexer_next(p->l);
             expect(&close_args, TOK_PAREN_CLOSE, p->l->source);
 
             e->tag = EXPR_FUNCALL;
-            e->funcall = (AstFunCall){
+            e->funcall = (AST_FunCall){
                 .function = strslice_from_loc(p->l->source.buffer, tok.loc),
                 .args = args,
             };
@@ -259,7 +259,7 @@ static AstExpr *_parse_expr(Parser *p, size_t min_bp) {
         expect(&close, TOK_PAREN_CLOSE, p->l->source);
         break;
     case TOK_CURLY_OPEN:
-        AstBlock block = parse_block(p);
+        AST_Block block = parse_block(p);
         Token close_block = lexer_next(p->l);
         expect(&close_block, TOK_CURLY_CLOSE, p->l->source);
 
@@ -284,8 +284,8 @@ static AstExpr *_parse_expr(Parser *p, size_t min_bp) {
             if (l < min_bp) { break; }
             lexer_next(p->l);
 
-            AstExpr *rhs = _parse_expr(p, r);
-            AstExpr *lhs = expr_init(p->arena);
+            AST_Expr *rhs = _parse_expr(p, r);
+            AST_Expr *lhs = expr_init(p->arena);
 
             lhs->tag = EXPR_BINOP;
             lhs->binop.lhs = e;
@@ -314,10 +314,10 @@ static AstExpr *_parse_expr(Parser *p, size_t min_bp) {
     return e;
 }
 
-static AstExpr *parse_expr(Parser *p) { return _parse_expr(p, 0); }
+static AST_Expr *parse_expr(Parser *p) { return _parse_expr(p, 0); }
 
 typedef struct ParamList {
-    AstParam head;
+    AST_Param head;
     struct ParamList *tail;
 } ParamList;
 
@@ -336,7 +336,7 @@ static ParamList *_parse_params(Parser *p, bool first) {
         if (lexer_peek(p->l).tag == TOK_PAREN_CLOSE) { return nullptr; }
     }
 
-    AstParam param = {0};
+    AST_Param param = {0};
 
     Token maybe_var = lexer_peek(p->l);
     if (maybe_var.tag == TOK_KW_VAR) {
@@ -367,26 +367,26 @@ static ParamList *_parse_params(Parser *p, bool first) {
     return params;
 }
 
-static AstParameters parse_params(Parser *p) {
+static AST_Parameters parse_params(Parser *p) {
     ParamList *params = _parse_params(p, true);
 
     size_t len = paramlist_count(params);
-    AstParam *items = arena_alloc(p->arena, len * sizeof(AstParam));
+    AST_Param *items = arena_alloc(p->arena, len * sizeof(AST_Param));
 
     for (size_t i = 0; i < len; ++i) {
         items[i] = params->head;
         params = params->tail;
     }
 
-    AstParameters parameters = {
+    AST_Parameters parameters = {
         .items = items,
         .len = len,
     };
     return parameters;
 }
 
-static AstFunction parse_function(Parser *p) {
-    AstFunction f = {0};
+static AST_Function parse_function(Parser *p) {
+    AST_Function f = {0};
 
     Token fun = lexer_next(p->l);
     expect(&fun, TOK_KW_FUN, p->l->source);
@@ -423,7 +423,7 @@ static AstFunction parse_function(Parser *p) {
 }
 
 typedef struct FunList {
-    AstFunction head;
+    AST_Function head;
     struct FunList *tail;
 } FunList;
 
@@ -435,7 +435,7 @@ static size_t funlist_count(FunList *list) {
 static FunList *_parse_program(Parser *p) {
     if (lexer_peek(p->l).tag == TOK_EOF) { return nullptr; }
 
-    AstFunction f = parse_function(p);
+    AST_Function f = parse_function(p);
     FunList *tail = _parse_program(p);
 
     FunList *funs = arena_alloc(p->tmp, sizeof(FunList));
@@ -445,10 +445,10 @@ static FunList *_parse_program(Parser *p) {
     return funs;
 }
 
-AstProgram parse_program(Lexer *lexer, Arena *ast_arena) {
+AST_Program parse_program(Lexer *lexer, Arena *ast_arena) {
     Arena tmp = {0};
 
-    AstExpr *unit_expr = expr_init(ast_arena);
+    AST_Expr *unit_expr = expr_init(ast_arena);
     unit_expr->tag = EXPR_UNIT;
 
     Parser p = {
@@ -461,13 +461,13 @@ AstProgram parse_program(Lexer *lexer, Arena *ast_arena) {
     FunList *funs = _parse_program(&p);
     size_t function_count = funlist_count(funs);
 
-    AstFunction *functions = arena_alloc(ast_arena, function_count * sizeof(AstFunction));
+    AST_Function *functions = arena_alloc(ast_arena, function_count * sizeof(AST_Function));
     for (size_t i = 0; i < function_count; ++i) {
         functions[i] = funs->head;
         funs = funs->tail;
     }
 
-    AstProgram program = {
+    AST_Program program = {
         .functions = functions,
         .function_count = function_count,
     };

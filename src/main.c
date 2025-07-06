@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
 
     printf("\n--------- AST ----------\n");
     Arena ast_arena = {0};
-    AstProgram ast = parse_program(&lexer, &ast_arena);
+    AST_Program ast = parse_program(&lexer, &ast_arena);
     print_program(&ast);
 
     printf("\n-------- NAMING --------\n");

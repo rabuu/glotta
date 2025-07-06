@@ -84,11 +84,11 @@ static SymbolId scope_lookup(Scope *scope, StrSlice name, SymbolKind kind) {
     return scope_lookup(scope->parent, name, kind);
 }
 
-static void resolve_names_in_expr(AstExpr *expr, Scope *scope, Namer *namer);
+static void resolve_names_in_expr(AST_Expr *expr, Scope *scope, Namer *namer);
 
-static void resolve_names_in_params(AstParameters *params, Scope *scope, Namer *namer) {
+static void resolve_names_in_params(AST_Parameters *params, Scope *scope, Namer *namer) {
     for (size_t i = 0; i < params->len; ++i) {
-        AstParam *param = &params->items[i];
+        AST_Param *param = &params->items[i];
 
         if (scope_lookup_single(scope, param->name, SYMBOL_VARIABLE)) {
             fprintf(stderr, "ERROR: Parameter `");
@@ -109,7 +109,7 @@ static void resolve_names_in_params(AstParameters *params, Scope *scope, Namer *
     }
 }
 
-static void resolve_names_in_expr(AstExpr *expr, Scope *scope, Namer *namer) {
+static void resolve_names_in_expr(AST_Expr *expr, Scope *scope, Namer *namer) {
     switch (expr->tag) {
     case EXPR_BLOCK:
         Scope *block_scope = scope_fork(scope, &namer->arena);
@@ -163,7 +163,7 @@ static void resolve_names_in_expr(AstExpr *expr, Scope *scope, Namer *namer) {
     }
 }
 
-static void resolve_names_in_function(AstFunction *fun, Scope *scope, Namer *namer) {
+static void resolve_names_in_function(AST_Function *fun, Scope *scope, Namer *namer) {
     Scope *param_scope = scope_fork(scope, &namer->arena);
     resolve_names_in_params(&fun->params, param_scope, namer);
 
@@ -171,9 +171,9 @@ static void resolve_names_in_function(AstFunction *fun, Scope *scope, Namer *nam
     resolve_names_in_expr(fun->body, function_scope, namer);
 }
 
-static void resolve_top_level_names(AstProgram *program, Scope *scope, Namer *namer) {
+static void resolve_top_level_names(AST_Program *program, Scope *scope, Namer *namer) {
     for (size_t i = 0; i < program->function_count; ++i) {
-        AstFunction *fun = &program->functions[i];
+        AST_Function *fun = &program->functions[i];
 
         if (scope_lookup(scope, fun->name, SYMBOL_FUNCTION)) {
             fprintf(stderr, "ERROR: Function `");
@@ -194,7 +194,7 @@ static void resolve_top_level_names(AstProgram *program, Scope *scope, Namer *na
     }
 }
 
-SymbolId resolve_names(AstProgram *program) {
+SymbolId resolve_names(AST_Program *program) {
     Namer namer = {
         .arena = {0},
         .new_symbol = 1,

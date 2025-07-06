@@ -8,63 +8,63 @@
 
 typedef size_t SymbolId;
 
-typedef struct AstExpr AstExpr;
+typedef struct AST_Expr AST_Expr;
 
 typedef enum {
     TYPE_UNIT,
     TYPE_INT,
-} AstType;
+} AST_Type;
 
 typedef struct {
     bool annotated;
-    AstType type;
+    AST_Type type;
     FilePosition pos;
-} AstTypeAnnotation;
+} AST_TypeAnnotation;
 
 typedef struct {
     bool resolved;
-    AstType type;
-} AstInferredType;
+    AST_Type type;
+} AST_InferredType;
 
 typedef struct {
     StrSlice name;
     SymbolId symbol;
-} AstVariable;
+} AST_Variable;
 
 typedef struct {
     enum {
         BINOP_ASSIGN,
         BINOP_ADD,
     } kind;
-    AstExpr *lhs;
-    AstExpr *rhs;
-} AstBinaryOp;
+    AST_Expr *lhs;
+    AST_Expr *rhs;
+} AST_BinaryOp;
 
 typedef struct {
-    AstExpr **items;
+    AST_Expr **items;
     size_t len;
-} AstArguments;
+} AST_Arguments;
 
 typedef struct {
     StrSlice function;
     SymbolId symbol;
-    AstArguments args;
-} AstFunCall;
+    AST_Arguments args;
+} AST_FunCall;
 
 typedef struct {
     StrSlice name;
     SymbolId symbol;
-    AstTypeAnnotation type_annotation;
-    AstExpr *expr;
+    AST_TypeAnnotation type_annotation;
+    AST_Expr *expr;
     bool mutable;
-} AstVarDef;
+} AST_VarDef;
 
 typedef struct {
-    AstExpr **items;
+    AST_Expr **items;
     size_t len;
-} AstBlock;
+} AST_Block;
 
-struct AstExpr {
+struct AST_Expr {
     enum {
         EXPR_UNIT,
         EXPR_INTEGER,
@@ -76,41 +76,41 @@ struct AstExpr {
     } tag;
     union {
         int32_t integer;
-        AstVariable variable;
-        AstBinaryOp binop;
-        AstFunCall funcall;
-        AstVarDef vardef;
-        AstBlock block;
+        AST_Variable variable;
+        AST_BinaryOp binop;
+        AST_FunCall funcall;
+        AST_VarDef vardef;
+        AST_Block block;
     };
     FilePosition pos;
-    AstInferredType inferred_type;
+    AST_InferredType inferred_type;
 };
 
 typedef struct {
     StrSlice name;
     SymbolId symbol;
-    AstTypeAnnotation type_annotation;
+    AST_TypeAnnotation type_annotation;
     bool mutable;
     FilePosition pos;
-} AstParam;
+} AST_Param;
 
 typedef struct {
-    AstParam *items;
+    AST_Param *items;
     size_t len;
-} AstParameters;
+} AST_Parameters;
 
 typedef struct {
     StrSlice name;
     SymbolId symbol;
-    AstParameters params;
-    AstTypeAnnotation return_type_annotation;
-    AstExpr *body;
+    AST_Parameters params;
+    AST_TypeAnnotation return_type_annotation;
+    AST_Expr *body;
     FilePosition pos;
-} AstFunction;
+} AST_Function;
 
 typedef struct {
-    AstFunction *functions;
+    AST_Function *functions;
     size_t function_count;
-} AstProgram;
+} AST_Program;
 
 #endif // AST_H_

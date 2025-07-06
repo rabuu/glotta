@@ -11,9 +11,9 @@ void print_strslice_err(StrSlice slice);
 
 void print_token(Token *token, SourceContext source);
 
-void print_type(AstType type);
-void print_expression(AstExpr *expr);
-void print_function(AstFunction *fun);
-void print_program(AstProgram *program);
+void print_type(AST_Type type);
+void print_expression(AST_Expr *expr);
+void print_function(AST_Function *fun);
+void print_program(AST_Program *program);
 
 #endif // PRINT_H_
