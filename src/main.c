@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "io.h"
 #include "lexing.h"
+#include "modules.h"
 #include "naming.h"
 #include "parsing.h"
 #include "print.h"
@@ -11,11 +13,20 @@
 
 int main(int argc, char **argv) {
     if (argc != 2) {
-        fprintf(stderr, "Usage: glotta SOURCE-FILE.glotta\n");
+        fprintf(stderr, "Usage: glotta <SOURCE-FILE.glotta | PROJECT-DIR>\n");
         exit(1);
     }
 
     char *path = argv[1];
+
+    if (is_dir(path)) {
+        ModuleTable modules = read_modules(path);
+        for (size_t i = 0; i < modules.count; ++i) {
+            print_module(&modules.modules[i]);
+        }
+        return 0;
+    }
+
     SourceContext source = read_source_from_file(path);
     printf("------- SOURCE ---------\n");
     printf("%s\n", source.buffer);
