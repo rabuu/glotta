@@ -1,9 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "io.h"
 #include "lexing.h"
-#include "modules.h"
+#include "project.h"
 #include "naming.h"
 #include "parsing.h"
 #include "print.h"
@@ -18,14 +17,13 @@ int main(int argc, char **argv) {
     }
 
     char *path = argv[1];
+    Project project = read_project(path);
 
-    if (is_dir(path)) {
-        ModuleTable modules = read_modules(path);
-        for (size_t i = 0; i < modules.count; ++i) {
-            print_module(&modules.modules[i]);
-        }
-        return 0;
+    for (size_t i = 0; i < project.module_count; ++i) {
+        print_module(&project.modules[i]);
     }
+
+    return 0;
 
     SourceContext source = read_source_from_file(path);
     printf("------- SOURCE ---------\n");
