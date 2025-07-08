@@ -3,7 +3,7 @@
  * https://github.com/tsoding/arena/blob/master/arena.h
  */
 
-#include "util/arena.h"
+#include "arena.h"
 
 #include <stddef.h>
 #include <stdint.h>

@@ -4,7 +4,7 @@
 #include "ast.h"
 #include "lexing.h"
 #include "source.h"
-#include "util/slice.h"
+#include "strslice.h"
 
 void print_strslice(StrSlice slice);
 void print_strslice_err(StrSlice slice);

@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 #include "source.h"
-#include "util/slice.h"
+#include "strslice.h"
 
 typedef size_t SymbolId;
 

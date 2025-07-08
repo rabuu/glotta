@@ -10,11 +10,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "arena.h"
 #include "ast.h"
 #include "lexing.h"
 #include "source.h"
-#include "util/arena.h"
-#include "util/slice.h"
+#include "strslice.h"
 
 typedef struct {
     Lexer *l;

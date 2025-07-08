@@ -1,5 +1,5 @@
-#ifndef SLICE_H_
-#define SLICE_H_
+#ifndef STRSLICE_H_
+#define STRSLICE_H_
 
 #include <stddef.h>
 
@@ -15,4 +15,4 @@ StrSlice strslice_from_loc(char *buffer, Location loc);
 bool strslice_eq(StrSlice a, StrSlice b);
 bool strslice_eq_str(StrSlice slice, char *str);
 
-#endif // SLICE_H_
+#endif // STRSLICE_H_

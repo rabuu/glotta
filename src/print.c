@@ -3,7 +3,7 @@
 #include <stdio.h>
 
 #include "ast.h"
-#include "util/slice.h"
+#include "strslice.h"
 
 static void print_symbol(SymbolId id) {
     if (id != 0) { printf("#%zu", id); }

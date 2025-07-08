@@ -1,14 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "arena.h"
 #include "lexing.h"
-#include "project.h"
 #include "naming.h"
 #include "parsing.h"
 #include "print.h"
+#include "project.h"
 #include "source.h"
 #include "typing.h"
-#include "util/arena.h"
 
 int main(int argc, char **argv) {
     if (argc != 2) {

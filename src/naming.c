@@ -5,10 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "arena.h"
 #include "ast.h"
 #include "print.h"
-#include "util/arena.h"
-#include "util/slice.h"
+#include "strslice.h"
 
 #define DEFAULT_SYMBOL_TABLE_CAP 4
 
