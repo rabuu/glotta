@@ -18,14 +18,6 @@ bool is_dir(const char *path) {
     return S_ISDIR(st.st_mode);
 }
 
-bool is_glotta_path(const char *path) {
-    const char *suffix = ".glotta";
-    size_t len = strlen(path);
-    size_t suffix_len = strlen(suffix);
-    if (len < suffix_len) { return false; }
-    return strcmp(path + len - suffix_len, suffix) == 0;
-}
-
 bool walk_project_tree(const char *dirpath, FileCallback on_file, void *custom_data) {
     DIR *dir = opendir(dirpath);
     if (!dir) {
@@ -40,16 +32,21 @@ bool walk_project_tree(const char *dirpath, FileCallback on_file, void *custom_d
         char path[4096];
         snprintf(path, sizeof(path), "%s/%s", dirpath, entry->d_name);
 
+        char canonical_path[4096];
+        if (!realpath(path, canonical_path)) {
+            return -1;
+        }
+
         struct stat st;
-        if (stat(path, &st) != 0) {
+        if (stat(canonical_path, &st) != 0) {
             fprintf(stderr, "stat failed on '%s': %s\n", path, strerror(errno));
             continue;
         }
 
         if (S_ISDIR(st.st_mode)) {
-            walk_project_tree(path, on_file, custom_data);
-        } else if (S_ISREG(st.st_mode) && is_glotta_path(path)) {
-            on_file(path, custom_data);
+            walk_project_tree(canonical_path, on_file, custom_data);
+        } else if (S_ISREG(st.st_mode)) {
+            on_file(canonical_path, custom_data);
         }
     }
 

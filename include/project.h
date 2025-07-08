@@ -5,8 +5,8 @@
 
 typedef struct {
     size_t id;
-    const char *name;
-    const char *full_path;
+    char *name;
+    char *fs_path;
 
     char *source;
     size_t len;
@@ -20,6 +20,8 @@ typedef struct {
 Project read_project(const char *path);
 Project read_multi_file_project(const char *projectdir);
 Project read_single_file_project(const char *filepath);
+
+void project_free(Project *project);
 
 void print_module(Module *module);
 

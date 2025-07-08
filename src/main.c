@@ -16,7 +16,11 @@ int main(int argc, char **argv) {
         exit(1);
     }
 
-    char *path = argv[1];
+    char *input_path = argv[1];
+    char path[4096];
+    if (!realpath(input_path, path)) {
+        return -1;
+    }
     Project project = read_project(path);
 
     for (size_t i = 0; i < project.module_count; ++i) {
@@ -54,6 +58,8 @@ int main(int argc, char **argv) {
     printf("\n-------- TYPING ----------\n");
     resolve_types(&ast, symbol_num);
     print_program(&ast);
+
+    project_free(&project);
 
     return 0;
 }
