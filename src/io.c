@@ -33,9 +33,7 @@ bool walk_project_tree(const char *dirpath, FileCallback on_file, void *custom_d
         snprintf(path, sizeof(path), "%s/%s", dirpath, entry->d_name);
 
         char canonical_path[4096];
-        if (!realpath(path, canonical_path)) {
-            return -1;
-        }
+        if (!realpath(path, canonical_path)) { return -1; }
 
         struct stat st;
         if (stat(canonical_path, &st) != 0) {
