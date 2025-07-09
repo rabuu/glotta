@@ -3,13 +3,18 @@
 
 #include <stddef.h>
 
+#include "strslice.h"
+
 typedef struct {
     size_t id;
-    char *name;
     char *fs_path;
 
-    char *source;
-    size_t len;
+    StrSlice name;
+    StrSlice *module_path;
+    size_t module_path_len;
+
+    char *src;
+    size_t src_len;
 } Module;
 
 typedef struct {
