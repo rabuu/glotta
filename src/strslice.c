@@ -9,6 +9,13 @@ StrSlice strslice(char *str, size_t start, size_t len) {
     };
 }
 
+StrSlice strslice_from_str(char *str) {
+    return (StrSlice){
+        .ptr = str,
+        .len = strlen(str),
+    };
+}
+
 StrSlice strslice_from_loc(char *buffer, Location loc) {
     size_t len = loc.end - loc.start;
     return strslice(buffer, loc.start, len);
