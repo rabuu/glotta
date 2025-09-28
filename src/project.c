@@ -91,6 +91,10 @@ Project read_multi_file_project(const char *projectdir) {
 
         if (!strslice_trim_suffix(&current_path, GLOTTA_FILE_EXT)) { assert(false); }
 
+        if (!strslice_forall(current_path, is_valid_path_component_char)) {
+            assert(false && "Invalid module name");
+        }
+
         size_t len;
         char *source = read_file_to_string(fs_path, &len);
 
