@@ -4,14 +4,16 @@ typ Str = *Byte
 // alias
 typ BytePtr = alias *Byte
 
-typ Option(T) = variant [
+for typ T
+typ Opt(T) = variant [
     none,
     some: T,
 ]
 
-fun [Option(typ T)] replace(self, new: T): Option(T) = match self {
-    none => Option.none,
-    some(_) => Option.some(new),
+for typ T, typ S
+fun [Opt(T)] replace(self, new: S): Opt(S) = match self {
+    none => Opt.none,
+    some(_) => Opt.some(new),
 }
 
 typ Person = struct [
@@ -24,19 +26,23 @@ fun [Person] born(name: Str): Person = Person [
     age: 0,
 ]
 
-fun [Person] say_hello(self) = {
+fun [Person] say_hello(*self) = {
     print("Hello, I am ");
-    println(self.name);
+    println(self.deref().name);
 }
 
 fun main() = {
-    val x : Option(Nat) = Option.none;
-    val y : Option(Nat) = Option.some(42);
+    val x : Opt(Nat) = Opt.none;
+    val y : Opt(Nat) = Opt.some(42);
 
     var joe := Person [
         name: "Joe",
         age: 42,
     ];
 
+    joe.say_hello();
     joe.age += 1;
+
+    val baby_joe := Person.born("Baby Joe");
+    baby_joe.say_hello();
 }

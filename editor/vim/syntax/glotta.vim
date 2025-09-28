@@ -16,7 +16,7 @@ syn keyword glottaBoolean true false
 syn keyword glottaConditional if then else match
 syn keyword glottaRepeat loop
 syn match glottaOperator "[+*-/<>:=!]"
-syn keyword glottaKeyword fun val var typ pub use return
+syn keyword glottaKeyword fun val var typ for pub use return
 
 syn keyword glottaType Unit Bool Byte Nat Int Float Str
 syn keyword glottaStructure struct variant alias
