@@ -3,6 +3,9 @@
 
 #include <stddef.h>
 
+#include "arena.h"
+#include "ast.h"
+#include "lexing.h"
 #include "strslice.h"
 
 typedef struct {
@@ -15,6 +18,10 @@ typedef struct {
 
     char *src;
     size_t src_len;
+
+    Lexer lexer;
+    Arena ast_arena;
+    AST_Program ast;
 } Module;
 
 typedef struct {
@@ -22,12 +29,11 @@ typedef struct {
     size_t module_count;
 } Project;
 
-Project read_project(const char *path);
-Project read_multi_file_project(const char *projectdir);
-Project read_single_file_project(const char *filepath);
-
+Project new_project(const char *path);
 void project_free(Project *project);
 
-void print_module(Module *module);
+void parse_project(Project *project);
+
+void print_project(Project *project);
 
 #endif // !PROJECT_H_

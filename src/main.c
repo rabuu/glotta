@@ -19,11 +19,10 @@ int main(int argc, char **argv) {
     char *input_path = argv[1];
     char path[4096];
     if (!realpath(input_path, path)) { return -1; }
-    Project project = read_project(path);
 
-    for (size_t i = 0; i < project.module_count; ++i) {
-        print_module(&project.modules[i]);
-    }
+    Project project = new_project(path);
+    parse_project(&project);
+    print_project(&project);
 
     return 0;
 

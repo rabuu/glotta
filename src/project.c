@@ -7,6 +7,8 @@
 
 #include "arena.h"
 #include "io.h"
+#include "lexing.h"
+#include "parsing.h"
 #include "print.h"
 #include "string.h"
 #include "strslice.h"
@@ -136,11 +138,28 @@ Project read_single_file_project(const char *filepath) {
     return project;
 }
 
-Project read_project(const char *path) {
+Project new_project(const char *path) {
     if (is_dir(path)) {
         return read_multi_file_project(path);
     } else {
         return read_single_file_project(path);
+    }
+}
+
+void parse_module(Module *module) {
+    SourceContext source = {
+        .filename = "TODO",
+        .buffer = module->src,
+        .len = module->src_len,
+    };
+
+    module->lexer = lexer_init(source);
+    module->ast = parse_program(&module->lexer, &module->ast_arena);
+}
+
+void parse_project(Project *project) {
+    for (size_t i = 0; i < project->module_count; ++i) {
+        parse_module(&project->modules[i]);
     }
 }
 
@@ -152,4 +171,11 @@ void print_module(Module *module) {
     }
     print_strslice(module->name);
     printf("\n------------------\n");
+    print_program(&module->ast);
+}
+
+void print_project(Project *project) {
+    for (size_t i = 0; i < project->module_count; ++i) {
+        print_module(&project->modules[i]);
+    }
 }
