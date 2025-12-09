@@ -240,19 +240,16 @@ static AST_Expr *_parse_expr(Parser *p, size_t min_bp) {
             e->variable.name = strslice_from_loc(p->l->source.buffer, tok.loc);
         }
         break;
-
     case TOK_KW_VAL:
         e = expr_init(p->arena);
         e->tag = EXPR_VARDEF;
         e->vardef = parse_vardef(p, false);
         break;
-
     case TOK_KW_VAR:
         e = expr_init(p->arena);
         e->tag = EXPR_VARDEF;
         e->vardef = parse_vardef(p, true);
         break;
-
     case TOK_PAREN_OPEN:
         e = parse_expr(p);
         Token close = lexer_next(p->l);
