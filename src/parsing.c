@@ -241,14 +241,10 @@ static AST_Expr *_parse_expr(Parser *p, size_t min_bp) {
         }
         break;
     case TOK_KW_VAL:
-        e = expr_init(p->arena);
-        e->tag = EXPR_VARDEF;
-        e->vardef = parse_vardef(p, false);
-        break;
     case TOK_KW_VAR:
         e = expr_init(p->arena);
         e->tag = EXPR_VARDEF;
-        e->vardef = parse_vardef(p, true);
+        e->vardef = parse_vardef(p, e->tag == TOK_KW_VAR);
         break;
     case TOK_PAREN_OPEN:
         e = parse_expr(p);
