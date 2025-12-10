@@ -31,7 +31,7 @@ fun [Person] say_hello(*self) = {
     println(self.deref().name);
 }
 
-fun main() = {
+fun main = {
     val x : Opt(Nat) = Opt.none;
     val y : Opt(Nat) = Opt.some(42);
 

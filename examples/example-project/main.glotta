@@ -1,7 +1,7 @@
 use calc::add;
 use util::foo::Foo;
 
-fun main(): Int = {
+fun main: Int = {
     val _ := .add(1, 2);
     val _ := .calc::sub(42, 1);
     val foo : Foo = .Foo::new(6);

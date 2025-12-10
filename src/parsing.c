@@ -394,6 +394,13 @@ static AST_Parameters parse_params(Parser *p) {
     return parameters;
 }
 
+static AST_Parameters empty_params() {
+    return (AST_Parameters){
+        .items = nullptr,
+        .len = 0,
+    };
+}
+
 static AST_Function parse_function(Parser *p) {
     AST_Function f = {0};
 
@@ -404,13 +411,16 @@ static AST_Function parse_function(Parser *p) {
     expect(&name, TOK_IDENT, p->l->source);
     f.name = strslice_from_loc(p->l->source.buffer, name.loc);
 
-    Token open = lexer_next(p->l);
-    expect(&open, TOK_PAREN_OPEN, p->l->source);
+    if (lexer_peek(p->l).tag == TOK_PAREN_OPEN) {
+        lexer_next(p->l);
 
-    f.params = parse_params(p);
+        f.params = parse_params(p);
 
-    Token close = lexer_next(p->l);
-    expect(&close, TOK_PAREN_CLOSE, p->l->source);
+        Token close = lexer_next(p->l);
+        expect(&close, TOK_PAREN_CLOSE, p->l->source);
+    } else {
+        f.params = empty_params();
+    }
 
     if (lexer_peek(p->l).tag == TOK_COLON) {
         lexer_next(p->l);

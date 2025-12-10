@@ -1,4 +1,4 @@
-fun main(): Int = {
+fun main: Int = {
     val a := .add(1, 2);
     var b : Int = 12;
     b = a + b;
