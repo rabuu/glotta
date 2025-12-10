@@ -48,6 +48,7 @@ typedef struct {
 typedef struct {
     StrSlice function;
     SymbolId symbol;
+    AST_Arguments prefix_args;
     AST_Arguments args;
 } AST_FunCall;
 

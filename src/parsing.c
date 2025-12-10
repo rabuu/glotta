@@ -164,6 +164,15 @@ static AST_Arguments empty_args() {
     };
 }
 
+static AST_Arguments singleton_args(Parser *p, AST_Expr *expr) {
+    AST_Expr **items = arena_alloc(p->arena, sizeof(AST_Expr *));
+    items[0] = expr;
+    return (AST_Arguments){
+        .items = items,
+        .len = 1,
+    };
+}
+
 static AST_VarDef parse_vardef(Parser *p, bool mutable) {
     Token variable = lexer_next(p->l);
     expect(&variable, TOK_IDENT, p->l->source);
@@ -204,6 +213,10 @@ static bool op_infix(TokenTag op, size_t *l, size_t *r) {
     case TOK_PLUS:
         *l = 3;
         *r = 4;
+        break;
+    case TOK_DOT:
+        *l = 99;
+        *r = 100;
         break;
     default:
         return false;
@@ -274,6 +287,7 @@ static AST_Expr *_parse_expr(Parser *p, size_t min_bp) {
         e->funcall = (AST_FunCall){
             .function = strslice_from_loc(p->l->source.buffer, function_name.loc),
             .args = args,
+            .prefix_args = empty_args(),
         };
         break;
     default:
@@ -291,8 +305,19 @@ static AST_Expr *_parse_expr(Parser *p, size_t min_bp) {
         size_t l, r;
         if (op_infix(op.tag, &l, &r)) {
             if (l < min_bp) { break; }
-            lexer_next(p->l);
 
+            // function calls
+            if (op.tag == TOK_DOT) {
+                AST_Expr *dot_call = _parse_expr(p, r);
+                dot_call->funcall.prefix_args = singleton_args(p, e);
+
+                e = dot_call;
+                continue;
+            }
+
+            // binary ops
+
+            lexer_next(p->l);
             AST_Expr *rhs = _parse_expr(p, r);
             AST_Expr *lhs = expr_init(p->arena);
 

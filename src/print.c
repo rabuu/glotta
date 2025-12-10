@@ -83,6 +83,13 @@ static void print_funcall(AST_FunCall funcall) {
     print_strslice(funcall.function);
     print_symbol(funcall.symbol);
     printf("(");
+    for (size_t i = 0; i < funcall.prefix_args.len; ++i) {
+        if (i != 0) { printf(", "); }
+        print_expression(funcall.prefix_args.items[i]);
+    }
+    if (funcall.prefix_args.len > 0 && funcall.args.len > 0) {
+        printf(", ");
+    }
     for (size_t i = 0; i < funcall.args.len; ++i) {
         if (i != 0) { printf(", "); }
         print_expression(funcall.args.items[i]);
