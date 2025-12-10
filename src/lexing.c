@@ -64,6 +64,8 @@ char *token_tag_to_str(TokenTag tag) {
         return "{";
     case TOK_CURLY_CLOSE:
         return "}";
+    case TOK_DOT:
+        return ".";
     case TOK_COMMA:
         return ",";
     case TOK_COLON:
@@ -154,6 +156,10 @@ Token lexer_next(Lexer *lexer) {
                 break;
             case '}':
                 result.tag = TOK_CURLY_CLOSE;
+                lexer->index++;
+                break;
+            case '.':
+                result.tag = TOK_DOT;
                 lexer->index++;
                 break;
             case ',':

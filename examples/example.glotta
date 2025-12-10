@@ -1,5 +1,5 @@
 fun main(): Int = {
-    val a := add(1, 2);
+    val a := .add(1, 2);
     var b : Int = 12;
     b = a + b;
     b + 1

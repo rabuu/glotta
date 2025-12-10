@@ -1,9 +1,9 @@
-use calc.add;
-use util.foo.Foo;
+use calc::add;
+use util::foo::Foo;
 
 fun main(): Int = {
-    val _ := add(1, 2);
-    val _ := calc.sub(42, 1);
-    val foo : Foo = Foo.new(6);
+    val _ := .add(1, 2);
+    val _ := .calc::sub(42, 1);
+    val foo : Foo = .Foo::new(6);
     0
 }

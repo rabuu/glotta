@@ -79,6 +79,7 @@ static void print_vardef(AST_VarDef vardef) {
 }
 
 static void print_funcall(AST_FunCall funcall) {
+    printf(".");
     print_strslice(funcall.function);
     print_symbol(funcall.symbol);
     printf("(");

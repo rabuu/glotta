@@ -157,6 +157,13 @@ static AST_Arguments parse_args(Parser *p) {
     return arguments;
 }
 
+static AST_Arguments empty_args() {
+    return (AST_Arguments){
+        .items = nullptr,
+        .len = 0,
+    };
+}
+
 static AST_VarDef parse_vardef(Parser *p, bool mutable) {
     Token variable = lexer_next(p->l);
     expect(&variable, TOK_IDENT, p->l->source);
@@ -224,21 +231,8 @@ static AST_Expr *_parse_expr(Parser *p, size_t min_bp) {
         break;
     case TOK_IDENT:
         e = expr_init(p->arena);
-        if (lexer_peek(p->l).tag == TOK_PAREN_OPEN) {
-            lexer_next(p->l);
-            AST_Arguments args = parse_args(p);
-            Token close_args = lexer_next(p->l);
-            expect(&close_args, TOK_PAREN_CLOSE, p->l->source);
-
-            e->tag = EXPR_FUNCALL;
-            e->funcall = (AST_FunCall){
-                .function = strslice_from_loc(p->l->source.buffer, tok.loc),
-                .args = args,
-            };
-        } else {
-            e->tag = EXPR_VARIABLE;
-            e->variable.name = strslice_from_loc(p->l->source.buffer, tok.loc);
-        }
+        e->tag = EXPR_VARIABLE;
+        e->variable.name = strslice_from_loc(p->l->source.buffer, tok.loc);
         break;
     case TOK_KW_VAL:
     case TOK_KW_VAR:
@@ -259,6 +253,28 @@ static AST_Expr *_parse_expr(Parser *p, size_t min_bp) {
         e = expr_init(p->arena);
         e->tag = EXPR_BLOCK;
         e->block = block;
+        break;
+    case TOK_DOT:
+        e = expr_init(p->arena);
+        e->tag = EXPR_FUNCALL;
+
+        Token function_name = lexer_next(p->l);
+        expect(&function_name, TOK_IDENT, p->l->source);
+
+        AST_Arguments args;
+        if (lexer_peek(p->l).tag == TOK_PAREN_OPEN) {
+            lexer_next(p->l);
+            args = parse_args(p);
+            Token close_args = lexer_next(p->l);
+            expect(&close_args, TOK_PAREN_CLOSE, p->l->source);
+        } else {
+            args = empty_args();
+        }
+
+        e->funcall = (AST_FunCall){
+            .function = strslice_from_loc(p->l->source.buffer, function_name.loc),
+            .args = args,
+        };
         break;
     default:
         error_prefix(tok.loc.start, p->l->source);
