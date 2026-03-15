@@ -1,9 +1,35 @@
 fun main: Int = {
-    val a := .add(1, 2);
-    var b : Int = 12;
+    val a := add(1, 2);
+    var b: Int = 12;
     b = a + b;
     b + 1
 }
 
 // This is a comment!
-fun add(x: Int, y: Int): Int = x + y
+fun add (x: Int, y: Int) -> Int = x + y
+
+typ Vec(T) = struct (
+    cap: Nat,
+    len: Nat,
+    ptr: *T,
+)
+
+for typ T:
+fun Vec[T]::new (a: Alloc) -> Vec[T] = {
+    val default_cap := 2;
+    val ptr := a.alloc(T.size * default_cap);
+
+    Vec[T] (
+        cap: default_cap,
+        len: 0,
+        ptr: ptr,
+    )
+}
+
+for typ T, S:
+fun Vec[T]::map (self: *Vec[T], fn: T -> S) -> Vec[S] = {
+    loop var i: Nat {
+        if i >= self:len then break;
+        self:ptr.add(i) = self:ptr.add(i).fn;
+    }
+}

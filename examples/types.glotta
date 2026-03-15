@@ -1,48 +1,47 @@
 // newtype
-typ Str = *Byte
+typ Str = Byte.Ptr
 
 // alias
-typ BytePtr = alias *Byte
+typ BytePtr = alias Byte.Ptr
 
-for typ T
-typ Opt(T) = variant [
+typ Opt(T) = variant (
     none,
     some: T,
-]
+)
 
-for typ T, typ S
-fun [Opt(T)] replace(self, new: S): Opt(S) = match self {
-    none => Opt.none,
-    some(_) => Opt.some(new),
+for typ T, S
+fun [Opt(T)] replace (self: Self, new: S) -> Opt(S) = match self {
+    none => Opt:none,
+    some(_) => Opt:some(new),
 }
 
-typ Person = struct [
+typ Person = struct (
     name: Str,
     var age: Nat,
-]
+)
 
-fun [Person] born(name: Str): Person = Person [
+fun [Person] born (name: Str) -> Person = Person (
     name: name,
     age: 0,
-]
+)
 
-fun [Person] say_hello(*self) = {
+fun [Person] say_hello (self: Self.Ptr) = {
     print("Hello, I am ");
-    println(self.deref().name);
+    println(self.deref:name);
 }
 
 fun main = {
-    val x : Opt(Nat) = Opt.none;
-    val y : Opt(Nat) = Opt.some(42);
+    val x: Opt(Nat) = Opt:none;
+    val y: Opt(Nat) = Opt:some(42);
 
-    var joe := Person [
+    var joe := Person (
         name: "Joe",
         age: 42,
-    ];
+    );
 
-    joe.say_hello();
-    joe.age += 1;
+    joe.say_hello;
+    joe:age += 1;
 
-    val baby_joe := Person.born("Baby Joe");
-    baby_joe.say_hello();
+    val baby_joe := Person:born("Baby Joe");
+    baby_joe.say_hello;
 }
