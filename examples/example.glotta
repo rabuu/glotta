@@ -1,3 +1,21 @@
+typ Vec(T) = (
+    cap: Nat,
+    len: Nat,
+    ptr: <T>,
+)
+
+typ Option(T) = (
+    Some = T,
+    None,
+)
+
+typ Animal = (
+    Pig = (
+        legs: Nat,
+        has_ears: Bool,
+    ),
+)
+
 fun main: Int = {
     val a := add(1, 2);
     var b: Int = 12;
@@ -30,6 +48,6 @@ for typ T, S:
 fun Vec[T]::map (self: *Vec[T], fn: T -> S) -> Vec[S] = {
     loop var i: Nat {
         if i >= self:len then break;
-        self:ptr.add(i) = self:ptr.add(i).fn;
+        self:ptr.add(i) <- self:ptr.add(i).fn;
     }
 }

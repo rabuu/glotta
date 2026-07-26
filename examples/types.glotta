@@ -4,23 +4,22 @@ typ Str = Byte.Ptr
 // alias
 typ BytePtr = alias Byte.Ptr
 
-typ Opt(T) = variant (
-    none,
-    some: T,
+typ Opt(T) = (
+    None,
+    Some = T,
 )
 
-for typ T, S
 fun [Opt(T)] replace (self: Self, new: S) -> Opt(S) = match self {
-    none => Opt:none,
-    some(_) => Opt:some(new),
+    None => Opt:None,
+    Some(_) => Opt:Some(new),
 }
 
-typ Person = struct (
+typ Person = (
     name: Str,
     var age: Nat,
 )
 
-fun [Person] born (name: Str) -> Person = Person (
+fun [Person] born (name: Str) -> Person = Person(
     name: name,
     age: 0,
 )
@@ -31,10 +30,10 @@ fun [Person] say_hello (self: Self.Ptr) = {
 }
 
 fun main = {
-    val x: Opt(Nat) = Opt:none;
-    val y: Opt(Nat) = Opt:some(42);
+    val x: Opt(Nat) = Opt:None;
+    val y: Opt(Nat) = Opt:Some(42);
 
-    var joe := Person (
+    var joe := Person(
         name: "Joe",
         age: 42,
     );
