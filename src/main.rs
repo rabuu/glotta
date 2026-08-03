@@ -72,8 +72,8 @@ fn main() {
     match cli.cmd {
         CliCommand::Lex { input } => {
             let driver = Driver::new(input).unwrap();
-            let tokens = driver.lex();
-            for token in tokens {
+            let lexer = driver.lexer();
+            for token in lexer {
                 match token {
                     Ok((token, span)) => println!("{token} (at {span:?})"),
                     Err(err) => println!("{err}"),
@@ -81,8 +81,15 @@ fn main() {
             }
         }
         CliCommand::Parse { input } => {
-            let _driver = Driver::new(input).unwrap();
-            todo!()
+            let driver = Driver::new(input).unwrap();
+            let ast = match driver.parse() {
+                Ok(ast) => ast,
+                Err(err) => {
+                    eprintln!("{err}");
+                    std::process::exit(1);
+                }
+            };
+            println!("{ast:?}");
         }
         CliCommand::Generate { input } => {
             let _driver = Driver::new(input).unwrap();
