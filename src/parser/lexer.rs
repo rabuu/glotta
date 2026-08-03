@@ -1,23 +1,35 @@
 use std::fmt;
 
-use crate::{Span, Spanned};
 use logos::{Logos, SpannedIter};
+use miette::Diagnostic;
+use thiserror::Error;
 
-#[derive(Debug, Clone, PartialEq)]
+use crate::span::{Span, Spanned};
+
+#[derive(Debug, Clone, PartialEq, Error, Diagnostic, Default)]
 pub enum LexingError {
-    InvalidToken(Option<Span>),
-    InvalidIntegerLiteral(Span),
-}
+    #[default]
+    #[error("Lexing failed.")]
+    UnknownError,
 
-impl Default for LexingError {
-    fn default() -> Self {
-        Self::InvalidToken(None)
-    }
+    #[error("Encountered invalid token: `{src}`")]
+    InvalidToken {
+        src: String,
+        #[label]
+        span: Span,
+    },
+
+    #[error("Failed to parse integer literal: `{src}`")]
+    InvalidIntegerLiteral {
+        src: String,
+        #[label]
+        span: Span,
+    },
 }
 
 #[derive(Debug, Logos)]
 #[logos(skip r"[ \t\r\n\f]+")]
-#[logos(error(LexingError, callback = |lex| LexingError::InvalidToken(Some(lex.span().into()))))]
+#[logos(error(LexingError, callback = |lex| LexingError::InvalidToken { src: lex.slice().to_string(), span: lex.span().into() }))]
 pub enum Token<'src> {
     // This uses the following unicode categories:
     // Ll = lowercase letter
@@ -68,10 +80,14 @@ impl<'src> IntegerLiteral<'src> {
     /// See Rust's [`std::str::FromStr`] on [`i64`].
     /// Additionally, underscores are allowed.
     fn parse(source: &'src str, span: Span) -> Result<Self, LexingError> {
-        let literal: i64 = source
-            .replace('_', "")
-            .parse()
-            .map_err(|_| LexingError::InvalidIntegerLiteral(span))?;
+        let literal: i64 =
+            source
+                .replace('_', "")
+                .parse()
+                .map_err(|_| LexingError::InvalidIntegerLiteral {
+                    src: source.to_string(),
+                    span,
+                })?;
         Ok(Self { source, literal })
     }
 }

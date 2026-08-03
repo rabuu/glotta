@@ -47,6 +47,8 @@ enum CliCommand {
 }
 
 fn main() {
+    miette::set_panic_hook();
+
     let cli = CliArgs::parse();
 
     tracing_subscriber::fmt()
@@ -74,7 +76,7 @@ fn main() {
             for token in tokens {
                 match token {
                     Ok((token, span)) => println!("{token} (at {span:?})"),
-                    Err(err) => println!("{err:?}"),
+                    Err(err) => println!("{err}"),
                 }
             }
         }
