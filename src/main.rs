@@ -69,8 +69,14 @@ fn main() {
 
     match cli.cmd {
         CliCommand::Lex { input } => {
-            let _driver = Driver::new(input).unwrap();
-            todo!()
+            let driver = Driver::new(input).unwrap();
+            let tokens = driver.lex();
+            for token in tokens {
+                match token {
+                    Ok((token, span)) => println!("{token} (at {span:?})"),
+                    Err(err) => println!("{err:?}"),
+                }
+            }
         }
         CliCommand::Parse { input } => {
             let _driver = Driver::new(input).unwrap();
