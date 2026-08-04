@@ -6,8 +6,7 @@ use thiserror::Error;
 use tracing::info;
 
 use crate::ast;
-use crate::parser::lexer::Lexer;
-use crate::parser::parser::{Parser, ParsingError};
+use crate::parser::{Lexer, Parser, ParsingError};
 
 type Result<T> = std::result::Result<T, DriverError>;
 
@@ -32,7 +31,7 @@ impl Driver {
         Ok(Self { input_path, source })
     }
 
-    pub fn source<'src>(&'src self) -> &'src str {
+    pub fn source(&self) -> &str {
         &self.source
     }
 

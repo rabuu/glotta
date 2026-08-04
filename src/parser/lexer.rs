@@ -50,7 +50,7 @@ impl<'src> Lexer<'src> {
                     _ => TokenKind::Identifier,
                 }
             }
-            c if c.is_digit(10) || c == '-' => {
+            c if c.is_ascii_digit() || c == '-' => {
                 self.eat_while(is_integer_literal);
                 TokenKind::IntegerLiteral
             }
