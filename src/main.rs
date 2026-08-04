@@ -76,28 +76,14 @@ fn main() {
 
     match cli.cmd {
         CliCommand::Lex { input } => {
-            let driver = match Driver::new(input) {
-                Ok(driver) => driver,
-                Err(error) => {
-                    let error: miette::Error = error.into();
-                    eprintln!("{error:?}");
-                    std::process::exit(1);
-                }
-            };
+            let driver = new_driver(input);
             let lexer = driver.lexer();
             for token in TokenStream::new(lexer, vec![]) {
                 println!("{} (at {:?})", token.kind, token.span);
             }
         }
         CliCommand::Parse { input } => {
-            let driver = match Driver::new(input) {
-                Ok(driver) => driver,
-                Err(error) => {
-                    let error: miette::Error = error.into();
-                    eprintln!("{error:?}");
-                    std::process::exit(1);
-                }
-            };
+            let driver = new_driver(input);
             let ast = driver.parse();
             match ast {
                 Ok(ast) => println!("{ast:#?}"),
@@ -108,14 +94,7 @@ fn main() {
             };
         }
         CliCommand::Generate { input, output } => {
-            let driver = match Driver::new(input) {
-                Ok(driver) => driver,
-                Err(error) => {
-                    let error: miette::Error = error.into();
-                    eprintln!("{error:?}");
-                    std::process::exit(1);
-                }
-            };
+            let driver = new_driver(input);
             let asm = driver.codegen();
             match asm {
                 Ok(asm) => {
@@ -137,8 +116,19 @@ fn main() {
             };
         }
         CliCommand::Build { input } => {
-            let _driver = Driver::new(input).unwrap();
+            let _driver = new_driver(input);
             todo!()
+        }
+    }
+}
+
+fn new_driver(input: PathBuf) -> Driver {
+    match Driver::new(input) {
+        Ok(driver) => driver,
+        Err(error) => {
+            let error: miette::Error = error.into();
+            eprintln!("{error:?}");
+            std::process::exit(1);
         }
     }
 }
