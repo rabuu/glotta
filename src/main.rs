@@ -4,7 +4,8 @@ use clap::{Parser, Subcommand};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
-use glotta::{driver::Driver, parser::token_stream::TokenStream};
+use glotta::driver::Driver;
+use glotta::parser::token_stream::TokenStream;
 
 #[derive(Debug, Parser)]
 #[clap(version, about = None, long_about = None)]
