@@ -72,22 +72,33 @@ fn main() {
 
     match cli.cmd {
         CliCommand::Lex { input } => {
-            let driver = Driver::new(input).unwrap();
+            let driver = match Driver::new(input) {
+                Ok(driver) => driver,
+                Err(error) => {
+                    let error: miette::Error = error.into();
+                    eprintln!("{error:?}");
+                    std::process::exit(1);
+                }
+            };
             let lexer = driver.lexer();
             for token in TokenStream::new(lexer, vec![]) {
                 println!("{} (at {:?})", token.kind, token.span);
             }
         }
         CliCommand::Parse { input } => {
-            let driver = Driver::new(input).unwrap();
+            let driver = match Driver::new(input) {
+                Ok(driver) => driver,
+                Err(error) => {
+                    let error: miette::Error = error.into();
+                    eprintln!("{error:?}");
+                    std::process::exit(1);
+                }
+            };
             let ast = driver.parse();
             match ast {
                 Ok(ast) => println!("{ast:#?}"),
-                Err(err) => {
-                    let err: miette::Error = err.into();
-                    let source = driver.source().to_string();
-                    let report: miette::Report = err.with_source_code(source);
-                    eprintln!("{report:?}");
+                Err(error) => {
+                    driver.print_error(error);
                     std::process::exit(1);
                 }
             };

@@ -45,4 +45,14 @@ impl Driver {
         let parser = Parser::new(lexer);
         parser.parse_program().map_err(DriverError::Parsing)
     }
+
+    pub fn print_error(&self, error: DriverError) {
+        let error: miette::Error = error.into();
+        let source = miette::NamedSource::new(
+            self.input_path.display().to_string(),
+            self.source.to_string(),
+        );
+        let report: miette::Report = error.with_source_code(source);
+        eprintln!("{report:?}");
+    }
 }
