@@ -54,6 +54,17 @@ impl Driver {
         Ok(asm)
     }
 
+    pub fn emit_assembly_to_file(&self, output: Option<PathBuf>) -> Result<()> {
+        let asm = self.codegen()?;
+        let output = output.unwrap_or_else(|| {
+            let mut output = self.input_path.clone();
+            let set_extension = output.set_extension("s");
+            assert!(set_extension);
+            output
+        });
+        std::fs::write(output, asm.to_string()).map_err(DriverError::Io)
+    }
+
     pub fn print_error(&self, error: DriverError) {
         let error: miette::Error = error.into();
         let source = miette::NamedSource::new(

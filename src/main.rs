@@ -37,6 +37,10 @@ enum CliCommand {
     Generate {
         /// Input source file.
         input: PathBuf,
+
+        /// Output assembly file.
+        #[clap(short, long)]
+        output: Option<Option<PathBuf>>,
     },
 
     /// Compile and build.
@@ -103,7 +107,7 @@ fn main() {
                 }
             };
         }
-        CliCommand::Generate { input } => {
+        CliCommand::Generate { input, output } => {
             let driver = match Driver::new(input) {
                 Ok(driver) => driver,
                 Err(error) => {
@@ -114,7 +118,18 @@ fn main() {
             };
             let asm = driver.codegen();
             match asm {
-                Ok(asm) => println!("{asm}"),
+                Ok(asm) => {
+                    if let Some(output) = output {
+                        driver
+                            .emit_assembly_to_file(output)
+                            .unwrap_or_else(|error| {
+                                driver.print_error(error);
+                                std::process::exit(1);
+                            })
+                    } else {
+                        println!("{asm}")
+                    }
+                }
                 Err(error) => {
                     driver.print_error(error);
                     std::process::exit(1);
