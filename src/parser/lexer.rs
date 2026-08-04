@@ -1,166 +1,118 @@
-use std::{collections::VecDeque, fmt};
+use std::collections::VecDeque;
+use std::str::Chars;
 
-use logos::{Logos, SpannedIter};
-use miette::Diagnostic;
-use thiserror::Error;
-
-use crate::span::{Span, Spanned};
-
-#[derive(Debug, Clone, PartialEq, Error, Diagnostic, Default)]
-pub enum LexingError {
-    #[default]
-    #[error("Lexing failed.")]
-    UnknownError,
-
-    #[error("Encountered invalid token: `{src}`")]
-    InvalidToken {
-        src: String,
-        #[label]
-        span: Span,
-    },
-
-    #[error("Failed to parse integer literal: `{src}`")]
-    InvalidIntegerLiteral {
-        src: String,
-        #[label]
-        span: Span,
-    },
-}
-
-#[derive(Debug, Logos)]
-#[logos(skip r"[ \t\r\n\f]+")]
-#[logos(error(LexingError, callback = |lex| LexingError::InvalidToken { src: lex.slice().to_string(), span: lex.span().into() }))]
-pub enum Token<'src> {
-    // This uses the following unicode categories:
-    // Ll = lowercase letter
-    // Lu = uppercase letter
-    // No = other numbers
-    #[regex(r"[\p{Ll}\p{Lu}_][\p{Ll}\p{Lu}0-9\p{No}_]*")]
-    Identifier(&'src str),
-
-    #[regex(r"[+-]?[0-9][0-9_]*", |lex| IntegerLiteral::parse(lex.slice(), lex.span().into()))]
-    IntegerLiteral(IntegerLiteral<'src>),
-
-    //
-    // keywords
-    //
-    #[token("fun")]
-    Fun,
-    #[token("Int")]
-    Int,
-
-    //
-    // symbols
-    //
-    #[token("=")]
-    Equals,
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum TokenKind {
-    Identifier,
-    IntegerLiteral,
-    Fun,
-    Int,
-    Equals,
-}
-
-impl Token<'_> {
-    pub fn kind(&self) -> TokenKind {
-        match self {
-            Token::Identifier(_) => TokenKind::Identifier,
-            Token::IntegerLiteral(_) => TokenKind::IntegerLiteral,
-            Token::Fun => TokenKind::Fun,
-            Token::Int => TokenKind::Int,
-            Token::Equals => TokenKind::Equals,
-        }
-    }
-}
-
-impl fmt::Display for Token<'_> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            Token::Identifier(ident) => write!(f, "{ident}"),
-            Token::IntegerLiteral(lit) => write!(f, "{}", lit.source),
-            Token::Fun => write!(f, "fun"),
-            Token::Int => write!(f, "int"),
-            Token::Equals => write!(f, "="),
-        }
-    }
-}
-
-impl fmt::Display for TokenKind {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            TokenKind::Identifier => write!(f, "identifier"),
-            TokenKind::IntegerLiteral => write!(f, "integer literal"),
-            TokenKind::Fun => write!(f, "fun"),
-            TokenKind::Int => write!(f, "int"),
-            TokenKind::Equals => write!(f, "="),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct IntegerLiteral<'src> {
-    pub source: &'src str,
-    pub literal: i64,
-}
-
-impl<'src> IntegerLiteral<'src> {
-    /// Parse an integer from a string slice with decimal digits.
-    ///
-    /// See Rust's [`std::str::FromStr`] on [`i64`].
-    /// Additionally, underscores are allowed.
-    fn parse(source: &'src str, span: Span) -> Result<Self, LexingError> {
-        let literal: i64 =
-            source
-                .replace('_', "")
-                .parse()
-                .map_err(|_| LexingError::InvalidIntegerLiteral {
-                    src: source.to_string(),
-                    span,
-                })?;
-        Ok(Self { source, literal })
-    }
-}
-
-type LexerItem<'src> = Result<Spanned<Token<'src>>, LexingError>;
+use crate::parser::token::{Token, TokenKind};
+use crate::span::Span;
 
 pub struct Lexer<'src> {
-    tokens: SpannedIter<'src, Token<'src>>,
-    lookahead: VecDeque<LexerItem<'src>>,
+    source: &'src str,
+    chars: Chars<'src>,
+    lookahead: VecDeque<char>,
+    pos: usize,
 }
 
 impl<'src> Lexer<'src> {
     pub fn new(source: &'src str) -> Self {
         Self {
-            tokens: Token::lexer(source).spanned(),
+            source,
+            chars: source.chars(),
             lookahead: VecDeque::new(),
+            pos: 0,
         }
     }
 
-    pub fn peek_n(&mut self, n: usize) -> Option<&LexerItem<'src>> {
+    pub fn source(&self) -> &'src str {
+        self.source
+    }
+
+    pub fn next_token(&mut self) -> Option<Token> {
+        let start = self.pos;
+        let first_char = self.bump()?;
+
+        let kind = match first_char {
+            '/' => match self.peek() {
+                Some('/') => {
+                    self.bump();
+                    self.eat_while(|c| c == '\n');
+                    TokenKind::Comment
+                }
+                _ => TokenKind::Invalid,
+            },
+            c if c.is_whitespace() => {
+                self.eat_while(char::is_whitespace);
+                TokenKind::Whitespace
+            }
+            c if is_identifier_start(c) => {
+                self.eat_while(is_identifier);
+                match self.slice_from(start) {
+                    "fun" => TokenKind::Fun,
+                    "Int" => TokenKind::Int,
+                    _ => TokenKind::Identifier,
+                }
+            }
+            c if c.is_digit(10) || c == '-' => {
+                self.eat_while(is_integer_literal);
+                TokenKind::IntegerLiteral
+            }
+            '=' => TokenKind::Equals,
+            ':' => TokenKind::Colon,
+            _ => TokenKind::Invalid,
+        };
+
+        Some(Token {
+            kind,
+            span: self.span_from(start),
+        })
+    }
+
+    fn peek_n(&mut self, n: usize) -> Option<char> {
         while self.lookahead.len() <= n {
-            let next = self.next()?;
-            self.lookahead.push_back(next);
+            let c = self.chars.next()?;
+            self.lookahead.push_back(c);
         }
-        self.lookahead.get(n)
+        self.lookahead.get(n).copied()
     }
 
-    pub fn peek(&mut self) -> Option<&LexerItem<'src>> {
+    fn peek(&mut self) -> Option<char> {
         self.peek_n(0)
+    }
+
+    fn bump(&mut self) -> Option<char> {
+        let c = self.lookahead.pop_front().or_else(|| self.chars.next())?;
+        self.pos += c.len_utf8();
+        Some(c)
+    }
+
+    fn span_from(&self, start: usize) -> Span {
+        (start..self.pos).into()
+    }
+
+    fn slice_from(&self, start: usize) -> &'src str {
+        &self.source[start..self.pos]
+    }
+
+    fn is_eof(&self) -> bool {
+        self.chars.as_str().is_empty()
+    }
+
+    fn eat_while(&mut self, pred: impl Fn(char) -> bool) {
+        while let Some(c) = self.peek()
+            && pred(c)
+            && !self.is_eof()
+        {
+            self.bump();
+        }
     }
 }
 
-impl<'src> Iterator for Lexer<'src> {
-    type Item = LexerItem<'src>;
+fn is_identifier_start(c: char) -> bool {
+    c.is_alphabetic() || c == '_'
+}
 
-    fn next(&mut self) -> Option<Self::Item> {
-        self.lookahead.pop_front().or_else(|| {
-            self.tokens
-                .next()
-                .map(|(token, span)| Ok((token?, span.into())))
-        })
-    }
+fn is_identifier(c: char) -> bool {
+    c.is_alphabetic() || c.is_numeric() || c == '_'
+}
+
+fn is_integer_literal(c: char) -> bool {
+    c.is_ascii_digit() || c == '_'
 }

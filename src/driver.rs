@@ -12,11 +12,11 @@ use crate::parser::parser::{Parser, ParsingError};
 type Result<T> = std::result::Result<T, DriverError>;
 
 #[derive(Debug, Error, Diagnostic)]
+#[error(transparent)]
 pub enum DriverError {
-    #[error("IO error: {0}")]
     Io(#[from] io::Error),
 
-    #[error("Parsing error: {0}")]
+    #[diagnostic(transparent)]
     Parsing(#[from] ParsingError),
 }
 
@@ -30,6 +30,10 @@ impl Driver {
         info!("read file '{}'", input_path.display());
         let source = fs::read_to_string(&input_path).map_err(DriverError::Io)?;
         Ok(Self { input_path, source })
+    }
+
+    pub fn source<'src>(&'src self) -> &'src str {
+        &self.source
     }
 
     pub fn lexer<'src>(&'src self) -> Lexer<'src> {

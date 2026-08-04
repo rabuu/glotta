@@ -4,7 +4,7 @@ use clap::{Parser, Subcommand};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
-use glotta::driver::Driver;
+use glotta::{driver::Driver, parser::token_stream::TokenStream};
 
 #[derive(Debug, Parser)]
 #[clap(version, about = None, long_about = None)]
@@ -73,23 +73,23 @@ fn main() {
         CliCommand::Lex { input } => {
             let driver = Driver::new(input).unwrap();
             let lexer = driver.lexer();
-            for token in lexer {
-                match token {
-                    Ok((token, span)) => println!("{token} (at {span:?})"),
-                    Err(err) => println!("{err}"),
-                }
+            for token in TokenStream::new(lexer, false) {
+                println!("{} (at {:?})", token.kind, token.span);
             }
         }
         CliCommand::Parse { input } => {
             let driver = Driver::new(input).unwrap();
-            let ast = match driver.parse() {
-                Ok(ast) => ast,
+            let ast = driver.parse();
+            match ast {
+                Ok(ast) => println!("{ast:#?}"),
                 Err(err) => {
-                    eprintln!("{err}");
+                    let err: miette::Error = err.into();
+                    let source = driver.source().to_string();
+                    let report: miette::Report = err.with_source_code(source);
+                    eprintln!("{report:?}");
                     std::process::exit(1);
                 }
             };
-            println!("{ast:?}");
         }
         CliCommand::Generate { input } => {
             let _driver = Driver::new(input).unwrap();

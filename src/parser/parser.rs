@@ -2,103 +2,85 @@ use miette::Diagnostic;
 use thiserror::Error;
 
 use crate::ast;
-use crate::parser::lexer::{IntegerLiteral, Lexer, LexingError, Token, TokenKind};
-use crate::span::{Span, Spanned};
+use crate::parser::lexer::Lexer;
+use crate::parser::token::{Token, TokenKind};
+use crate::parser::token_stream::TokenStream;
+use crate::span::Span;
 
 type Result<T> = std::result::Result<T, ParsingError>;
 
 #[derive(Debug, Error, Diagnostic)]
 pub enum ParsingError {
-    #[error("Invalid token: {0}")]
-    InvalidToken(#[from] LexingError),
-
-    #[error("Expected token of kind `{expected}` but got `{got}`.")]
-    UnexpectedToken {
-        expected: TokenKind,
-        got: TokenKind,
+    #[error("Invalid token")]
+    InvalidToken {
         #[label]
         span: Span,
     },
 
-    #[error("Expected {expected} but got `{got}`.")]
-    UnexpectedTokenIn {
+    #[error("Expected {expected} but got {got}.")]
+    UnexpectedToken {
         expected: String,
         got: TokenKind,
         #[label]
         span: Span,
     },
 
-    #[error("Expected token `{expected}` but got EOF.")]
-    UnexpectedEof { expected: TokenKind },
+    #[error("Expected {expected} but got EOF.")]
+    UnexpectedEof { expected: String },
 
-    #[error("Expected some token but got EOF.")]
-    UnexpectedEofAny,
-
-    #[error("Expected EOF but got `{token}`.")]
+    #[error("Expected EOF but got {token}.")]
     ExtraToken {
         token: TokenKind,
+        #[label]
+        span: Span,
+    },
+
+    #[error("Failed to parse integer literal.")]
+    InvalidIntegerLiteral {
+        #[source]
+        err: std::num::ParseIntError,
         #[label]
         span: Span,
     },
 }
 
 pub struct Parser<'src> {
-    lexer: Lexer<'src>,
+    source: &'src str,
+    tokens: TokenStream<'src>,
 }
 
 impl<'src> Parser<'src> {
     pub fn new(lexer: Lexer<'src>) -> Self {
-        Self { lexer }
-    }
-
-    fn peek_n(&mut self, n: usize) -> Result<TokenKind> {
-        match self.lexer.peek_n(n) {
-            Some(Ok((token, _))) => Ok(token.kind()),
-            Some(Err(err)) => Err(err.clone().into()),
-            None => Err(ParsingError::UnexpectedEofAny),
+        Self {
+            source: lexer.source(),
+            tokens: TokenStream::new(lexer, true),
         }
     }
 
-    fn peek(&mut self) -> Result<TokenKind> {
-        self.peek_n(0)
+    fn slice(&self, span: Span) -> &'src str {
+        &self.source[span.0]
     }
 
-    fn expect(&mut self, kind: TokenKind) -> Result<Spanned<Token<'src>>> {
-        match self.lexer.next() {
-            Some(Ok((token, span))) if token.kind() == kind => Ok((token, span)),
-            Some(Ok((token, span))) => Err(ParsingError::UnexpectedToken {
-                expected: kind,
-                got: token.kind(),
-                span,
+    fn expect(&mut self, kind: TokenKind) -> Result<Token> {
+        match self.tokens.next() {
+            Some(token) if token.kind == kind => Ok(token),
+            Some(token) => Err(ParsingError::UnexpectedToken {
+                expected: kind.to_string(),
+                got: token.kind,
+                span: token.span,
             }),
-            Some(Err(err)) => Err(err.into()),
-            None => Err(ParsingError::UnexpectedEof { expected: kind }),
-        }
-    }
-
-    fn expect_integer_literal(&mut self) -> Result<Spanned<IntegerLiteral<'src>>> {
-        let (token, span) = self.expect(TokenKind::IntegerLiteral)?;
-        match token {
-            Token::IntegerLiteral(literal) => Ok((literal, span)),
-            _ => unreachable!(),
-        }
-    }
-
-    fn expect_identifier(&mut self) -> Result<Spanned<String>> {
-        let (token, span) = self.expect(TokenKind::Identifier)?;
-        match token {
-            Token::Identifier(ident) => Ok((ident.to_owned(), span)),
-            _ => unreachable!(),
+            None => Err(ParsingError::UnexpectedEof {
+                expected: kind.to_string(),
+            }),
         }
     }
 
     fn expect_eof(&mut self) -> Result<()> {
-        match self.lexer.next() {
+        match self.tokens.next() {
             None => Ok(()),
-            Some(Err(err)) => Err(err.into()),
-            Some(Ok((token, span))) => Err(ParsingError::ExtraToken {
-                token: token.kind(),
-                span,
+            Some(token) => Err(ParsingError::ExtraToken {
+                token: token.kind,
+                span: token.span,
             }),
         }
     }
@@ -109,29 +91,65 @@ impl<'src> Parser<'src> {
         Ok(ast::Program { function })
     }
 
-    pub fn parse_function_definition(&mut self) -> Result<ast::FunctionDefinition> {
-        self.expect(TokenKind::Fun)?;
-        let (name, name_span) = self.expect_identifier()?;
+    fn parse_function_definition(&mut self) -> Result<ast::FunctionDefinition> {
+        let fun = self.expect(TokenKind::Fun)?;
+        let name = self.parse_identifier()?;
+        self.expect(TokenKind::Colon)?;
+        self.expect(TokenKind::Int)?;
         self.expect(TokenKind::Equals)?;
         let body = self.parse_expression()?;
+        let span = fun.span.to(body.span);
 
-        Ok(ast::FunctionDefinition {
-            name,
-            name_span,
-            body,
-        })
+        Ok(ast::FunctionDefinition { name, body, span })
     }
 
-    pub fn parse_expression(&mut self) -> Result<ast::Expression> {
-        match self.peek()? {
+    fn parse_expression(&mut self) -> Result<ast::Expression> {
+        let Some(first_token) = self.tokens.peek() else {
+            return Err(ParsingError::UnexpectedEof {
+                expected: String::from("an expression"),
+            });
+        };
+        match first_token.kind {
             TokenKind::IntegerLiteral => {
-                let (literal, span) = self.expect_integer_literal()?;
-                Ok(ast::Expression::Constant {
-                    value: literal.literal,
+                let literal = self.parse_integer_literal()?;
+                let span = literal.span;
+                Ok(ast::Expression {
+                    kind: ast::ExpressionKind::Constant(literal),
                     span,
                 })
             }
-            _ => todo!(),
+            kind => Err(ParsingError::UnexpectedToken {
+                expected: String::from("an expression"),
+                got: kind,
+                span: first_token.span,
+            }),
         }
+    }
+
+    fn parse_identifier(&mut self) -> Result<ast::Identifier> {
+        let token = self.expect(TokenKind::Identifier)?;
+        let identifier = self.slice(token.span).to_owned();
+
+        Ok(ast::Identifier {
+            identifier,
+            span: token.span,
+        })
+    }
+
+    fn parse_integer_literal(&mut self) -> Result<ast::IntegerLiteral> {
+        let token = self.expect(TokenKind::IntegerLiteral)?;
+        let source = self.slice(token.span).replace('_', "");
+
+        let value: i64 = source
+            .parse()
+            .map_err(|err| ParsingError::InvalidIntegerLiteral {
+                err,
+                span: token.span,
+            })?;
+
+        Ok(ast::IntegerLiteral {
+            value,
+            span: token.span,
+        })
     }
 }

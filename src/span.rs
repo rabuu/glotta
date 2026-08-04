@@ -1,7 +1,11 @@
-pub type Spanned<T> = (T, Span);
-
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Span(pub std::range::Range<usize>);
+
+impl Span {
+    pub fn to(self, to: Span) -> Span {
+        (self.0.start..to.0.end).into()
+    }
+}
 
 impl<T> From<T> for Span
 where

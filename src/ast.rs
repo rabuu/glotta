@@ -7,12 +7,30 @@ pub struct Program {
 
 #[derive(Debug)]
 pub struct FunctionDefinition {
-    pub name: String,
-    pub name_span: Span,
+    pub name: Identifier,
     pub body: Expression,
+    pub span: Span,
 }
 
 #[derive(Debug)]
-pub enum Expression {
-    Constant { value: i64, span: Span },
+pub struct Identifier {
+    pub identifier: String,
+    pub span: Span,
+}
+
+#[derive(Debug)]
+pub struct Expression {
+    pub kind: ExpressionKind,
+    pub span: Span,
+}
+
+#[derive(Debug)]
+pub enum ExpressionKind {
+    Constant(IntegerLiteral),
+}
+
+#[derive(Debug)]
+pub struct IntegerLiteral {
+    pub value: i64,
+    pub span: Span,
 }
