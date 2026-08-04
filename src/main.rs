@@ -104,8 +104,22 @@ fn main() {
             };
         }
         CliCommand::Generate { input } => {
-            let _driver = Driver::new(input).unwrap();
-            todo!()
+            let driver = match Driver::new(input) {
+                Ok(driver) => driver,
+                Err(error) => {
+                    let error: miette::Error = error.into();
+                    eprintln!("{error:?}");
+                    std::process::exit(1);
+                }
+            };
+            let asm = driver.codegen();
+            match asm {
+                Ok(asm) => println!("{asm}"),
+                Err(error) => {
+                    driver.print_error(error);
+                    std::process::exit(1);
+                }
+            };
         }
         CliCommand::Build { input } => {
             let _driver = Driver::new(input).unwrap();

@@ -6,6 +6,7 @@ use thiserror::Error;
 use tracing::info;
 
 use crate::ast;
+use crate::codegen::{self, asm};
 use crate::parser::{Lexer, Parser, ParsingError};
 
 type Result<T> = std::result::Result<T, DriverError>;
@@ -40,10 +41,17 @@ impl Driver {
     }
 
     pub fn parse(&self) -> Result<ast::Program> {
-        info!("parse file '{}'", self.input_path.display());
+        info!("parse '{}'", self.input_path.display());
         let lexer = self.lexer();
         let parser = Parser::new(lexer);
         parser.parse_program().map_err(DriverError::Parsing)
+    }
+
+    pub fn codegen(&self) -> Result<asm::Program> {
+        let ast = self.parse()?;
+        info!("codegen '{}'", self.input_path.display());
+        let asm = codegen::codegen_program(&ast).unwrap();
+        Ok(asm)
     }
 
     pub fn print_error(&self, error: DriverError) {
