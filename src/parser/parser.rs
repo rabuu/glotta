@@ -53,7 +53,7 @@ impl<'src> Parser<'src> {
     pub fn new(lexer: Lexer<'src>) -> Self {
         Self {
             source: lexer.source(),
-            tokens: TokenStream::new(lexer, true),
+            tokens: TokenStream::new(lexer, vec![TokenKind::Whitespace, TokenKind::Comment]),
         }
     }
 

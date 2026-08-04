@@ -8,15 +8,15 @@ use crate::parser::{
 pub struct TokenStream<'src> {
     lexer: Lexer<'src>,
     lookahead: VecDeque<Token>,
-    ignore_whitespace: bool,
+    ignore: Vec<TokenKind>,
 }
 
 impl<'src> TokenStream<'src> {
-    pub fn new(lexer: Lexer<'src>, ignore_whitespace: bool) -> Self {
+    pub fn new(lexer: Lexer<'src>, ignore: Vec<TokenKind>) -> Self {
         Self {
             lexer,
             lookahead: VecDeque::new(),
-            ignore_whitespace,
+            ignore,
         }
     }
 
@@ -34,10 +34,8 @@ impl<'src> TokenStream<'src> {
 
     fn next_token(&mut self) -> Option<Token> {
         let mut token = self.lexer.next_token()?;
-        if self.ignore_whitespace {
-            while token.kind == TokenKind::Whitespace {
-                token = self.lexer.next_token()?;
-            }
+        while self.ignore.contains(&token.kind) {
+            token = self.lexer.next_token()?;
         }
         Some(token)
     }

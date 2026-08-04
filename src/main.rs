@@ -74,7 +74,7 @@ fn main() {
         CliCommand::Lex { input } => {
             let driver = Driver::new(input).unwrap();
             let lexer = driver.lexer();
-            for token in TokenStream::new(lexer, false) {
+            for token in TokenStream::new(lexer, vec![]) {
                 println!("{} (at {:?})", token.kind, token.span);
             }
         }

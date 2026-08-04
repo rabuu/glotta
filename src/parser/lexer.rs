@@ -33,7 +33,7 @@ impl<'src> Lexer<'src> {
             '/' => match self.peek() {
                 Some('/') => {
                     self.bump();
-                    self.eat_while(|c| c == '\n');
+                    self.eat_while(|c| c != '\n');
                     TokenKind::Comment
                 }
                 _ => TokenKind::Invalid,
