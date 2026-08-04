@@ -7,7 +7,7 @@ syn match glottaStringEscape "\\[ntr\\\"']" contained
 syn match glottaStringEscape "\\x[0-9a-fA-F]\{2}" contained
 syn match glottaStringEscape "\\u[0-9a-fA-F]\{4}" contained
 
-syn match glottaNumber "-\=\<[0-9]*\>"
+syn match glottaNumber "-\=\<[0-9][0-9_]*\>"
 syn match glottaFloat "-\=\<[0-9]*\.[0-9]*\>"
 syn keyword glottaBoolean true false
 
