@@ -24,8 +24,8 @@ pub enum DriverError {
     #[error("The input path '{path}' is invalid.")]
     InvalidInputPath { path: PathBuf },
 
-    #[error("The output path and input path are the same: '{path}'")]
-    OutputPathIsInputPath { path: PathBuf },
+    #[error("The implicit output file '{path}' would overwrite the input file.")]
+    ImplicitOutputFileOverwritesInputFile { path: PathBuf },
 }
 
 pub struct Driver {
@@ -72,12 +72,12 @@ impl Driver {
     where
         P: Into<PathBuf>,
     {
-        let asm = self.codegen()?;
-
         let path = match path {
             Some(path) => path.into(),
             None => self.default_output_path(OutputFormat::Assembly)?,
         };
+
+        let asm = self.codegen()?;
 
         info!(
             "emit assembly from '{}' to file '{}'",
@@ -114,7 +114,7 @@ impl Driver {
         path.set_extension(format.extension());
 
         if path == self.input_path {
-            return Err(DriverError::OutputPathIsInputPath { path });
+            return Err(DriverError::ImplicitOutputFileOverwritesInputFile { path });
         }
 
         Ok(path)
