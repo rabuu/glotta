@@ -56,79 +56,62 @@ fn main() {
 
     let cli = CliArgs::parse();
 
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            EnvFilter::builder()
-                .with_env_var("GLOTTA_LOG")
-                .with_default_directive(
-                    if cli.quiet {
-                        LevelFilter::OFF
-                    } else {
-                        LevelFilter::INFO
-                    }
-                    .into(),
-                )
-                .from_env_lossy(),
-        )
-        .without_time()
-        .compact()
-        .init();
+    init_logger(cli.quiet);
 
+    if let Err(err) = run(cli) {
+        eprintln!("{err:?}");
+        std::process::exit(1);
+    }
+}
+
+fn run(cli: CliArgs) -> miette::Result<()> {
     match cli.cmd {
         CliCommand::Lex { input } => {
-            let driver = new_driver(input);
+            let driver = Driver::new(input).map_err(miette::Report::from)?;
             let lexer = driver.lexer();
             for token in TokenStream::new(lexer, vec![]) {
                 println!("{} (at {:?})", token.kind, token.span);
             }
+            Ok(())
         }
         CliCommand::Parse { input } => {
-            let driver = new_driver(input);
-            let ast = driver.parse();
-            match ast {
-                Ok(ast) => println!("{ast:#?}"),
-                Err(error) => {
-                    driver.print_error(error);
-                    std::process::exit(1);
-                }
-            };
+            let driver = Driver::new(input).map_err(miette::Report::from)?;
+            let ast = driver.parse().map_err(|err| driver.to_report(err))?;
+            println!("{ast:#?}");
+            Ok(())
         }
         CliCommand::Generate { input, output } => {
-            let driver = new_driver(input);
-            let asm = driver.codegen();
-            match asm {
-                Ok(asm) => {
-                    if let Some(output) = output {
-                        driver
-                            .emit_assembly_to_file(output)
-                            .unwrap_or_else(|error| {
-                                driver.print_error(error);
-                                std::process::exit(1);
-                            })
-                    } else {
-                        println!("{asm}")
-                    }
-                }
-                Err(error) => {
-                    driver.print_error(error);
-                    std::process::exit(1);
-                }
-            };
+            let driver = Driver::new(input).map_err(miette::Report::from)?;
+
+            match output {
+                Some(path) => driver.emit_assembly_to_file(path),
+                None => driver.emit_assembly_to_stdout(),
+            }
+            .map_err(|err| driver.to_report(err))?;
+
+            Ok(())
         }
         CliCommand::Build { input } => {
-            let _driver = new_driver(input);
+            let _driver = Driver::new(input).map_err(miette::Report::from)?;
             todo!()
         }
     }
 }
 
-fn new_driver(input: PathBuf) -> Driver {
-    match Driver::new(input) {
-        Ok(driver) => driver,
-        Err(error) => {
-            let error: miette::Error = error.into();
-            eprintln!("{error:?}");
-            std::process::exit(1);
-        }
-    }
+fn init_logger(quiet: bool) {
+    let default_level_filter = match quiet {
+        true => LevelFilter::OFF,
+        false => LevelFilter::INFO,
+    };
+
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::builder()
+                .with_env_var("GLOTTA_LOG")
+                .with_default_directive(default_level_filter.into())
+                .from_env_lossy(),
+        )
+        .without_time()
+        .compact()
+        .init();
 }

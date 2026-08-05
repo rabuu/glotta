@@ -1,7 +1,7 @@
 use crate::ast;
 
 pub mod asm;
-pub mod format;
+pub mod emitter;
 
 pub fn codegen_program(program: &ast::Program) -> Result<asm::Program, ()> {
     let ast::Program { function } = program;
