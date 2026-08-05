@@ -5,6 +5,7 @@
 
 test*.glotta
 test*.asm
+test
 
 *.o
 a.out
