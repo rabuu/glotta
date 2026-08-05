@@ -16,12 +16,8 @@ impl<O: io::Write> Emitter<O> {
     pub fn emit_program(mut self, program: &asm::Program) -> io::Result<()> {
         let asm::Program { function } = program;
 
+        writeln!(self.output, "section .text\n")?;
         self.emit_function_definition(function)?;
-        writeln!(self.output)?;
-        writeln!(
-            self.output,
-            "{INDENT}.section .not.GNU-stack,\"\",@progbits"
-        )?;
 
         self.output.flush()?;
 
@@ -31,12 +27,12 @@ impl<O: io::Write> Emitter<O> {
     fn emit_function_definition(&mut self, function: &asm::FunctionDefinition) -> io::Result<()> {
         let asm::FunctionDefinition { name, instructions } = function;
 
-        writeln!(self.output, "{INDENT}.globl {name}")?;
+        writeln!(self.output, "global {name}")?;
         writeln!(self.output, "{name}:")?;
         for instruction in instructions {
             write!(self.output, "{INDENT}")?;
             self.emit_instruction(instruction)?;
-            writeln!(self.output)?;
+            self.newline()?;
         }
 
         Ok(())
@@ -45,10 +41,10 @@ impl<O: io::Write> Emitter<O> {
     fn emit_instruction(&mut self, instruction: &asm::Instruction) -> io::Result<()> {
         match instruction {
             asm::Instruction::Mov { src, dst } => {
-                write!(self.output, "movl ")?;
-                self.emit_operand(src)?;
-                write!(self.output, ", ")?;
+                write!(self.output, "mov ")?;
                 self.emit_operand(dst)?;
+                write!(self.output, ", ")?;
+                self.emit_operand(src)?;
                 Ok(())
             }
             asm::Instruction::Ret => write!(self.output, "ret"),
@@ -57,8 +53,12 @@ impl<O: io::Write> Emitter<O> {
 
     fn emit_operand(&mut self, operand: &asm::Operand) -> io::Result<()> {
         match operand {
-            asm::Operand::Immediate(int) => write!(self.output, "${int}"),
-            asm::Operand::Register => write!(self.output, "%eax"),
+            asm::Operand::Immediate(int) => write!(self.output, "{int}"),
+            asm::Operand::Register => write!(self.output, "eax"),
         }
+    }
+
+    fn newline(&mut self) -> io::Result<()> {
+        writeln!(self.output)
     }
 }
