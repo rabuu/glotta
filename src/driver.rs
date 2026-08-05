@@ -76,7 +76,7 @@ impl Driver {
 
         let path = match path {
             Some(path) => path.into(),
-            None => self.default_output_path(OutputFormat::Elf)?,
+            None => self.default_output_path(OutputFormat::Assembly)?,
         };
 
         info!(
