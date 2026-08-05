@@ -19,6 +19,12 @@ impl<O: io::Write> Emitter<O> {
         writeln!(self.output, "section .text\n")?;
         self.emit_function_definition(function)?;
 
+        self.newline()?;
+        writeln!(
+            self.output,
+            "section .note.GNU-stack noalloc noexec nowrite progbits"
+        )?;
+
         self.output.flush()?;
 
         Ok(())
