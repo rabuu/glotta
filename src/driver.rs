@@ -64,7 +64,7 @@ impl Driver {
         let ast = self.parse()?;
 
         info!("codegen '{}'", self.input_path.display());
-        let asm = codegen::codegen_program(&ast).unwrap();
+        let asm = codegen::codegen_program(&ast);
         Ok(asm)
     }
 
