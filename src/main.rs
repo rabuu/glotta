@@ -105,6 +105,7 @@ fn init_logger(quiet: bool) {
     };
 
     tracing_subscriber::fmt()
+        .with_writer(std::io::stderr)
         .with_env_filter(
             EnvFilter::builder()
                 .with_env_var("GLOTTA_LOG")
