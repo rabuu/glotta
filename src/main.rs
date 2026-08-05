@@ -48,6 +48,18 @@ enum CliCommand {
     Build {
         /// Input source file.
         input: PathBuf,
+
+        /// Output compiled file.
+        #[clap(short, long)]
+        output: Option<PathBuf>,
+
+        /// Disable linking and only generate the object file.
+        #[clap(long)]
+        no_linking: bool,
+
+        /// Keep all intermediate build artifacts.
+        #[clap(short, long)]
+        keep_build_artifacts: bool,
     },
 }
 
@@ -84,16 +96,28 @@ fn run(cli: CliArgs) -> miette::Result<()> {
             let driver = Driver::new(input).map_err(miette::Report::from)?;
 
             match output {
-                Some(path) => driver.emit_assembly_to_file(path),
+                Some(path) => driver.emit_assembly_to_file(path).map(|_| ()),
                 None => driver.emit_assembly_to_stdout(),
             }
             .map_err(|err| driver.to_report(err))?;
 
             Ok(())
         }
-        CliCommand::Build { input } => {
-            let _driver = Driver::new(input).map_err(miette::Report::from)?;
-            todo!()
+        CliCommand::Build {
+            input,
+            output,
+            no_linking,
+            keep_build_artifacts,
+        } => {
+            let driver = Driver::new(input).map_err(miette::Report::from)?;
+
+            match no_linking {
+                true => driver.generate_object_file(output, keep_build_artifacts),
+                false => driver.compile_to_executable_file(output, keep_build_artifacts),
+            }
+            .map_err(|err| driver.to_report(err))?;
+
+            Ok(())
         }
     }
 }

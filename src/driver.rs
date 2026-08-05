@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::process::Command;
 use std::{fs, io};
 
 use miette::Diagnostic;
@@ -20,6 +21,18 @@ pub enum DriverError {
     #[error(transparent)]
     #[diagnostic(transparent)]
     Parsing(#[from] ParsingError),
+
+    #[error("Running `nasm -f elf64 {assembly_path} -o {object_path}` failed.")]
+    Nasm {
+        assembly_path: PathBuf,
+        object_path: PathBuf,
+    },
+
+    #[error("Running `cc {object_path} -o {executable_path}` failed.")]
+    Cc {
+        object_path: PathBuf,
+        executable_path: PathBuf,
+    },
 
     #[error("The input path '{path}' is invalid.")]
     InvalidInputPath { path: PathBuf },
@@ -68,29 +81,26 @@ impl Driver {
         Ok(asm)
     }
 
-    pub fn emit_assembly_to_file<P>(&self, path: Option<P>) -> Result<()>
-    where
-        P: Into<PathBuf>,
-    {
-        let path = match path {
-            Some(path) => path.into(),
+    pub fn emit_assembly_to_file(&self, assembly_path: Option<PathBuf>) -> Result<PathBuf> {
+        let assembly_path = match assembly_path {
+            Some(path) => path,
             None => self.default_output_path(OutputFormat::Assembly)?,
         };
 
         let asm = self.codegen()?;
 
         info!(
-            "emit assembly from '{}' to file '{}'",
+            "emit assembly from '{}' to '{}'",
             self.input_path.display(),
-            path.display()
+            assembly_path.display()
         );
 
-        let file = fs::File::create(path)?;
+        let file = fs::File::create(&assembly_path)?;
         let writer = io::BufWriter::new(file);
         let emitter = Emitter::new(writer);
         emitter.emit_program(&asm)?;
 
-        Ok(())
+        Ok(assembly_path)
     }
 
     pub fn emit_assembly_to_stdout(&self) -> Result<()> {
@@ -109,11 +119,88 @@ impl Driver {
         Ok(())
     }
 
+    pub fn generate_object_file(
+        &self,
+        object_path: Option<PathBuf>,
+        keep_build_artifacts: bool,
+    ) -> Result<PathBuf> {
+        let object_path = match object_path {
+            Some(path) => path,
+            None => self.default_output_path(OutputFormat::Object)?,
+        };
+
+        let assembly_path = self.emit_assembly_to_file(None)?;
+
+        info!(
+            "assemble '{}' to '{}' with `nasm`",
+            assembly_path.display(),
+            object_path.display()
+        );
+
+        let status = Command::new("nasm")
+            .args(["-f", "elf64"])
+            .arg(&assembly_path)
+            .arg("-o")
+            .arg(&object_path)
+            .status()?;
+
+        if !status.success() {
+            return Err(DriverError::Nasm {
+                assembly_path,
+                object_path,
+            });
+        }
+
+        if !keep_build_artifacts {
+            fs::remove_file(&assembly_path)?;
+        }
+
+        Ok(object_path)
+    }
+
+    pub fn compile_to_executable_file(
+        &self,
+        executable_path: Option<PathBuf>,
+        keep_build_artifacts: bool,
+    ) -> Result<PathBuf> {
+        let executable_path = match executable_path {
+            Some(path) => path,
+            None => self.default_output_path(OutputFormat::Executable)?,
+        };
+
+        let object_path = self.generate_object_file(None, keep_build_artifacts)?;
+
+        info!(
+            "link '{}' to '{}' with `cc`",
+            object_path.display(),
+            executable_path.display()
+        );
+
+        let status = Command::new("cc")
+            .arg(&object_path)
+            .arg("-o")
+            .arg(&executable_path)
+            .status()?;
+
+        if !status.success() {
+            return Err(DriverError::Cc {
+                object_path,
+                executable_path,
+            });
+        }
+
+        if !keep_build_artifacts {
+            fs::remove_file(&object_path)?;
+        }
+
+        Ok(executable_path)
+    }
+
     pub fn default_output_path(&self, format: OutputFormat) -> Result<PathBuf> {
         let mut path = self.input_path.clone();
         path.set_extension(format.extension());
 
-        if path == self.input_path {
+        if path.exists() && path == self.input_path {
             return Err(DriverError::ImplicitOutputFileOverwritesInputFile { path });
         }
 
@@ -134,7 +221,7 @@ impl Driver {
 pub enum OutputFormat {
     Assembly,
     Object,
-    Elf,
+    Executable,
 }
 
 impl OutputFormat {
@@ -142,7 +229,7 @@ impl OutputFormat {
         match self {
             OutputFormat::Assembly => "asm",
             OutputFormat::Object => "o",
-            OutputFormat::Elf => "",
+            OutputFormat::Executable => "",
         }
     }
 }
