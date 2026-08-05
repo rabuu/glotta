@@ -23,6 +23,9 @@
             gdb
 
             nasm
+
+            just
+            fd
           ];
         };
       }
