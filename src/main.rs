@@ -34,7 +34,7 @@ enum CliCommand {
 
     /// Generate assembly code.
     #[clap(alias = "gen")]
-    Generate {
+    Codegen {
         /// Input source file.
         input: PathBuf,
 
@@ -80,7 +80,7 @@ fn run(cli: CliArgs) -> miette::Result<()> {
             println!("{ast:#?}");
             Ok(())
         }
-        CliCommand::Generate { input, output } => {
+        CliCommand::Codegen { input, output } => {
             let driver = Driver::new(input).map_err(miette::Report::from)?;
 
             match output {
