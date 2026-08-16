@@ -1,6 +1,7 @@
+use std::fmt;
 use std::path::PathBuf;
 
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, ValueEnum};
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
@@ -20,47 +21,69 @@ struct CliArgs {
 
 #[derive(Debug, Subcommand)]
 enum CliCommand {
-    /// Print the lexer output.
-    Lex {
-        /// Input source file.
-        input: PathBuf,
-    },
-
-    /// Print the parser output.
-    Parse {
-        /// Input source file.
-        input: PathBuf,
-    },
-
-    /// Generate assembly code.
-    #[clap(alias = "gen")]
-    Codegen {
-        /// Input source file.
-        input: PathBuf,
-
-        /// Output assembly file.
-        #[clap(short, long)]
-        output: Option<Option<PathBuf>>,
-    },
-
-    /// Compile and build.
+    /// Compile a source file or project.
     #[clap(alias = "b")]
     Build {
-        /// Input source file.
+        /// Path of input file.
         input: PathBuf,
 
-        /// Output compiled file.
+        /// Path of output file.
         #[clap(short, long)]
         output: Option<PathBuf>,
 
-        /// Disable linking and only generate the object file.
-        #[clap(long)]
-        no_linking: bool,
+        /// Output file format.
+        #[clap(short, long, default_value_t)]
+        format: CliOutputFormat,
 
         /// Keep all intermediate build artifacts.
         #[clap(short, long)]
         keep_build_artifacts: bool,
     },
+
+    /// Debug a compiler intermediate stage.
+    Debug {
+        /// Path of input file.
+        input: PathBuf,
+
+        /// The intermediate stage to debug.
+        #[clap(short, long)]
+        stage: CliDebugStage,
+    },
+}
+
+#[derive(Debug, Clone, Copy, Default, ValueEnum)]
+pub enum CliOutputFormat {
+    #[value(alias = "asm")]
+    Assembly,
+
+    #[value(alias = "obj")]
+    Object,
+
+    #[value(alias = "exe")]
+    #[default]
+    Executable,
+}
+
+impl fmt::Display for CliOutputFormat {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CliOutputFormat::Assembly => write!(f, "assembly"),
+            CliOutputFormat::Object => write!(f, "object"),
+            CliOutputFormat::Executable => write!(f, "executable"),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, ValueEnum)]
+pub enum CliDebugStage {
+    #[value(alias = "lex")]
+    Lexer,
+
+    #[value(alias = "parse")]
+    Parser,
+
+    #[value(alias = "asm")]
+    Assembly,
 }
 
 fn main() {
@@ -78,46 +101,44 @@ fn main() {
 
 fn run(cli: CliArgs) -> miette::Result<()> {
     match cli.cmd {
-        CliCommand::Lex { input } => {
-            let driver = Driver::new(input).map_err(miette::Report::from)?;
-            let lexer = driver.lexer();
-            for token in TokenStream::new(lexer, vec![]) {
-                println!("{} (at {:?})", token.kind, token.span);
-            }
-            Ok(())
-        }
-        CliCommand::Parse { input } => {
-            let driver = Driver::new(input).map_err(miette::Report::from)?;
-            let ast = driver.parse().map_err(|err| driver.to_report(err))?;
-            println!("{ast:#?}");
-            Ok(())
-        }
-        CliCommand::Codegen { input, output } => {
-            let driver = Driver::new(input).map_err(miette::Report::from)?;
-
-            match output {
-                Some(path) => driver.emit_assembly_to_file(path).map(|_| ()),
-                None => driver.emit_assembly_to_stdout(),
-            }
-            .map_err(|err| driver.to_report(err))?;
-
-            Ok(())
-        }
         CliCommand::Build {
             input,
             output,
-            no_linking,
+            format,
             keep_build_artifacts,
         } => {
             let driver = Driver::new(input).map_err(miette::Report::from)?;
 
-            match no_linking {
-                true => driver.generate_object_file(output, keep_build_artifacts),
-                false => driver.compile_to_executable_file(output, keep_build_artifacts),
+            match format {
+                CliOutputFormat::Assembly => driver.assembly_to_file(output),
+                CliOutputFormat::Object => driver.object_to_file(output, keep_build_artifacts),
+                CliOutputFormat::Executable => {
+                    driver.executable_to_file(output, keep_build_artifacts)
+                }
             }
             .map_err(|err| driver.to_report(err))?;
 
             Ok(())
+        }
+        CliCommand::Debug { stage: mode, input } => {
+            let driver = Driver::new(input).map_err(miette::Report::from)?;
+            match mode {
+                CliDebugStage::Lexer => {
+                    let lexer = driver.lexer();
+                    for token in TokenStream::new(lexer, vec![]) {
+                        println!("{} (at {:?})", token.kind, token.span);
+                    }
+                    Ok(())
+                }
+                CliDebugStage::Parser => {
+                    let ast = driver.parse().map_err(|err| driver.to_report(err))?;
+                    println!("{ast:#?}");
+                    Ok(())
+                }
+                CliDebugStage::Assembly => driver
+                    .assembly_to_stdout()
+                    .map_err(|err| driver.to_report(err)),
+            }
         }
     }
 }

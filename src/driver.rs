@@ -81,7 +81,7 @@ impl Driver {
         Ok(asm)
     }
 
-    pub fn emit_assembly_to_file(&self, assembly_path: Option<PathBuf>) -> Result<PathBuf> {
+    pub fn assembly_to_file(&self, assembly_path: Option<PathBuf>) -> Result<PathBuf> {
         let assembly_path = match assembly_path {
             Some(path) => path,
             None => self.default_output_path(OutputFormat::Assembly)?,
@@ -103,7 +103,7 @@ impl Driver {
         Ok(assembly_path)
     }
 
-    pub fn emit_assembly_to_stdout(&self) -> Result<()> {
+    pub fn assembly_to_stdout(&self) -> Result<()> {
         let asm = self.codegen()?;
 
         info!(
@@ -119,7 +119,7 @@ impl Driver {
         Ok(())
     }
 
-    pub fn generate_object_file(
+    pub fn object_to_file(
         &self,
         object_path: Option<PathBuf>,
         keep_build_artifacts: bool,
@@ -129,7 +129,7 @@ impl Driver {
             None => self.default_output_path(OutputFormat::Object)?,
         };
 
-        let assembly_path = self.emit_assembly_to_file(None)?;
+        let assembly_path = self.assembly_to_file(None)?;
 
         info!(
             "assemble '{}' to '{}' with `nasm`",
@@ -158,7 +158,7 @@ impl Driver {
         Ok(object_path)
     }
 
-    pub fn compile_to_executable_file(
+    pub fn executable_to_file(
         &self,
         executable_path: Option<PathBuf>,
         keep_build_artifacts: bool,
@@ -168,7 +168,7 @@ impl Driver {
             None => self.default_output_path(OutputFormat::Executable)?,
         };
 
-        let object_path = self.generate_object_file(None, keep_build_artifacts)?;
+        let object_path = self.object_to_file(None, keep_build_artifacts)?;
 
         info!(
             "link '{}' to '{}' with `cc`",
@@ -196,7 +196,7 @@ impl Driver {
         Ok(executable_path)
     }
 
-    pub fn default_output_path(&self, format: OutputFormat) -> Result<PathBuf> {
+    fn default_output_path(&self, format: OutputFormat) -> Result<PathBuf> {
         let mut path = self.input_path.clone();
         path.set_extension(format.extension());
 
