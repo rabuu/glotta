@@ -17,6 +17,9 @@ pub enum TokenKind {
     Fun,
     Int,
 
+    ParenL,
+    ParenR,
+
     Equals,
     Colon,
 
@@ -33,6 +36,8 @@ impl fmt::Display for TokenKind {
             TokenKind::IntegerLiteral => write!(f, "integer literal"),
             TokenKind::Fun => write!(f, "`fun`"),
             TokenKind::Int => write!(f, "`Int`"),
+            TokenKind::ParenL => write!(f, "`(`"),
+            TokenKind::ParenR => write!(f, "`)`"),
             TokenKind::Equals => write!(f, "`=`"),
             TokenKind::Colon => write!(f, "`:`"),
             TokenKind::Comment => write!(f, "comment"),

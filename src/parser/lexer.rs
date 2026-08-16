@@ -54,6 +54,8 @@ impl<'src> Lexer<'src> {
                 self.eat_while(is_integer_literal);
                 TokenKind::IntegerLiteral
             }
+            '(' => TokenKind::ParenL,
+            ')' => TokenKind::ParenR,
             '=' => TokenKind::Equals,
             ':' => TokenKind::Colon,
             _ => TokenKind::Invalid,
