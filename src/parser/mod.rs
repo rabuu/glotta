@@ -63,7 +63,7 @@ impl<'src> Parser<'src> {
     }
 
     fn slice(&self, span: Span) -> &'src str {
-        &self.source[span.0]
+        &self.source[span.inner]
     }
 
     fn expect(&mut self, kind: TokenKind) -> Result<Token> {

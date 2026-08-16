@@ -2,6 +2,7 @@ use std::fmt;
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand, ValueEnum};
+use glotta::span::SourcePosition;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
@@ -126,7 +127,20 @@ fn run(cli: CliArgs) -> miette::Result<()> {
                 CliDebugStage::Lexer => {
                     let lexer = driver.lexer();
                     for token in TokenStream::new(lexer, vec![]) {
-                        println!("{} (at {:?})", token.kind, token.span);
+                        fn display_source_position(pos: Option<SourcePosition>) -> String {
+                            match pos {
+                                Some(pos) => pos.to_string(),
+                                None => String::from("out of bounds"),
+                            }
+                        }
+
+                        let (start_pos, end_pos) = driver.span_to_source_positions(token.span);
+                        println!(
+                            "[{} to {}] {}",
+                            display_source_position(start_pos),
+                            display_source_position(end_pos),
+                            token.kind,
+                        );
                     }
                     Ok(())
                 }

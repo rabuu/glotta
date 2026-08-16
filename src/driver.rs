@@ -10,6 +10,7 @@ use crate::ast;
 use crate::codegen::emitter::Emitter;
 use crate::codegen::{self, asm};
 use crate::parser::{Lexer, Parser, ParsingError};
+use crate::span::{SourcePosition, Span};
 
 type Result<T> = std::result::Result<T, DriverError>;
 
@@ -214,6 +215,31 @@ impl Driver {
             self.source.to_string(),
         );
         error.with_source_code(source)
+    }
+
+    pub fn source_position(&self, offset: usize) -> Option<SourcePosition> {
+        if offset >= self.source.as_bytes().len() {
+            return None;
+        }
+
+        let before = &self.source[..offset];
+
+        let row = before.chars().filter(|&c| c == '\n').count() + 1;
+        let col = before
+            .rsplit_once('\n')
+            .map_or(before.chars().count(), |(_, line)| line.chars().count())
+            + 1;
+
+        Some(SourcePosition { row, col })
+    }
+
+    pub fn span_to_source_positions(
+        &self,
+        span: Span,
+    ) -> (Option<SourcePosition>, Option<SourcePosition>) {
+        let start = self.source_position(span.inner.start);
+        let end = self.source_position(span.inner.end - 1);
+        (start, end)
     }
 }
 
