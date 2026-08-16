@@ -34,5 +34,6 @@ pub fn codegen_expression(expression: &ast::Expression) -> asm::Operand {
     let ast::Expression { kind, span: _ } = expression;
     match kind {
         ast::ExpressionKind::Constant(literal) => asm::Operand::Immediate(literal.value),
+        ast::ExpressionKind::Call(_) => todo!(),
     }
 }

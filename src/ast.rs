@@ -27,10 +27,36 @@ pub struct Expression {
 #[derive(Debug)]
 pub enum ExpressionKind {
     Constant(IntegerLiteral),
+    Call(CallKind),
 }
 
 #[derive(Debug)]
 pub struct IntegerLiteral {
     pub value: i64,
+    pub span: Span,
+}
+
+#[derive(Debug)]
+pub enum CallKind {
+    Builtin(BuiltinCall),
+    Function(FunctionCall),
+}
+
+#[derive(Debug)]
+pub struct BuiltinCall {
+    pub kind: BuiltinCallKind,
+    pub span: Span,
+}
+
+#[derive(Debug)]
+pub enum BuiltinCallKind {
+    BitwiseNot { arg: Box<Expression> },
+    Negation { arg: Box<Expression> },
+}
+
+#[derive(Debug)]
+pub struct FunctionCall {
+    pub function_name: Identifier,
+    pub args: Vec<Expression>,
     pub span: Span,
 }

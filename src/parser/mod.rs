@@ -123,6 +123,47 @@ impl<'src> Parser<'src> {
                     span,
                 })
             }
+            TokenKind::Identifier => {
+                // for now, an identifier always means a call.
+                // this will change, once variables are implemented.
+
+                let ident = self.parse_identifier()?;
+                let start = ident.span;
+
+                let _paren_l = self.expect(TokenKind::ParenL)?;
+                let arg = self.parse_expression()?;
+                let paren_r = self.expect(TokenKind::ParenR)?;
+                let end = paren_r.span;
+
+                let span = start.to(end);
+
+                match ident.identifier.as_str() {
+                    "bit_not" => Ok(ast::Expression {
+                        kind: ast::ExpressionKind::Call(ast::CallKind::Builtin(ast::BuiltinCall {
+                            kind: ast::BuiltinCallKind::BitwiseNot { arg: Box::new(arg) },
+                            span,
+                        })),
+                        span,
+                    }),
+                    "neg" => Ok(ast::Expression {
+                        kind: ast::ExpressionKind::Call(ast::CallKind::Builtin(ast::BuiltinCall {
+                            kind: ast::BuiltinCallKind::Negation { arg: Box::new(arg) },
+                            span,
+                        })),
+                        span,
+                    }),
+                    _ => Ok(ast::Expression {
+                        kind: ast::ExpressionKind::Call(ast::CallKind::Function(
+                            ast::FunctionCall {
+                                function_name: ident,
+                                args: vec![arg],
+                                span,
+                            },
+                        )),
+                        span,
+                    }),
+                }
+            }
             kind => Err(ParsingError::UnexpectedToken {
                 expected: String::from("an expression"),
                 got: kind,
