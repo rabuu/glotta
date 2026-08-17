@@ -1,3 +1,5 @@
+use std::fmt;
+
 #[derive(Debug, Clone)]
 pub struct Program {
     pub function: FunctionDefinition,
@@ -38,4 +40,13 @@ pub enum Value {
 pub enum Identifier {
     Named(String),
     Temporary(usize),
+}
+
+impl fmt::Display for Identifier {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Identifier::Named(name) => write!(f, "{name}"),
+            Identifier::Temporary(tmp) => write!(f, "tmp.{tmp}"),
+        }
+    }
 }

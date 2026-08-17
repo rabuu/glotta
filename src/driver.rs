@@ -85,10 +85,10 @@ impl Driver {
     }
 
     pub fn codegen(&self) -> Result<asm::Program> {
-        let ast = self.parse()?;
+        let tacky = self.tacky()?;
 
         info!("codegen '{}'", self.input_path.display());
-        let asm = codegen::codegen_program(&ast);
+        let asm = codegen::codegen_program(&tacky);
         Ok(asm)
     }
 

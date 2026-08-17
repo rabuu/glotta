@@ -88,7 +88,7 @@ impl<O: io::Write> Emitter<O> {
         match operand {
             asm::Operand::Immediate(int) => write!(self.output, "{int}"),
             asm::Operand::Register(register) => self.emit_register(register),
-            asm::Operand::Pseudo(pseudo) => write!(self.output, "PEUDO({pseudo})"),
+            asm::Operand::Pseudo(pseudo) => write!(self.output, "<{pseudo}>"),
             asm::Operand::Stack { offset } => {
                 let sign = if offset.is_negative() { "-" } else { "+" };
                 let abs = offset.abs();
