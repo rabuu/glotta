@@ -1,5 +1,9 @@
 use std::fmt;
 
+pub trait Spanned {
+    fn span(&self) -> Span;
+}
+
 #[derive(Clone, Copy, PartialEq)]
 pub struct Span {
     pub inner: std::range::Range<usize>,

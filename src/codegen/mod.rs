@@ -31,9 +31,8 @@ pub fn codegen_function_definition(function: &ast::FunctionDefinition) -> asm::F
 }
 
 pub fn codegen_expression(expression: &ast::Expression) -> asm::Operand {
-    let ast::Expression { kind, span: _ } = expression;
-    match kind {
-        ast::ExpressionKind::Constant(literal) => asm::Operand::Immediate(literal.value as isize),
-        ast::ExpressionKind::Call(_) => todo!(),
+    match expression {
+        ast::Expression::Constant(constant) => asm::Operand::Immediate(constant.value as isize),
+        ast::Expression::Call(_) => todo!(),
     }
 }

@@ -6,7 +6,7 @@ use miette::Diagnostic;
 use thiserror::Error;
 
 use crate::ast;
-use crate::span::Span;
+use crate::span::{Span, Spanned};
 
 pub use lexing::Lexer;
 pub use token::{Token, TokenKind};
@@ -103,7 +103,7 @@ impl<'src> Parser<'src> {
         self.expect(TokenKind::Int)?;
         self.expect(TokenKind::Equals)?;
         let body = self.parse_expression()?;
-        let span = fun.span.to(body.span);
+        let span = fun.span.to(body.span());
 
         Ok(ast::FunctionDefinition { name, body, span })
     }
@@ -116,12 +116,8 @@ impl<'src> Parser<'src> {
         };
         match first_token.kind {
             TokenKind::IntegerLiteral => {
-                let literal = self.parse_integer_literal()?;
-                let span = literal.span;
-                Ok(ast::Expression {
-                    kind: ast::ExpressionKind::Constant(literal),
-                    span,
-                })
+                let constant = self.parse_integer_constant()?;
+                Ok(ast::Expression::Constant(constant))
             }
             TokenKind::Identifier => {
                 // for now, an identifier always means a call.
@@ -138,38 +134,33 @@ impl<'src> Parser<'src> {
                 let span = start.to(end);
 
                 match ident.identifier.as_str() {
-                    "bit_not" => Ok(ast::Expression {
-                        kind: ast::ExpressionKind::Call(ast::CallKind::Builtin(ast::BuiltinCall {
-                            kind: ast::BuiltinCallKind::Unary(ast::UnaryOperation {
-                                operator: ast::UnaryOperator::BitwiseNot,
-                                arg: Box::new(arg),
-                                span,
-                            }),
-                            span,
-                        })),
-                        span,
-                    }),
-                    "neg" => Ok(ast::Expression {
-                        kind: ast::ExpressionKind::Call(ast::CallKind::Builtin(ast::BuiltinCall {
-                            kind: ast::BuiltinCallKind::Unary(ast::UnaryOperation {
-                                operator: ast::UnaryOperator::Negation,
-                                arg: Box::new(arg),
-                                span,
-                            }),
-                            span,
-                        })),
-                        span,
-                    }),
-                    _ => Ok(ast::Expression {
-                        kind: ast::ExpressionKind::Call(ast::CallKind::Function(
-                            ast::FunctionCall {
-                                function_name: ident,
-                                args: vec![arg],
-                                span,
+                    "bit_not" => Ok(ast::Expression::Call(ast::Call::Builtin(
+                        ast::BuiltinCall::Unary(ast::UnaryOperation {
+                            operator: ast::UnaryOperator {
+                                kind: ast::UnaryOperatorKind::BitwiseNot,
+                                span: ident.span,
                             },
-                        )),
-                        span,
-                    }),
+                            arg: Box::new(arg),
+                            span,
+                        }),
+                    ))),
+                    "neg" => Ok(ast::Expression::Call(ast::Call::Builtin(
+                        ast::BuiltinCall::Unary(ast::UnaryOperation {
+                            operator: ast::UnaryOperator {
+                                kind: ast::UnaryOperatorKind::Negation,
+                                span: ident.span,
+                            },
+                            arg: Box::new(arg),
+                            span,
+                        }),
+                    ))),
+                    _ => Ok(ast::Expression::Call(ast::Call::Function(
+                        ast::FunctionCall {
+                            function_name: ident,
+                            args: vec![arg],
+                            span,
+                        },
+                    ))),
                 }
             }
             kind => Err(ParsingError::UnexpectedToken {
@@ -190,7 +181,7 @@ impl<'src> Parser<'src> {
         })
     }
 
-    fn parse_integer_literal(&mut self) -> Result<ast::IntegerLiteral> {
+    fn parse_integer_constant(&mut self) -> Result<ast::IntegerConstant> {
         let token = self.expect(TokenKind::IntegerLiteral)?;
         let source = self.slice(token.span).replace('_', "");
 
@@ -201,7 +192,7 @@ impl<'src> Parser<'src> {
                 span: token.span,
             })?;
 
-        Ok(ast::IntegerLiteral {
+        Ok(ast::IntegerConstant {
             value,
             span: token.span,
         })

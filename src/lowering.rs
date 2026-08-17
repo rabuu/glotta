@@ -14,23 +14,21 @@ impl Lowerer {
         expression: &ast::Expression,
         instructions: &mut Vec<tacky::Instruction>,
     ) -> tacky::Value {
-        let ast::Expression { kind, span: _ } = expression;
-
-        match kind {
-            ast::ExpressionKind::Constant(literal) => self.lower_constant(literal, instructions),
-            ast::ExpressionKind::Call(ast::CallKind::Builtin(call)) => {
+        match expression {
+            ast::Expression::Constant(constant) => self.lower_constant(constant, instructions),
+            ast::Expression::Call(ast::Call::Builtin(call)) => {
                 self.lower_builtin_call(call, instructions)
             }
-            ast::ExpressionKind::Call(ast::CallKind::Function(_)) => todo!(),
+            ast::Expression::Call(ast::Call::Function(_)) => todo!(),
         }
     }
 
     fn lower_constant(
         &self,
-        literal: &ast::IntegerLiteral,
+        constant: &ast::IntegerConstant,
         _instructions: &mut Vec<tacky::Instruction>,
     ) -> tacky::Value {
-        let ast::IntegerLiteral { value, span: _ } = literal;
+        let ast::IntegerConstant { value, span: _ } = constant;
         tacky::Value::Constant(*value)
     }
 
@@ -39,9 +37,8 @@ impl Lowerer {
         call: &ast::BuiltinCall,
         instructions: &mut Vec<tacky::Instruction>,
     ) -> tacky::Value {
-        let ast::BuiltinCall { kind, span: _ } = call;
-        match kind {
-            ast::BuiltinCallKind::Unary(ast::UnaryOperation {
+        match call {
+            ast::BuiltinCall::Unary(ast::UnaryOperation {
                 operator,
                 arg,
                 span: _,
@@ -63,9 +60,9 @@ impl Lowerer {
     }
 
     fn lower_unary_operator(&self, operator: &ast::UnaryOperator) -> tacky::UnaryOperator {
-        match operator {
-            ast::UnaryOperator::BitwiseNot => tacky::UnaryOperator::BitwiseNot,
-            ast::UnaryOperator::Negation => tacky::UnaryOperator::Negation,
+        match operator.kind {
+            ast::UnaryOperatorKind::BitwiseNot => tacky::UnaryOperator::BitwiseNot,
+            ast::UnaryOperatorKind::Negation => tacky::UnaryOperator::Negation,
         }
     }
 
