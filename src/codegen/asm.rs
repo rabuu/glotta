@@ -39,3 +39,7 @@ pub enum Register {
     EAX,
     R10D,
 }
+
+impl Register {
+    pub const TEMP: Register = Register::R10D;
+}
