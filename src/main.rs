@@ -7,7 +7,7 @@ use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
 use glotta::driver::Driver;
-use glotta::parser::TokenStream;
+use glotta::parsing::TokenStream;
 
 #[derive(Debug, Parser)]
 #[clap(version, about = None, long_about = None)]
@@ -78,10 +78,10 @@ impl fmt::Display for CliOutputFormat {
 #[derive(Debug, Clone, Copy, ValueEnum)]
 pub enum CliDebugStage {
     #[value(alias = "lex")]
-    Lexer,
+    Lexing,
 
     #[value(alias = "parse")]
-    Parser,
+    Parsing,
 
     #[value(alias = "asm")]
     Assembly,
@@ -124,7 +124,7 @@ fn run(cli: CliArgs) -> miette::Result<()> {
         CliCommand::Debug { stage: mode, input } => {
             let driver = Driver::new(input).map_err(miette::Report::from)?;
             match mode {
-                CliDebugStage::Lexer => {
+                CliDebugStage::Lexing => {
                     let lexer = driver.lexer();
                     for token in TokenStream::new(lexer, vec![]) {
                         fn display_source_position(pos: Option<SourcePosition>) -> String {
@@ -144,7 +144,7 @@ fn run(cli: CliArgs) -> miette::Result<()> {
                     }
                     Ok(())
                 }
-                CliDebugStage::Parser => {
+                CliDebugStage::Parsing => {
                     let ast = driver.parse().map_err(|err| driver.to_report(err))?;
                     println!("{ast:#?}");
                     Ok(())

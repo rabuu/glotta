@@ -1,4 +1,4 @@
-mod lexer;
+mod lexing;
 mod token;
 mod token_stream;
 
@@ -8,7 +8,7 @@ use thiserror::Error;
 use crate::ast;
 use crate::span::Span;
 
-pub use lexer::Lexer;
+pub use lexing::Lexer;
 pub use token::{Token, TokenKind};
 pub use token_stream::TokenStream;
 

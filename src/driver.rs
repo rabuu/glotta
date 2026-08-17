@@ -9,7 +9,7 @@ use tracing::info;
 use crate::ast;
 use crate::codegen::emitter::Emitter;
 use crate::codegen::{self, asm};
-use crate::parser::{Lexer, Parser, ParsingError};
+use crate::parsing::{Lexer, Parser, ParsingError};
 use crate::span::{SourcePosition, Span};
 
 type Result<T> = std::result::Result<T, DriverError>;

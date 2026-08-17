@@ -1,7 +1,7 @@
 pub mod ast;
 pub mod codegen;
 pub mod driver;
-pub mod lowerer;
-pub mod parser;
+pub mod lowering;
+pub mod parsing;
 pub mod span;
 pub mod tacky;
