@@ -207,17 +207,6 @@ impl Driver {
         Ok(executable_path)
     }
 
-    fn default_output_path(&self, format: OutputFormat) -> Result<PathBuf> {
-        let mut path = self.input_path.clone();
-        path.set_extension(format.extension());
-
-        if path.exists() && path == self.input_path {
-            return Err(DriverError::ImplicitOutputFileOverwritesInputFile { path });
-        }
-
-        Ok(path)
-    }
-
     pub fn to_report(&self, error: DriverError) -> miette::Report {
         let error: miette::Error = error.into();
         let source = miette::NamedSource::new(
@@ -250,6 +239,17 @@ impl Driver {
         let start = self.source_position(span.inner.start);
         let end = self.source_position(span.inner.end - 1);
         (start, end)
+    }
+
+    fn default_output_path(&self, format: OutputFormat) -> Result<PathBuf> {
+        let mut path = self.input_path.clone();
+        path.set_extension(format.extension());
+
+        if path.exists() && path == self.input_path {
+            return Err(DriverError::ImplicitOutputFileOverwritesInputFile { path });
+        }
+
+        Ok(path)
     }
 }
 
