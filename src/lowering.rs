@@ -9,7 +9,35 @@ impl Lowerer {
         Self { fresh: 0 }
     }
 
-    pub fn lower_expression(
+    pub fn lower_program(&mut self, program: &ast::Program) -> tacky::Program {
+        let ast::Program { function } = program;
+        let function = self.lower_function_definition(function);
+        tacky::Program { function }
+    }
+
+    fn lower_function_definition(
+        &mut self,
+        function: &ast::FunctionDefinition,
+    ) -> tacky::FunctionDefinition {
+        let ast::FunctionDefinition {
+            name,
+            body,
+            span: _,
+        } = function;
+
+        let name = tacky::Identifier::Named(name.identifier.clone());
+
+        let mut instructions = Vec::new();
+        let body = self.lower_expression(body, &mut instructions);
+        instructions.push(tacky::Instruction::Return(body));
+
+        tacky::FunctionDefinition {
+            name,
+            body: instructions,
+        }
+    }
+
+    fn lower_expression(
         &mut self,
         expression: &ast::Expression,
         instructions: &mut Vec<tacky::Instruction>,

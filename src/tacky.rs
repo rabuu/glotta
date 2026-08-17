@@ -36,5 +36,6 @@ pub enum Value {
 
 #[derive(Debug, Clone)]
 pub enum Identifier {
+    Named(String),
     Temporary(usize),
 }
