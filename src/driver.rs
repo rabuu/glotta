@@ -6,11 +6,12 @@ use miette::Diagnostic;
 use thiserror::Error;
 use tracing::info;
 
-use crate::ast;
 use crate::codegen::emitter::Emitter;
 use crate::codegen::{self, asm};
+use crate::lowering::Lowerer;
 use crate::parsing::{Lexer, Parser, ParsingError};
 use crate::span::{SourcePosition, Span};
+use crate::{ast, tacky};
 
 type Result<T> = std::result::Result<T, DriverError>;
 
@@ -72,6 +73,15 @@ impl Driver {
         let lexer = self.lexer();
         let parser = Parser::new(lexer);
         parser.parse_program().map_err(DriverError::Parsing)
+    }
+
+    pub fn tacky(&self) -> Result<tacky::Program> {
+        let ast = self.parse()?;
+
+        info!("lower '{}' to TACKY", self.input_path.display());
+        let mut lowerer = Lowerer::new();
+        let tacky = lowerer.lower_program(&ast);
+        Ok(tacky)
     }
 
     pub fn codegen(&self) -> Result<asm::Program> {
