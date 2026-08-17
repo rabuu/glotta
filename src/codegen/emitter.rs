@@ -53,6 +53,33 @@ impl<O: io::Write> Emitter<O> {
                 self.emit_operand(src)?;
                 Ok(())
             }
+            asm::Instruction::Sub { src, dst } => {
+                write!(self.output, "sub ")?;
+                self.emit_operand(dst)?;
+                write!(self.output, ", ")?;
+                self.emit_operand(src)?;
+                Ok(())
+            }
+            asm::Instruction::Not(operand) => {
+                write!(self.output, "not ")?;
+                self.emit_operand(operand)?;
+                Ok(())
+            }
+            asm::Instruction::Neg(operand) => {
+                write!(self.output, "neg ")?;
+                self.emit_operand(operand)?;
+                Ok(())
+            }
+            asm::Instruction::Push(operand) => {
+                write!(self.output, "push ")?;
+                self.emit_operand(operand)?;
+                Ok(())
+            }
+            asm::Instruction::Pop(operand) => {
+                write!(self.output, "pop ")?;
+                self.emit_operand(operand)?;
+                Ok(())
+            }
             asm::Instruction::Ret => write!(self.output, "ret"),
         }
     }
@@ -60,7 +87,22 @@ impl<O: io::Write> Emitter<O> {
     fn emit_operand(&mut self, operand: &asm::Operand) -> io::Result<()> {
         match operand {
             asm::Operand::Immediate(int) => write!(self.output, "{int}"),
-            asm::Operand::Register => write!(self.output, "eax"),
+            asm::Operand::Register(register) => self.emit_register(register),
+            asm::Operand::Pseudo(pseudo) => write!(self.output, "PEUDO({pseudo})"),
+            asm::Operand::Stack { offset } => {
+                let sign = if offset.is_negative() { "-" } else { "+" };
+                let abs = offset.abs();
+                write!(self.output, "[rbp {sign} {abs}]")
+            }
+        }
+    }
+
+    fn emit_register(&mut self, register: &asm::Register) -> io::Result<()> {
+        match register {
+            asm::Register::RSP => write!(self.output, "rsp"),
+            asm::Register::RBP => write!(self.output, "rbp"),
+            asm::Register::EAX => write!(self.output, "eax"),
+            asm::Register::R10D => write!(self.output, "r10d"),
         }
     }
 
