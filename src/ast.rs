@@ -32,7 +32,7 @@ pub enum ExpressionKind {
 
 #[derive(Debug, Clone)]
 pub struct IntegerLiteral {
-    pub value: i64,
+    pub value: i32,
     pub span: Span,
 }
 

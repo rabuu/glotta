@@ -43,7 +43,7 @@ pub enum ParsingError {
     #[error("Failed to parse integer literal.")]
     InvalidIntegerLiteral {
         #[source]
-        err: std::num::ParseIntError,
+        error: std::num::ParseIntError,
         #[label]
         span: Span,
     },
@@ -186,10 +186,10 @@ impl<'src> Parser<'src> {
         let token = self.expect(TokenKind::IntegerLiteral)?;
         let source = self.slice(token.span).replace('_', "");
 
-        let value: i64 = source
+        let value: i32 = source
             .parse()
-            .map_err(|err| ParsingError::InvalidIntegerLiteral {
-                err,
+            .map_err(|error| ParsingError::InvalidIntegerLiteral {
+                error,
                 span: token.span,
             })?;
 

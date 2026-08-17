@@ -17,6 +17,6 @@ pub enum Instruction {
 
 #[derive(Debug, Clone)]
 pub enum Operand {
-    Immediate(i64),
+    Immediate(isize),
     Register,
 }
