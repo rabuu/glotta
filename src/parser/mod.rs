@@ -140,14 +140,22 @@ impl<'src> Parser<'src> {
                 match ident.identifier.as_str() {
                     "bit_not" => Ok(ast::Expression {
                         kind: ast::ExpressionKind::Call(ast::CallKind::Builtin(ast::BuiltinCall {
-                            kind: ast::BuiltinCallKind::BitwiseNot { arg: Box::new(arg) },
+                            kind: ast::BuiltinCallKind::Unary(ast::UnaryOperation {
+                                operator: ast::UnaryOperator::BitwiseNot,
+                                arg: Box::new(arg),
+                                span,
+                            }),
                             span,
                         })),
                         span,
                     }),
                     "neg" => Ok(ast::Expression {
                         kind: ast::ExpressionKind::Call(ast::CallKind::Builtin(ast::BuiltinCall {
-                            kind: ast::BuiltinCallKind::Negation { arg: Box::new(arg) },
+                            kind: ast::BuiltinCallKind::Unary(ast::UnaryOperation {
+                                operator: ast::UnaryOperator::Negation,
+                                arg: Box::new(arg),
+                                span,
+                            }),
                             span,
                         })),
                         span,

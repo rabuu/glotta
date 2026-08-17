@@ -50,8 +50,20 @@ pub struct BuiltinCall {
 
 #[derive(Debug, Clone)]
 pub enum BuiltinCallKind {
-    BitwiseNot { arg: Box<Expression> },
-    Negation { arg: Box<Expression> },
+    Unary(UnaryOperation),
+}
+
+#[derive(Debug, Clone)]
+pub struct UnaryOperation {
+    pub operator: UnaryOperator,
+    pub arg: Box<Expression>,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum UnaryOperator {
+    BitwiseNot,
+    Negation,
 }
 
 #[derive(Debug, Clone)]
