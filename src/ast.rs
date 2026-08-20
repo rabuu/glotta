@@ -86,6 +86,12 @@ pub struct FunctionCall {
 
 #[derive(Debug, Clone, Spanned)]
 pub struct ArgumentList {
-    pub arguments: Vec<Expression>,
+    pub inner: Vec<Expression>,
     pub span: Span,
+}
+
+impl ArgumentList {
+    pub fn arity(&self) -> usize {
+        self.inner.len()
+    }
 }

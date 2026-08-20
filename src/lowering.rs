@@ -65,7 +65,80 @@ impl Lowerer {
         call: &ast::BuiltinCall,
         instructions: &mut Vec<tacky::Instruction>,
     ) -> tacky::Value {
-        todo!()
+        let ast::BuiltinCall {
+            operator,
+            arguments,
+            span: _,
+        } = call;
+
+        match operator.kind {
+            ast::BuiltinOperatorKind::BitwiseNot | ast::BuiltinOperatorKind::Negation => {
+                assert_eq!(arguments.arity(), 1, "Known by type checking");
+                let arg = &arguments.inner[0];
+
+                let src = self.lower_expression(arg, instructions);
+                let dst = self.fresh_variable();
+                let op = self
+                    .lower_unary_operator(operator)
+                    .expect("pattern matching ensures this is a unary operator");
+
+                instructions.push(tacky::Instruction::Unary(tacky::Unary {
+                    op,
+                    src,
+                    dst: dst.clone(),
+                }));
+
+                dst
+            }
+            ast::BuiltinOperatorKind::Addition
+            | ast::BuiltinOperatorKind::Multiplication
+            | ast::BuiltinOperatorKind::Subtraction
+            | ast::BuiltinOperatorKind::Division => {
+                assert_eq!(arguments.arity(), 2, "Known by type checking");
+                let lhs = &arguments.inner[0];
+                let rhs = &arguments.inner[1];
+
+                let lhs = self.lower_expression(lhs, instructions);
+                let rhs = self.lower_expression(rhs, instructions);
+                let dst = self.fresh_variable();
+                let op = self
+                    .lower_binary_operator(operator)
+                    .expect("pattern matching ensures this is a binary operator");
+
+                instructions.push(tacky::Instruction::Binary(tacky::Binary {
+                    op,
+                    lhs,
+                    rhs,
+                    dst: dst.clone(),
+                }));
+
+                dst
+            }
+        }
+    }
+
+    fn lower_unary_operator(
+        &self,
+        operator: &ast::BuiltinOperator,
+    ) -> Option<tacky::UnaryOperator> {
+        match operator.kind {
+            ast::BuiltinOperatorKind::BitwiseNot => Some(tacky::UnaryOperator::BitwiseNot),
+            ast::BuiltinOperatorKind::Negation => Some(tacky::UnaryOperator::Negation),
+            _ => None,
+        }
+    }
+
+    fn lower_binary_operator(
+        &self,
+        operator: &ast::BuiltinOperator,
+    ) -> Option<tacky::BinaryOperator> {
+        match operator.kind {
+            ast::BuiltinOperatorKind::Addition => Some(tacky::BinaryOperator::Addition),
+            ast::BuiltinOperatorKind::Multiplication => Some(tacky::BinaryOperator::Multiplication),
+            ast::BuiltinOperatorKind::Subtraction => Some(tacky::BinaryOperator::Subtraction),
+            ast::BuiltinOperatorKind::Division => Some(tacky::BinaryOperator::Division),
+            _ => None,
+        }
     }
 
     fn fresh_identifier(&mut self) -> tacky::Identifier {

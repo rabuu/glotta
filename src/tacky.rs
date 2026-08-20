@@ -15,6 +15,7 @@ pub struct FunctionDefinition {
 pub enum Instruction {
     Return(Value),
     Unary(Unary),
+    Binary(Binary),
 }
 
 #[derive(Debug, Clone)]
@@ -28,6 +29,22 @@ pub struct Unary {
 pub enum UnaryOperator {
     BitwiseNot,
     Negation,
+}
+
+#[derive(Debug, Clone)]
+pub struct Binary {
+    pub op: BinaryOperator,
+    pub lhs: Value,
+    pub rhs: Value,
+    pub dst: Value,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum BinaryOperator {
+    Addition,
+    Multiplication,
+    Subtraction,
+    Division,
 }
 
 #[derive(Debug, Clone)]
