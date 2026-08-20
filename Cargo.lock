@@ -179,10 +179,20 @@ name = "glotta"
 version = "0.1.0"
 dependencies = [
  "clap",
+ "glotta-macros",
  "miette",
  "thiserror",
  "tracing",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "glotta-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 3.0.3",
 ]
 
 [[package]]
