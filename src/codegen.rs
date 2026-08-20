@@ -18,10 +18,10 @@ fn codegen_function_definition(function: &tacky::FunctionDefinition) -> asm::Fun
     let name = name.to_string();
 
     let prologue = vec![
-        asm::Instruction::Push(asm::Operand::Register(asm::Register::RBP)),
+        asm::Instruction::Push(asm::Register::RBP.into()),
         asm::Instruction::Mov {
-            src: asm::Operand::Register(asm::Register::RSP),
-            dst: asm::Operand::Register(asm::Register::RBP),
+            src: asm::Register::RSP.into(),
+            dst: asm::Register::RBP.into(),
         },
     ];
 
@@ -38,7 +38,7 @@ fn codegen_function_definition(function: &tacky::FunctionDefinition) -> asm::Fun
     // allocate stack space
     instructions.push(asm::Instruction::Sub {
         src: asm::Operand::Immediate(required_stack_space as isize),
-        dst: asm::Operand::Register(asm::Register::RSP),
+        dst: asm::Register::RSP.into(),
     });
 
     instructions.append(&mut body_instructions);
@@ -51,17 +51,15 @@ fn codegen_instruction(instruction: &tacky::Instruction, instructions: &mut Vec<
         tacky::Instruction::Return(value) => {
             instructions.push(asm::Instruction::Mov {
                 src: codegen_value(value),
-                dst: asm::Operand::Register(asm::Register::EAX),
+                dst: asm::Register::EAX.into(),
             });
 
             // function epilogue
             instructions.push(asm::Instruction::Mov {
-                src: asm::Operand::Register(asm::Register::RBP),
-                dst: asm::Operand::Register(asm::Register::RSP),
+                src: asm::Register::RBP.into(),
+                dst: asm::Register::RSP.into(),
             });
-            instructions.push(asm::Instruction::Pop(asm::Operand::Register(
-                asm::Register::RBP,
-            )));
+            instructions.push(asm::Instruction::Pop(asm::Register::RBP.into()));
 
             instructions.push(asm::Instruction::Ret);
         }
@@ -109,12 +107,12 @@ fn codegen_instruction(instruction: &tacky::Instruction, instructions: &mut Vec<
                 tacky::BinaryOperator::Division => instructions.extend([
                     asm::Instruction::Mov {
                         src: lhs,
-                        dst: asm::Operand::Register(asm::Register::EAX),
+                        dst: asm::Register::EAX.into(),
                     },
                     asm::Instruction::Cdq,
                     asm::Instruction::IDiv(rhs),
                     asm::Instruction::Mov {
-                        src: asm::Operand::Register(asm::Register::EAX),
+                        src: asm::Register::EAX.into(),
                         dst,
                     },
                 ]),
@@ -189,13 +187,13 @@ fn rewrite_invalid_instructions(instructions: &mut Vec<asm::Instruction>) {
             } => {
                 instructions[i] = asm::Instruction::Mov {
                     src: asm::Operand::Stack { offset: src_offset },
-                    dst: asm::Operand::Register(asm::Register::TEMP_SRC),
+                    dst: asm::Register::TEMP_SRC.into(),
                 };
 
                 instructions.insert(
                     i + 1,
                     asm::Instruction::Mov {
-                        src: asm::Operand::Register(asm::Register::TEMP_SRC),
+                        src: asm::Register::TEMP_SRC.into(),
                         dst: asm::Operand::Stack { offset: dst_offset },
                     },
                 );
@@ -208,13 +206,13 @@ fn rewrite_invalid_instructions(instructions: &mut Vec<asm::Instruction>) {
             } => {
                 instructions[i] = asm::Instruction::Mov {
                     src: asm::Operand::Stack { offset: src_offset },
-                    dst: asm::Operand::Register(asm::Register::TEMP_SRC),
+                    dst: asm::Register::TEMP_SRC.into(),
                 };
 
                 instructions.insert(
                     i + 1,
                     asm::Instruction::Add {
-                        src: asm::Operand::Register(asm::Register::TEMP_SRC),
+                        src: asm::Register::TEMP_SRC.into(),
                         dst: asm::Operand::Stack { offset: dst_offset },
                     },
                 );
@@ -227,13 +225,13 @@ fn rewrite_invalid_instructions(instructions: &mut Vec<asm::Instruction>) {
             } => {
                 instructions[i] = asm::Instruction::Mov {
                     src: asm::Operand::Stack { offset: src_offset },
-                    dst: asm::Operand::Register(asm::Register::TEMP_SRC),
+                    dst: asm::Register::TEMP_SRC.into(),
                 };
 
                 instructions.insert(
                     i + 1,
                     asm::Instruction::Sub {
-                        src: asm::Operand::Register(asm::Register::TEMP_SRC),
+                        src: asm::Register::TEMP_SRC.into(),
                         dst: asm::Operand::Stack { offset: dst_offset },
                     },
                 );
@@ -248,21 +246,21 @@ fn rewrite_invalid_instructions(instructions: &mut Vec<asm::Instruction>) {
 
                 instructions[i] = asm::Instruction::Mov {
                     src: asm::Operand::Stack { offset: dst_offset },
-                    dst: asm::Operand::Register(asm::Register::TEMP_DST),
+                    dst: asm::Register::TEMP_DST.into(),
                 };
 
                 instructions.insert(
                     i + 1,
                     asm::Instruction::IMul {
                         src,
-                        dst: asm::Operand::Register(asm::Register::TEMP_DST),
+                        dst: asm::Register::TEMP_DST.into(),
                     },
                 );
 
                 instructions.insert(
                     i + 2,
                     asm::Instruction::Mov {
-                        src: asm::Operand::Register(asm::Register::TEMP_DST),
+                        src: asm::Register::TEMP_DST.into(),
                         dst: asm::Operand::Stack { offset: dst_offset },
                     },
                 );
@@ -272,12 +270,12 @@ fn rewrite_invalid_instructions(instructions: &mut Vec<asm::Instruction>) {
             asm::Instruction::IDiv(asm::Operand::Immediate(imm)) => {
                 instructions[i] = asm::Instruction::Mov {
                     src: asm::Operand::Immediate(imm),
-                    dst: asm::Operand::Register(asm::Register::TEMP_SRC),
+                    dst: asm::Register::TEMP_SRC.into(),
                 };
 
                 instructions.insert(
                     i + 1,
-                    asm::Instruction::IDiv(asm::Operand::Register(asm::Register::TEMP_SRC)),
+                    asm::Instruction::IDiv(asm::Register::TEMP_SRC.into()),
                 );
             }
 

@@ -36,6 +36,12 @@ pub enum Operand {
     Stack { offset: isize },
 }
 
+impl From<Register> for Operand {
+    fn from(value: Register) -> Self {
+        Self::Register(value)
+    }
+}
+
 #[derive(Debug, Clone)]
 pub enum Register {
     /// stack pointer
