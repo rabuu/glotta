@@ -16,11 +16,15 @@ pub struct FunctionDefinition {
 #[derive(Debug, Clone)]
 pub enum Instruction {
     Mov { src: Operand, dst: Operand },
+    Add { src: Operand, dst: Operand },
     Sub { src: Operand, dst: Operand },
+    IMul { src: Operand, dst: Operand },
     Not(Operand),
     Neg(Operand),
+    IDiv(Operand),
     Push(Operand),
     Pop(Operand),
+    Cdq,
     Ret,
 }
 
@@ -41,11 +45,14 @@ pub enum Register {
     RBP,
 
     EAX,
+    EDX,
     R10D,
+    R11D,
 }
 
 impl Register {
-    pub const TEMP: Register = Register::R10D;
+    pub const TEMP_SRC: Register = Register::R10D;
+    pub const TEMP_DST: Register = Register::R11D;
 }
 
 pub struct Emitter<O: io::Write> {
@@ -104,6 +111,20 @@ impl<O: io::Write> Emitter<O> {
                 self.emit_operand(src)?;
                 Ok(())
             }
+            Instruction::Add { src, dst } => {
+                write!(self.output, "add ")?;
+                self.emit_operand(dst)?;
+                write!(self.output, ", ")?;
+                self.emit_operand(src)?;
+                Ok(())
+            }
+            Instruction::IMul { src, dst } => {
+                write!(self.output, "imul ")?;
+                self.emit_operand(dst)?;
+                write!(self.output, ", ")?;
+                self.emit_operand(src)?;
+                Ok(())
+            }
             Instruction::Not(operand) => {
                 write!(self.output, "not ")?;
                 self.emit_operand(operand)?;
@@ -114,6 +135,12 @@ impl<O: io::Write> Emitter<O> {
                 self.emit_operand(operand)?;
                 Ok(())
             }
+            Instruction::IDiv(operand) => {
+                write!(self.output, "idiv ")?;
+                self.emit_operand(operand)?;
+                Ok(())
+            }
+            Instruction::Cdq => write!(self.output, "cdq"),
             Instruction::Push(operand) => {
                 write!(self.output, "push ")?;
                 self.emit_operand(operand)?;
@@ -146,7 +173,9 @@ impl<O: io::Write> Emitter<O> {
             Register::RSP => write!(self.output, "rsp"),
             Register::RBP => write!(self.output, "rbp"),
             Register::EAX => write!(self.output, "eax"),
+            Register::EDX => write!(self.output, "edx"),
             Register::R10D => write!(self.output, "r10d"),
+            Register::R11D => write!(self.output, "r11d"),
         }
     }
 
