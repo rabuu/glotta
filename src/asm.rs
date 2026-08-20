@@ -62,27 +62,27 @@ impl Register {
 }
 
 pub struct Emitter<O: io::Write> {
-    output: O,
+    out: O,
 }
 
 impl<O: io::Write> Emitter<O> {
-    pub fn new(output: O) -> Self {
-        Self { output }
+    pub fn new(out: O) -> Self {
+        Self { out }
     }
 
     pub fn emit_program(mut self, program: &Program) -> io::Result<()> {
         let Program { function } = program;
 
-        writeln!(self.output, "section .text\n")?;
+        writeln!(self.out, "section .text\n")?;
         self.emit_function_definition(function)?;
 
         self.newline()?;
         writeln!(
-            self.output,
+            self.out,
             "section .note.GNU-stack noalloc noexec nowrite progbits"
         )?;
 
-        self.output.flush()?;
+        self.out.flush()?;
 
         Ok(())
     }
@@ -90,10 +90,10 @@ impl<O: io::Write> Emitter<O> {
     fn emit_function_definition(&mut self, function: &FunctionDefinition) -> io::Result<()> {
         let FunctionDefinition { name, instructions } = function;
 
-        writeln!(self.output, "global {name}")?;
-        writeln!(self.output, "{name}:")?;
+        writeln!(self.out, "global {name}")?;
+        writeln!(self.out, "{name}:")?;
         for instruction in instructions {
-            write!(self.output, "{INDENT}")?;
+            write!(self.out, "{INDENT}")?;
             self.emit_instruction(instruction)?;
             self.newline()?;
         }
@@ -104,88 +104,88 @@ impl<O: io::Write> Emitter<O> {
     fn emit_instruction(&mut self, instruction: &Instruction) -> io::Result<()> {
         match instruction {
             Instruction::Mov { src, dst } => {
-                write!(self.output, "mov ")?;
+                write!(self.out, "mov ")?;
                 self.emit_operand(dst)?;
-                write!(self.output, ", ")?;
+                write!(self.out, ", ")?;
                 self.emit_operand(src)?;
                 Ok(())
             }
             Instruction::Sub { src, dst } => {
-                write!(self.output, "sub ")?;
+                write!(self.out, "sub ")?;
                 self.emit_operand(dst)?;
-                write!(self.output, ", ")?;
+                write!(self.out, ", ")?;
                 self.emit_operand(src)?;
                 Ok(())
             }
             Instruction::Add { src, dst } => {
-                write!(self.output, "add ")?;
+                write!(self.out, "add ")?;
                 self.emit_operand(dst)?;
-                write!(self.output, ", ")?;
+                write!(self.out, ", ")?;
                 self.emit_operand(src)?;
                 Ok(())
             }
             Instruction::IMul { src, dst } => {
-                write!(self.output, "imul ")?;
+                write!(self.out, "imul ")?;
                 self.emit_operand(dst)?;
-                write!(self.output, ", ")?;
+                write!(self.out, ", ")?;
                 self.emit_operand(src)?;
                 Ok(())
             }
             Instruction::Not(operand) => {
-                write!(self.output, "not ")?;
+                write!(self.out, "not ")?;
                 self.emit_operand(operand)?;
                 Ok(())
             }
             Instruction::Neg(operand) => {
-                write!(self.output, "neg ")?;
+                write!(self.out, "neg ")?;
                 self.emit_operand(operand)?;
                 Ok(())
             }
             Instruction::IDiv(operand) => {
-                write!(self.output, "idiv ")?;
+                write!(self.out, "idiv ")?;
                 self.emit_operand(operand)?;
                 Ok(())
             }
-            Instruction::Cdq => write!(self.output, "cdq"),
+            Instruction::Cdq => write!(self.out, "cdq"),
             Instruction::Push(operand) => {
-                write!(self.output, "push ")?;
+                write!(self.out, "push ")?;
                 self.emit_operand(operand)?;
                 Ok(())
             }
             Instruction::Pop(operand) => {
-                write!(self.output, "pop ")?;
+                write!(self.out, "pop ")?;
                 self.emit_operand(operand)?;
                 Ok(())
             }
-            Instruction::Ret => write!(self.output, "ret"),
+            Instruction::Ret => write!(self.out, "ret"),
         }
     }
 
     fn emit_operand(&mut self, operand: &Operand) -> io::Result<()> {
         match operand {
-            Operand::Immediate(int) => write!(self.output, "{int}"),
+            Operand::Immediate(int) => write!(self.out, "{int}"),
             Operand::Register(register) => self.emit_register(register),
-            Operand::Pseudo(pseudo) => write!(self.output, "<{pseudo}>"),
+            Operand::Pseudo(pseudo) => write!(self.out, "<{pseudo}>"),
             Operand::Stack { offset } => {
                 let sign = if offset.is_negative() { "-" } else { "+" };
                 let abs = offset.abs();
-                write!(self.output, "[rbp {sign} {abs}]")
+                write!(self.out, "[rbp {sign} {abs}]")
             }
         }
     }
 
     fn emit_register(&mut self, register: &Register) -> io::Result<()> {
         match register {
-            Register::RSP => write!(self.output, "rsp"),
-            Register::RBP => write!(self.output, "rbp"),
-            Register::EAX => write!(self.output, "eax"),
-            Register::EDX => write!(self.output, "edx"),
-            Register::R10D => write!(self.output, "r10d"),
-            Register::R11D => write!(self.output, "r11d"),
+            Register::RSP => write!(self.out, "rsp"),
+            Register::RBP => write!(self.out, "rbp"),
+            Register::EAX => write!(self.out, "eax"),
+            Register::EDX => write!(self.out, "edx"),
+            Register::R10D => write!(self.out, "r10d"),
+            Register::R11D => write!(self.out, "r11d"),
         }
     }
 
     fn newline(&mut self) -> io::Result<()> {
-        writeln!(self.output)
+        writeln!(self.out)
     }
 }
