@@ -22,6 +22,7 @@ pub enum TokenKind {
 
     Equals,
     Colon,
+    Comma,
 
     Comment,
     Whitespace,
@@ -40,6 +41,7 @@ impl fmt::Display for TokenKind {
             TokenKind::ParenR => write!(f, "`)`"),
             TokenKind::Equals => write!(f, "`=`"),
             TokenKind::Colon => write!(f, "`:`"),
+            TokenKind::Comma => write!(f, "`,`"),
             TokenKind::Comment => write!(f, "comment"),
             TokenKind::Whitespace => write!(f, "whitespace"),
             TokenKind::Invalid => write!(f, "invalid token"),

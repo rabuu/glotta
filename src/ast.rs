@@ -52,32 +52,40 @@ pub enum Call {
 }
 
 #[derive(Debug, Clone, Spanned)]
-pub enum BuiltinCall {
-    Unary(UnaryOperation),
-}
-
-#[derive(Debug, Clone, Spanned)]
-pub struct UnaryOperation {
-    pub operator: UnaryOperator,
-    pub arg: Box<Expression>,
+pub struct BuiltinCall {
+    pub operator: BuiltinOperator,
+    pub arguments: ArgumentList,
     pub span: Span,
 }
 
 #[derive(Debug, Clone, Copy, Spanned)]
-pub struct UnaryOperator {
-    pub kind: UnaryOperatorKind,
+pub struct BuiltinOperator {
+    pub kind: BuiltinOperatorKind,
     pub span: Span,
 }
 
 #[derive(Debug, Clone, Copy)]
-pub enum UnaryOperatorKind {
+pub enum BuiltinOperatorKind {
+    // unary
     BitwiseNot,
     Negation,
+
+    // binary
+    Addition,
+    Multiplication,
+    Subtraction,
+    Division,
 }
 
 #[derive(Debug, Clone, Spanned)]
 pub struct FunctionCall {
     pub function_name: Identifier,
-    pub args: Vec<Expression>,
+    pub arguments: ArgumentList,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, Spanned)]
+pub struct ArgumentList {
+    pub arguments: Vec<Expression>,
     pub span: Span,
 }

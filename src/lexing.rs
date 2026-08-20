@@ -58,6 +58,7 @@ impl<'src> Lexer<'src> {
             ')' => TokenKind::ParenR,
             '=' => TokenKind::Equals,
             ':' => TokenKind::Colon,
+            ',' => TokenKind::Comma,
             _ => TokenKind::Invalid,
         };
 

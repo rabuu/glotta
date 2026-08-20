@@ -119,48 +119,44 @@ impl<'src> Parser<'src> {
                 // this will change, once variables are implemented.
 
                 let ident = self.parse_identifier()?;
-                let start = ident.span;
+                let start = ident.span();
 
-                let _paren_l = self.expect(TokenKind::ParenL)?;
-                let arg = self.parse_expression()?;
-                let paren_r = self.expect(TokenKind::ParenR)?;
-                let end = paren_r.span;
+                let arguments = self.parse_arguments()?;
+                let end = arguments.span();
 
                 let span = start.to(end);
 
-                match ident.identifier.as_str() {
-                    "bit_not" => Ok(ast::Expression::Call(ast::Call::Builtin(
-                        ast::BuiltinCall::Unary(ast::UnaryOperation {
-                            operator: ast::UnaryOperator {
-                                kind: ast::UnaryOperatorKind::BitwiseNot,
-                                span: ident.span,
-                            },
-                            arg: Box::new(arg),
-                            span,
-                        }),
-                    ))),
-                    "neg" => Ok(ast::Expression::Call(ast::Call::Builtin(
-                        ast::BuiltinCall::Unary(ast::UnaryOperation {
-                            operator: ast::UnaryOperator {
-                                kind: ast::UnaryOperatorKind::Negation,
-                                span: ident.span,
-                            },
-                            arg: Box::new(arg),
-                            span,
-                        }),
-                    ))),
-                    _ => Ok(ast::Expression::Call(ast::Call::Function(
-                        ast::FunctionCall {
-                            function_name: ident,
-                            args: vec![arg],
-                            span,
+                let builtin_call = match ident.identifier.as_str() {
+                    "bit_not" => Some(ast::BuiltinOperatorKind::BitwiseNot),
+                    "neg" => Some(ast::BuiltinOperatorKind::Negation),
+                    "add" => Some(ast::BuiltinOperatorKind::Addition),
+                    "mul" => Some(ast::BuiltinOperatorKind::Multiplication),
+                    "sub" => Some(ast::BuiltinOperatorKind::Subtraction),
+                    "div" => Some(ast::BuiltinOperatorKind::Division),
+                    _ => None,
+                };
+
+                let call = match builtin_call {
+                    Some(kind) => ast::Call::Builtin(ast::BuiltinCall {
+                        operator: ast::BuiltinOperator {
+                            kind,
+                            span: ident.span(),
                         },
-                    ))),
-                }
+                        arguments,
+                        span,
+                    }),
+                    None => ast::Call::Function(ast::FunctionCall {
+                        function_name: ident,
+                        arguments,
+                        span,
+                    }),
+                };
+
+                Ok(ast::Expression::Call(call))
             }
-            kind => Err(ParsingError::UnexpectedToken {
+            got => Err(ParsingError::UnexpectedToken {
                 expected: String::from("an expression"),
-                got: kind,
+                got,
                 span: first_token.span,
             }),
         }
@@ -191,5 +187,53 @@ impl<'src> Parser<'src> {
             value,
             span: token.span,
         })
+    }
+
+    fn parse_arguments(&mut self) -> Result<ast::ArgumentList> {
+        let left = self.expect(TokenKind::ParenL)?;
+
+        let mut arguments = Vec::new();
+
+        loop {
+            match self.tokens.peek().map(|tok| tok.kind) {
+                Some(TokenKind::ParenR) => break,
+                Some(_) => {
+                    let expr = self.parse_expression()?;
+                    arguments.push(expr);
+
+                    match self.tokens.peek() {
+                        Some(token) if token.kind == TokenKind::ParenR => break,
+                        Some(token) if token.kind == TokenKind::Comma => {
+                            self.tokens.next().unwrap();
+                            continue;
+                        }
+                        Some(token) => {
+                            return Err(ParsingError::UnexpectedToken {
+                                expected: format!("{} or {}", TokenKind::ParenR, TokenKind::Comma),
+                                got: token.kind,
+                                span: token.span,
+                            });
+                        }
+                        None => {
+                            return Err(ParsingError::UnexpectedEof {
+                                expected: format!("{} or {}", TokenKind::ParenR, TokenKind::Comma),
+                            });
+                        }
+                    }
+                }
+                None => {
+                    return Err(ParsingError::UnexpectedEof {
+                        expected: "argument list".to_string(),
+                    });
+                }
+            }
+        }
+
+        let right = self.expect(TokenKind::ParenR)?;
+
+        return Ok(ast::ArgumentList {
+            arguments,
+            span: left.span.to(right.span),
+        });
     }
 }

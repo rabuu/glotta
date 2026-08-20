@@ -65,33 +65,7 @@ impl Lowerer {
         call: &ast::BuiltinCall,
         instructions: &mut Vec<tacky::Instruction>,
     ) -> tacky::Value {
-        match call {
-            ast::BuiltinCall::Unary(ast::UnaryOperation {
-                operator,
-                arg,
-                span: _,
-            }) => {
-                let src = self.lower_expression(arg, instructions);
-                let dst = self.fresh_variable();
-                let op = self.lower_unary_operator(operator);
-
-                let instruction = tacky::Instruction::Unary(tacky::Unary {
-                    op,
-                    src,
-                    dst: dst.clone(),
-                });
-                instructions.push(instruction);
-
-                return dst;
-            }
-        }
-    }
-
-    fn lower_unary_operator(&self, operator: &ast::UnaryOperator) -> tacky::UnaryOperator {
-        match operator.kind {
-            ast::UnaryOperatorKind::BitwiseNot => tacky::UnaryOperator::BitwiseNot,
-            ast::UnaryOperatorKind::Negation => tacky::UnaryOperator::Negation,
-        }
+        todo!()
     }
 
     fn fresh_identifier(&mut self) -> tacky::Identifier {
