@@ -1,8 +1,8 @@
 use std::collections::VecDeque;
 use std::str::Chars;
 
-use crate::parsing::token::{Token, TokenKind};
 use crate::span::Span;
+use crate::token::{Token, TokenKind};
 
 pub struct Lexer<'src> {
     source: &'src str,

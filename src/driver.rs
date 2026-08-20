@@ -6,11 +6,11 @@ use miette::Diagnostic;
 use thiserror::Error;
 use tracing::info;
 
-use crate::codegen::emitter::Emitter;
-use crate::codegen::{self, asm};
+use crate::lexing::Lexer;
 use crate::lowering::Lowerer;
-use crate::parsing::{Lexer, Parser, ParsingError};
+use crate::parsing::{Parser, ParsingError};
 use crate::span::{SourcePosition, Span};
+use crate::{asm, codegen};
 use crate::{ast, tacky};
 
 type Result<T> = std::result::Result<T, DriverError>;
@@ -108,7 +108,7 @@ impl Driver {
 
         let file = fs::File::create(&assembly_path)?;
         let writer = io::BufWriter::new(file);
-        let emitter = Emitter::new(writer);
+        let emitter = asm::Emitter::new(writer);
         emitter.emit_program(&asm)?;
 
         Ok(assembly_path)
@@ -124,7 +124,7 @@ impl Driver {
 
         let stdout = io::stdout().lock();
         let writer = io::BufWriter::new(stdout);
-        let emitter = Emitter::new(writer);
+        let emitter = asm::Emitter::new(writer);
         emitter.emit_program(&asm)?;
 
         Ok(())

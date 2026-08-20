@@ -7,7 +7,7 @@ use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
 use glotta::driver::Driver;
-use glotta::parsing::TokenStream;
+use glotta::token_stream::TokenStream;
 
 #[derive(Debug, Parser)]
 #[clap(version, about = None, long_about = None)]

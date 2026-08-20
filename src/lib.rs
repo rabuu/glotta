@@ -1,7 +1,11 @@
+pub mod asm;
 pub mod ast;
 pub mod codegen;
 pub mod driver;
+pub mod lexing;
 pub mod lowering;
 pub mod parsing;
 pub mod span;
 pub mod tacky;
+pub mod token;
+pub mod token_stream;

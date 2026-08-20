@@ -1,7 +1,7 @@
 use std::collections::VecDeque;
 
-use crate::parsing::lexing::Lexer;
-use crate::parsing::token::{Token, TokenKind};
+use crate::lexing::Lexer;
+use crate::token::{Token, TokenKind};
 
 pub struct TokenStream<'src> {
     lexer: Lexer<'src>,

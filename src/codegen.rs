@@ -1,9 +1,6 @@
 use std::collections::HashMap;
 
-use crate::tacky;
-
-pub mod asm;
-pub mod emitter;
+use crate::{asm, tacky};
 
 /// An Int takes four bytes in memory.
 /// For now, every variable is an Int.

@@ -1,16 +1,11 @@
-mod lexing;
-mod token;
-mod token_stream;
-
 use miette::Diagnostic;
 use thiserror::Error;
 
 use crate::ast;
+use crate::lexing::Lexer;
 use crate::span::{Span, Spanned};
-
-pub use lexing::Lexer;
-pub use token::{Token, TokenKind};
-pub use token_stream::TokenStream;
+use crate::token::{Token, TokenKind};
+use crate::token_stream::TokenStream;
 
 type Result<T> = std::result::Result<T, ParsingError>;
 
