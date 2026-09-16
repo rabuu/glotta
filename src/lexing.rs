@@ -50,6 +50,10 @@ impl<'src> Lexer<'src> {
                     _ => TokenKind::Identifier,
                 }
             }
+            '-' if self.peek() == Some('>') => {
+                self.bump().unwrap();
+                TokenKind::Arrow
+            }
             c if c.is_ascii_digit() || c == '-' => {
                 self.eat_while(is_integer_literal);
                 TokenKind::IntegerLiteral

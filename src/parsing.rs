@@ -95,6 +95,9 @@ impl<'src> Parser<'src> {
         let let_kw = self.expect(TokenKind::Let)?;
         let name = self.parse_identifier()?;
         self.expect(TokenKind::Colon)?;
+        self.expect(TokenKind::ParenL)?;
+        self.expect(TokenKind::ParenR)?;
+        self.expect(TokenKind::Arrow)?;
         self.expect(TokenKind::Int)?;
         self.expect(TokenKind::Equals)?;
         let body = self.parse_expression()?;
