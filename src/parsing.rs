@@ -92,13 +92,13 @@ impl<'src> Parser<'src> {
     }
 
     fn parse_function_definition(&mut self) -> Result<ast::FunctionDefinition> {
-        let fun = self.expect(TokenKind::Fun)?;
+        let let_kw = self.expect(TokenKind::Let)?;
         let name = self.parse_identifier()?;
         self.expect(TokenKind::Colon)?;
         self.expect(TokenKind::Int)?;
         self.expect(TokenKind::Equals)?;
         let body = self.parse_expression()?;
-        let span = fun.span.to(body.span());
+        let span = let_kw.span.to(body.span());
 
         Ok(ast::FunctionDefinition { name, body, span })
     }

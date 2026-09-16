@@ -45,7 +45,7 @@ impl<'src> Lexer<'src> {
             c if is_identifier_start(c) => {
                 self.eat_while(is_identifier);
                 match self.slice_from(start) {
-                    "fun" => TokenKind::Fun,
+                    "let" => TokenKind::Let,
                     "Int" => TokenKind::Int,
                     _ => TokenKind::Identifier,
                 }

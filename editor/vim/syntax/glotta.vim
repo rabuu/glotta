@@ -14,12 +14,11 @@ syn keyword glottaBoolean true false
 syn keyword glottaConditional if then else match
 syn keyword glottaRepeat loop
 syn match glottaOperator "[+*-/<>:=!]"
-syn keyword glottaKeyword fun val var typ pub use return
+syn keyword glottaKeyword let var typ use return
 
-syn keyword glottaType Unit Bool Byte Nat Int Float Str Ptr
+syn keyword glottaType Bool Byte Nat Int Float Str Ptr
 syn keyword glottaStructure alias
 
-syn keyword glottaSpecial self unit
 syn match glottaDelimiter "[,;.]"
 
 syn match glottaComment "//.*$"
@@ -36,7 +35,6 @@ hi def link glottaOperator Operator
 hi def link glottaKeyword Keyword
 hi def link glottaType Type
 hi def link glottaStructure Structure
-hi def link glottaSpecial Special
 hi def link glottaDelimiter Delimiter
 
 let b:current_syntax = "glotta"
