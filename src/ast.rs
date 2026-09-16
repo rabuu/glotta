@@ -21,16 +21,10 @@ pub struct FunctionDefinition {
     pub span: Span,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Spanned)]
 pub struct Identifier {
     pub identifier: String,
     pub span: Span,
-}
-
-impl Spanned for Identifier {
-    fn span(&self) -> Span {
-        self.span
-    }
 }
 
 #[derive(Debug, Clone, Spanned)]
