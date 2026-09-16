@@ -63,6 +63,7 @@ impl<'src> Lexer<'src> {
             '=' => TokenKind::Equals,
             ':' => TokenKind::Colon,
             ',' => TokenKind::Comma,
+            '#' => TokenKind::Hash,
             _ => TokenKind::Invalid,
         };
 

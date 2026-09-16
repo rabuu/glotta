@@ -117,9 +117,14 @@ impl<'src> Parser<'src> {
                 let constant = self.parse_integer_constant()?;
                 Ok(ast::Expression::Constant(constant))
             }
-            TokenKind::Identifier => {
+            TokenKind::Identifier | TokenKind::Hash => {
                 // for now, an identifier always means a call.
                 // this will change, once variables are implemented.
+
+                let is_builtin = first_token.kind == TokenKind::Hash;
+                if is_builtin {
+                    self.expect(TokenKind::Hash)?;
+                }
 
                 let ident = self.parse_identifier()?;
                 let start = ident.span();
@@ -129,30 +134,31 @@ impl<'src> Parser<'src> {
 
                 let span = start.to(end);
 
-                let builtin_call = match ident.identifier.as_str() {
-                    "bit_not" => Some(ast::BuiltinOperatorKind::BitwiseNot),
-                    "neg" => Some(ast::BuiltinOperatorKind::Negation),
-                    "add" => Some(ast::BuiltinOperatorKind::Addition),
-                    "mul" => Some(ast::BuiltinOperatorKind::Multiplication),
-                    "sub" => Some(ast::BuiltinOperatorKind::Subtraction),
-                    "div" => Some(ast::BuiltinOperatorKind::Division),
-                    _ => None,
-                };
+                let call = if is_builtin {
+                    let kind = match ident.identifier.as_str() {
+                        "bit_not" => ast::BuiltinOperatorKind::BitwiseNot,
+                        "neg" => ast::BuiltinOperatorKind::Negation,
+                        "add" => ast::BuiltinOperatorKind::Addition,
+                        "mul" => ast::BuiltinOperatorKind::Multiplication,
+                        "sub" => ast::BuiltinOperatorKind::Subtraction,
+                        "div" => ast::BuiltinOperatorKind::Division,
+                        x => todo!("{:?}", x),
+                    };
 
-                let call = match builtin_call {
-                    Some(kind) => ast::Call::Builtin(ast::BuiltinCall {
+                    ast::Call::Builtin(ast::BuiltinCall {
                         operator: ast::BuiltinOperator {
                             kind,
                             span: ident.span(),
                         },
                         arguments,
                         span,
-                    }),
-                    None => ast::Call::Function(ast::FunctionCall {
+                    })
+                } else {
+                    ast::Call::Function(ast::FunctionCall {
                         function_name: ident,
                         arguments,
                         span,
-                    }),
+                    })
                 };
 
                 Ok(ast::Expression::Call(call))

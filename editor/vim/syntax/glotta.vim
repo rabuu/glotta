@@ -7,6 +7,8 @@ syn match glottaStringEscape "\\[ntr\\\"']" contained
 syn match glottaStringEscape "\\x[0-9a-fA-F]\{2}" contained
 syn match glottaStringEscape "\\u[0-9a-fA-F]\{4}" contained
 
+syn match glottaBuiltin "#[a-zA-Z_][a-zA-Z0-9_]*"
+
 syn match glottaNumber "-\=\<[0-9][0-9_]*\>"
 syn match glottaFloat "-\=\<[0-9]*\.[0-9]*\>"
 syn keyword glottaBoolean true false
@@ -32,6 +34,7 @@ hi def link glottaBoolean Boolean
 hi def link glottaConditional Conditional
 hi def link glottaRepeat Repeat
 hi def link glottaOperator Operator
+hi def link glottaBuiltin Special
 hi def link glottaKeyword Keyword
 hi def link glottaType Type
 hi def link glottaStructure Structure
