@@ -138,11 +138,20 @@ impl<'src> Parser<'src> {
                     let kind = match ident.identifier.as_str() {
                         "bit_not" => ast::BuiltinOperatorKind::BitwiseNot,
                         "neg" => ast::BuiltinOperatorKind::Negation,
+                        "not" => ast::BuiltinOperatorKind::Not,
                         "add" => ast::BuiltinOperatorKind::Addition,
                         "mul" => ast::BuiltinOperatorKind::Multiplication,
                         "sub" => ast::BuiltinOperatorKind::Subtraction,
                         "div" => ast::BuiltinOperatorKind::Division,
                         "rem" => ast::BuiltinOperatorKind::Remainder,
+                        "and" => ast::BuiltinOperatorKind::And,
+                        "or" => ast::BuiltinOperatorKind::Or,
+                        "eq" => ast::BuiltinOperatorKind::Equal,
+                        "neq" => ast::BuiltinOperatorKind::NotEqual,
+                        "lt" => ast::BuiltinOperatorKind::LessThan,
+                        "leq" => ast::BuiltinOperatorKind::LessOrEqual,
+                        "gt" => ast::BuiltinOperatorKind::GreaterThan,
+                        "geq" => ast::BuiltinOperatorKind::GreaterOrEqual,
                         x => todo!("{:?}", x),
                     };
 

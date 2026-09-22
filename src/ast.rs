@@ -63,6 +63,7 @@ pub enum BuiltinOperatorKind {
     // unary
     BitwiseNot,
     Negation,
+    Not,
 
     // binary
     Addition,
@@ -70,6 +71,14 @@ pub enum BuiltinOperatorKind {
     Subtraction,
     Division,
     Remainder,
+    And,
+    Or,
+    Equal,
+    NotEqual,
+    LessThan,
+    LessOrEqual,
+    GreaterThan,
+    GreaterOrEqual,
 }
 
 #[derive(Debug, Clone, Spanned)]
