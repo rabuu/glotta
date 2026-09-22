@@ -152,7 +152,7 @@ impl<'src> Parser<'src> {
                         "leq" => ast::BuiltinOperatorKind::LessOrEqual,
                         "gt" => ast::BuiltinOperatorKind::GreaterThan,
                         "geq" => ast::BuiltinOperatorKind::GreaterOrEqual,
-                        x => todo!("{:?}", x),
+                        x => unimplemented!("{}", x),
                     };
 
                     ast::Call::Builtin(ast::BuiltinCall {
