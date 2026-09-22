@@ -152,11 +152,9 @@ fn run(cli: CliArgs) -> miette::Result<()> {
                     println!("{ast:#?}");
                     Ok(())
                 }
-                CliDebugStage::Tacky => {
-                    let tacky = driver.tacky().map_err(|err| driver.to_report(err))?;
-                    println!("{tacky:#?}");
-                    Ok(())
-                }
+                CliDebugStage::Tacky => driver
+                    .tacky_to_stdout()
+                    .map_err(|err| driver.to_report(err)),
                 CliDebugStage::Assembly => driver
                     .assembly_to_stdout()
                     .map_err(|err| driver.to_report(err)),

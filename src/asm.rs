@@ -1,7 +1,5 @@
 use std::io;
 
-const INDENT: &str = "    ";
-
 #[derive(Debug, Clone)]
 pub struct Program {
     pub function: FunctionDefinition,
@@ -66,6 +64,8 @@ pub struct Emitter<O: io::Write> {
 }
 
 impl<O: io::Write> Emitter<O> {
+    const INDENT: &str = "    ";
+
     pub fn new(out: O) -> Self {
         Self { out }
     }
@@ -93,7 +93,7 @@ impl<O: io::Write> Emitter<O> {
         writeln!(self.out, "global {name}")?;
         writeln!(self.out, "{name}:")?;
         for instruction in instructions {
-            write!(self.out, "{INDENT}")?;
+            self.indent()?;
             self.emit_instruction(instruction)?;
             self.newline()?;
         }
@@ -187,5 +187,9 @@ impl<O: io::Write> Emitter<O> {
 
     fn newline(&mut self) -> io::Result<()> {
         writeln!(self.out)
+    }
+
+    fn indent(&mut self) -> io::Result<()> {
+        write!(self.out, "{}", Self::INDENT)
     }
 }

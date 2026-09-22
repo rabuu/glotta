@@ -84,6 +84,22 @@ impl Driver {
         Ok(tacky)
     }
 
+    pub fn tacky_to_stdout(&self) -> Result<()> {
+        let tacky = self.tacky()?;
+
+        info!(
+            "emit assembly from '{}' to stdout",
+            self.input_path.display()
+        );
+
+        let stdout = io::stdout().lock();
+        let writer = io::BufWriter::new(stdout);
+        let emitter = tacky::Emitter::new(writer);
+        emitter.emit_program(&tacky)?;
+
+        Ok(())
+    }
+
     pub fn codegen(&self) -> Result<asm::Program> {
         let tacky = self.tacky()?;
 
