@@ -93,7 +93,8 @@ impl Lowerer {
             ast::BuiltinOperatorKind::Addition
             | ast::BuiltinOperatorKind::Multiplication
             | ast::BuiltinOperatorKind::Subtraction
-            | ast::BuiltinOperatorKind::Division => {
+            | ast::BuiltinOperatorKind::Division
+            | ast::BuiltinOperatorKind::Remainder => {
                 assert_eq!(arguments.arity(), 2, "Known by type checking");
                 let lhs = &arguments.inner[0];
                 let rhs = &arguments.inner[1];
@@ -137,6 +138,7 @@ impl Lowerer {
             ast::BuiltinOperatorKind::Multiplication => Some(tacky::BinaryOperator::Multiplication),
             ast::BuiltinOperatorKind::Subtraction => Some(tacky::BinaryOperator::Subtraction),
             ast::BuiltinOperatorKind::Division => Some(tacky::BinaryOperator::Division),
+            ast::BuiltinOperatorKind::Remainder => Some(tacky::BinaryOperator::Remainder),
             _ => None,
         }
     }

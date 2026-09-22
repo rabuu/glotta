@@ -69,6 +69,7 @@ pub enum BuiltinOperatorKind {
     Multiplication,
     Subtraction,
     Division,
+    Remainder,
 }
 
 #[derive(Debug, Clone, Spanned)]

@@ -116,6 +116,18 @@ fn codegen_instruction(instruction: &tacky::Instruction, instructions: &mut Vec<
                         dst,
                     },
                 ]),
+                tacky::BinaryOperator::Remainder => instructions.extend([
+                    asm::Instruction::Mov {
+                        src: lhs,
+                        dst: asm::Register::EAX.into(),
+                    },
+                    asm::Instruction::Cdq,
+                    asm::Instruction::IDiv(rhs),
+                    asm::Instruction::Mov {
+                        src: asm::Register::EDX.into(),
+                        dst,
+                    },
+                ]),
             }
         }
     }

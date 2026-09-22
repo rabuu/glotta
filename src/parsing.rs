@@ -142,6 +142,7 @@ impl<'src> Parser<'src> {
                         "mul" => ast::BuiltinOperatorKind::Multiplication,
                         "sub" => ast::BuiltinOperatorKind::Subtraction,
                         "div" => ast::BuiltinOperatorKind::Division,
+                        "rem" => ast::BuiltinOperatorKind::Remainder,
                         x => todo!("{:?}", x),
                     };
 

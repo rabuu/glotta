@@ -45,6 +45,7 @@ pub enum BinaryOperator {
     Multiplication,
     Subtraction,
     Division,
+    Remainder,
 }
 
 #[derive(Debug, Clone)]
