@@ -16,6 +16,20 @@ pub enum Instruction {
     Return(Value),
     Unary(Unary),
     Binary(Binary),
+    Copy {
+        src: Value,
+        dst: Value,
+    },
+    Jump(Identifier),
+    JumpIfZero {
+        condition: Value,
+        target: Identifier,
+    },
+    JumpIfNotZero {
+        condition: Value,
+        target: Identifier,
+    },
+    Label(Identifier),
 }
 
 #[derive(Debug, Clone)]
@@ -29,6 +43,7 @@ pub struct Unary {
 pub enum UnaryOperator {
     BitwiseNot,
     Negation,
+    Not,
 }
 
 #[derive(Debug, Clone)]
@@ -46,6 +61,12 @@ pub enum BinaryOperator {
     Subtraction,
     Division,
     Remainder,
+    Equal,
+    NotEqual,
+    LessThan,
+    LessOrEqual,
+    GreaterThan,
+    GreaterOrEqual,
 }
 
 #[derive(Debug, Clone)]
