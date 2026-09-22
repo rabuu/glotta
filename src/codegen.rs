@@ -75,6 +75,7 @@ fn codegen_instruction(instruction: &tacky::Instruction, instructions: &mut Vec<
             match op {
                 tacky::UnaryOperator::BitwiseNot => instructions.push(asm::Instruction::Not(dst)),
                 tacky::UnaryOperator::Negation => instructions.push(asm::Instruction::Neg(dst)),
+                _ => todo!(),
             }
         }
         tacky::Instruction::Binary(tacky::Binary { op, lhs, rhs, dst }) => {
@@ -128,8 +129,10 @@ fn codegen_instruction(instruction: &tacky::Instruction, instructions: &mut Vec<
                         dst,
                     },
                 ]),
+                _ => todo!(),
             }
         }
+        _ => todo!(),
     }
 }
 

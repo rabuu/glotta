@@ -128,8 +128,8 @@ impl Lowerer {
                 let lhs = &arguments.inner[0];
                 let rhs = &arguments.inner[1];
 
-                let false_label = self.fresh_identifier();
-                let end_label = self.fresh_identifier();
+                let false_label = self.fresh_identifier("and.false");
+                let end_label = self.fresh_identifier("and.end");
                 let result = self.fresh_variable();
 
                 let lhs = self.lower_expression(lhs, instructions);
@@ -165,8 +165,8 @@ impl Lowerer {
                 let lhs = &arguments.inner[0];
                 let rhs = &arguments.inner[1];
 
-                let true_label = self.fresh_identifier();
-                let end_label = self.fresh_identifier();
+                let true_label = self.fresh_identifier("or.true");
+                let end_label = self.fresh_identifier("or.end");
                 let result = self.fresh_variable();
 
                 let lhs = self.lower_expression(lhs, instructions);
@@ -232,14 +232,17 @@ impl Lowerer {
         }
     }
 
-    fn fresh_identifier(&mut self) -> tacky::Identifier {
-        let ident = tacky::Identifier::Temporary(self.fresh);
+    fn fresh_identifier(&mut self, hint: impl ToString) -> tacky::Identifier {
+        let ident = tacky::Identifier::Temporary {
+            hint: hint.to_string(),
+            id: self.fresh,
+        };
         self.fresh += 1;
         ident
     }
 
     fn fresh_variable(&mut self) -> tacky::Value {
-        let ident = self.fresh_identifier();
+        let ident = self.fresh_identifier("var");
         tacky::Value::Variable(ident)
     }
 }
