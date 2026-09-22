@@ -72,7 +72,9 @@ impl Lowerer {
         } = call;
 
         match operator.kind {
-            ast::BuiltinOperatorKind::BitwiseNot | ast::BuiltinOperatorKind::Negation => {
+            ast::BuiltinOperatorKind::BitwiseNot
+            | ast::BuiltinOperatorKind::Negation
+            | ast::BuiltinOperatorKind::Not => {
                 assert_eq!(arguments.arity(), 1, "Known by type checking");
                 let arg = &arguments.inner[0];
 
@@ -94,7 +96,13 @@ impl Lowerer {
             | ast::BuiltinOperatorKind::Multiplication
             | ast::BuiltinOperatorKind::Subtraction
             | ast::BuiltinOperatorKind::Division
-            | ast::BuiltinOperatorKind::Remainder => {
+            | ast::BuiltinOperatorKind::Remainder
+            | ast::BuiltinOperatorKind::Equal
+            | ast::BuiltinOperatorKind::NotEqual
+            | ast::BuiltinOperatorKind::LessThan
+            | ast::BuiltinOperatorKind::LessOrEqual
+            | ast::BuiltinOperatorKind::GreaterThan
+            | ast::BuiltinOperatorKind::GreaterOrEqual => {
                 assert_eq!(arguments.arity(), 2, "Known by type checking");
                 let lhs = &arguments.inner[0];
                 let rhs = &arguments.inner[1];
@@ -115,6 +123,80 @@ impl Lowerer {
 
                 dst
             }
+            ast::BuiltinOperatorKind::And => {
+                assert_eq!(arguments.arity(), 2, "Known by type checking");
+                let lhs = &arguments.inner[0];
+                let rhs = &arguments.inner[1];
+
+                let false_label = self.fresh_identifier();
+                let end_label = self.fresh_identifier();
+                let result = self.fresh_variable();
+
+                let lhs = self.lower_expression(lhs, instructions);
+                instructions.push(tacky::Instruction::JumpIfZero {
+                    condition: lhs,
+                    target: false_label.clone(),
+                });
+
+                let rhs = self.lower_expression(rhs, instructions);
+                instructions.push(tacky::Instruction::JumpIfZero {
+                    condition: rhs,
+                    target: false_label.clone(),
+                });
+
+                instructions.extend([
+                    tacky::Instruction::Copy {
+                        src: tacky::Value::Constant(1),
+                        dst: result.clone(),
+                    },
+                    tacky::Instruction::Jump(end_label.clone()),
+                    tacky::Instruction::Label(false_label),
+                    tacky::Instruction::Copy {
+                        src: tacky::Value::Constant(0),
+                        dst: result.clone(),
+                    },
+                    tacky::Instruction::Label(end_label),
+                ]);
+
+                result
+            }
+            ast::BuiltinOperatorKind::Or => {
+                assert_eq!(arguments.arity(), 2, "Known by type checking");
+                let lhs = &arguments.inner[0];
+                let rhs = &arguments.inner[1];
+
+                let true_label = self.fresh_identifier();
+                let end_label = self.fresh_identifier();
+                let result = self.fresh_variable();
+
+                let lhs = self.lower_expression(lhs, instructions);
+                instructions.push(tacky::Instruction::JumpIfNotZero {
+                    condition: lhs,
+                    target: true_label.clone(),
+                });
+
+                let rhs = self.lower_expression(rhs, instructions);
+                instructions.push(tacky::Instruction::JumpIfNotZero {
+                    condition: rhs,
+                    target: true_label.clone(),
+                });
+
+                instructions.extend([
+                    tacky::Instruction::Copy {
+                        src: tacky::Value::Constant(0),
+                        dst: result.clone(),
+                    },
+                    tacky::Instruction::Jump(end_label.clone()),
+                    tacky::Instruction::Label(true_label),
+                    tacky::Instruction::Copy {
+                        src: tacky::Value::Constant(1),
+                        dst: result.clone(),
+                    },
+                    tacky::Instruction::Label(end_label),
+                ]);
+
+                result
+            }
         }
     }
 
@@ -125,6 +207,7 @@ impl Lowerer {
         match operator.kind {
             ast::BuiltinOperatorKind::BitwiseNot => Some(tacky::UnaryOperator::BitwiseNot),
             ast::BuiltinOperatorKind::Negation => Some(tacky::UnaryOperator::Negation),
+            ast::BuiltinOperatorKind::Not => Some(tacky::UnaryOperator::Not),
             _ => None,
         }
     }
@@ -139,6 +222,12 @@ impl Lowerer {
             ast::BuiltinOperatorKind::Subtraction => Some(tacky::BinaryOperator::Subtraction),
             ast::BuiltinOperatorKind::Division => Some(tacky::BinaryOperator::Division),
             ast::BuiltinOperatorKind::Remainder => Some(tacky::BinaryOperator::Remainder),
+            ast::BuiltinOperatorKind::Equal => Some(tacky::BinaryOperator::Equal),
+            ast::BuiltinOperatorKind::NotEqual => Some(tacky::BinaryOperator::NotEqual),
+            ast::BuiltinOperatorKind::LessThan => Some(tacky::BinaryOperator::LessThan),
+            ast::BuiltinOperatorKind::LessOrEqual => Some(tacky::BinaryOperator::LessOrEqual),
+            ast::BuiltinOperatorKind::GreaterThan => Some(tacky::BinaryOperator::GreaterThan),
+            ast::BuiltinOperatorKind::GreaterOrEqual => Some(tacky::BinaryOperator::GreaterOrEqual),
             _ => None,
         }
     }
