@@ -79,7 +79,7 @@ impl Driver {
         let ast = self.parse()?;
 
         info!("lower '{}' to TACKY", self.input_path.display());
-        let mut lowerer = Lowerer::new();
+        let mut lowerer = Lowerer::default();
         let tacky = lowerer.lower_program(&ast);
         Ok(tacky)
     }
@@ -233,7 +233,7 @@ impl Driver {
     }
 
     pub fn source_position(&self, offset: usize) -> Option<SourcePosition> {
-        if offset >= self.source.as_bytes().len() {
+        if offset >= self.source.len() {
             return None;
         }
 

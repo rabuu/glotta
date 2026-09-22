@@ -250,9 +250,9 @@ impl<'src> Parser<'src> {
 
         let right = self.expect(TokenKind::ParenR)?;
 
-        return Ok(ast::ArgumentList {
+        Ok(ast::ArgumentList {
             inner: arguments,
             span: left.span.to(right.span),
-        });
+        })
     }
 }
