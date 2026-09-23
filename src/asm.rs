@@ -205,7 +205,7 @@ impl<O: io::Write> Emitter<O> {
             }
             Instruction::Jmp(label) => write!(self.out, "jmp {label}"),
             Instruction::JmpCC { flag, label } => {
-                write!(self.out, "jmp")?;
+                write!(self.out, "j")?;
                 self.emit_conditional_flag(flag)?;
                 write!(self.out, " {label}")?;
                 Ok(())
