@@ -138,13 +138,13 @@ impl<O: io::Write> Emitter<O> {
             }
             Instruction::Unary(Unary { op, src, dst }) => {
                 self.emit_value(dst)?;
-                write!(self.out, " <- {op:?}")?;
+                write!(self.out, " <- {op:?} ")?;
                 self.emit_value(src)?;
                 Ok(())
             }
             Instruction::Binary(Binary { op, lhs, rhs, dst }) => {
                 self.emit_value(dst)?;
-                write!(self.out, " <- {op:?}")?;
+                write!(self.out, " <- {op:?} ")?;
                 self.emit_value(lhs)?;
                 write!(self.out, ", ")?;
                 self.emit_value(rhs)?;
