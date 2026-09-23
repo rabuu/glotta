@@ -72,7 +72,10 @@ fn codegen_instruction(instruction: &tacky::Instruction, instructions: &mut Vec<
             let dst = codegen_value(dst);
 
             instructions.extend([
-                asm::Instruction::Cmp(asm::Operand::Immediate(0), src),
+                asm::Instruction::Cmp {
+                    src: asm::Operand::Immediate(0),
+                    dst: src,
+                },
                 asm::Instruction::Mov {
                     src: asm::Operand::Immediate(0),
                     dst: dst.clone(),
@@ -155,7 +158,7 @@ fn codegen_instruction(instruction: &tacky::Instruction, instructions: &mut Vec<
                 | tacky::BinaryOperator::LessOrEqual
                 | tacky::BinaryOperator::GreaterThan
                 | tacky::BinaryOperator::GreaterOrEqual => instructions.extend([
-                    asm::Instruction::Cmp(rhs, lhs),
+                    asm::Instruction::Cmp { src: rhs, dst: lhs },
                     asm::Instruction::Mov {
                         src: asm::Operand::Immediate(0),
                         dst: dst.clone(),
@@ -179,7 +182,10 @@ fn codegen_instruction(instruction: &tacky::Instruction, instructions: &mut Vec<
         tacky::Instruction::JumpIfZero { condition, target } => {
             let condition = codegen_value(condition);
             instructions.extend([
-                asm::Instruction::Cmp(asm::Operand::Immediate(0), condition),
+                asm::Instruction::Cmp {
+                    src: asm::Operand::Immediate(0),
+                    dst: condition,
+                },
                 asm::Instruction::JmpCC {
                     flag: asm::ConditionalFlag::E,
                     label: target.to_string(),
@@ -189,7 +195,10 @@ fn codegen_instruction(instruction: &tacky::Instruction, instructions: &mut Vec<
         tacky::Instruction::JumpIfNotZero { condition, target } => {
             let condition = codegen_value(condition);
             instructions.extend([
-                asm::Instruction::Cmp(asm::Operand::Immediate(0), condition),
+                asm::Instruction::Cmp {
+                    src: asm::Operand::Immediate(0),
+                    dst: condition,
+                },
                 asm::Instruction::JmpCC {
                     flag: asm::ConditionalFlag::NE,
                     label: target.to_string(),
@@ -228,13 +237,13 @@ fn replace_pseudo_operands(instructions: &mut Vec<asm::Instruction>) -> usize {
 
     for instruction in instructions {
         match instruction {
-            asm::Instruction::Mov { src: one, dst: two }
-            | asm::Instruction::Add { src: one, dst: two }
-            | asm::Instruction::Sub { src: one, dst: two }
-            | asm::Instruction::IMul { src: one, dst: two }
-            | asm::Instruction::Cmp(one, two) => {
-                replace_pseudo_operand(one, &mut current_offset, &mut offset_map);
-                replace_pseudo_operand(two, &mut current_offset, &mut offset_map);
+            asm::Instruction::Mov { src, dst }
+            | asm::Instruction::Add { src, dst }
+            | asm::Instruction::Sub { src, dst }
+            | asm::Instruction::IMul { src, dst }
+            | asm::Instruction::Cmp { src, dst } => {
+                replace_pseudo_operand(src, &mut current_offset, &mut offset_map);
+                replace_pseudo_operand(dst, &mut current_offset, &mut offset_map);
             }
             asm::Instruction::Not(op)
             | asm::Instruction::Neg(op)
@@ -331,27 +340,33 @@ fn rewrite_invalid_instruction(instruction: asm::Instruction, out: &mut Vec<asm:
         ]),
 
         // rewrite cmp instructions with both operands in stack position
-        asm::Instruction::Cmp(
-            asm::Operand::Stack { offset: src_offset },
-            asm::Operand::Stack { offset: dst_offset },
-        ) => out.extend([
+        asm::Instruction::Cmp {
+            src: asm::Operand::Stack { offset: src_offset },
+            dst: asm::Operand::Stack { offset: dst_offset },
+        } => out.extend([
             asm::Instruction::Mov {
                 src: asm::Operand::Stack { offset: src_offset },
                 dst: asm::Register::TEMP_SRC.into(),
             },
-            asm::Instruction::Cmp(
-                asm::Register::TEMP_SRC.into(),
-                asm::Operand::Stack { offset: dst_offset },
-            ),
+            asm::Instruction::Cmp {
+                src: asm::Register::TEMP_SRC.into(),
+                dst: asm::Operand::Stack { offset: dst_offset },
+            },
         ]),
 
         // rewrite cmp instructions with immediate second operand
-        asm::Instruction::Cmp(fst, asm::Operand::Immediate(imm)) => out.extend([
+        asm::Instruction::Cmp {
+            src: fst,
+            dst: asm::Operand::Immediate(imm),
+        } => out.extend([
             asm::Instruction::Mov {
                 src: asm::Operand::Immediate(imm),
                 dst: asm::Register::TEMP_DST.into(),
             },
-            asm::Instruction::Cmp(fst, asm::Register::TEMP_DST.into()),
+            asm::Instruction::Cmp {
+                src: fst,
+                dst: asm::Register::TEMP_DST.into(),
+            },
         ]),
 
         // rewrite imul instructions with dst operand in stack position

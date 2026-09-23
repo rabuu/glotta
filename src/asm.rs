@@ -29,7 +29,10 @@ pub enum Instruction {
         src: Operand,
         dst: Operand,
     },
-    Cmp(Operand, Operand),
+    Cmp {
+        src: Operand,
+        dst: Operand,
+    },
     Not(Operand),
     Neg(Operand),
     IDiv(Operand),
@@ -170,11 +173,11 @@ impl<O: io::Write> Emitter<O> {
                 self.emit_operand(src)?;
                 Ok(())
             }
-            Instruction::Cmp(a, b) => {
+            Instruction::Cmp { src, dst } => {
                 write!(self.out, "cmp ")?;
-                self.emit_operand(a)?;
+                self.emit_operand(dst)?;
                 write!(self.out, ", ")?;
-                self.emit_operand(b)?;
+                self.emit_operand(src)?;
                 Ok(())
             }
             Instruction::Not(operand) => {
