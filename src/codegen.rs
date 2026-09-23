@@ -31,7 +31,7 @@ fn codegen_function_definition(function: &tacky::FunctionDefinition) -> asm::Fun
     }
 
     let required_stack_space = replace_pseudo_operands(&mut body_instructions);
-    rewrite_invalid_instructions(&mut body_instructions);
+    body_instructions = rewrite_invalid_instructions(body_instructions);
 
     let mut instructions = prologue;
 
@@ -275,111 +275,90 @@ fn replace_pseudo_operand(
     }
 }
 
-fn rewrite_invalid_instructions(instructions: &mut Vec<asm::Instruction>) {
-    // NOTE: this is very inefficient, shifting all Vec elements for every insert
+fn rewrite_invalid_instructions(instructions: Vec<asm::Instruction>) -> Vec<asm::Instruction> {
+    let mut out = Vec::new();
+    for instruction in instructions {
+        rewrite_invalid_instruction(instruction, &mut out);
+    }
+    out
+}
 
-    for i in 0..instructions.len() {
-        match instructions[i] {
-            // rewrite mov instructions with both operands in stack position
+fn rewrite_invalid_instruction(instruction: asm::Instruction, out: &mut Vec<asm::Instruction>) {
+    match instruction {
+        // rewrite mov instructions with both operands in stack position
+        asm::Instruction::Mov {
+            src: asm::Operand::Stack { offset: src_offset },
+            dst: asm::Operand::Stack { offset: dst_offset },
+        } => out.extend([
             asm::Instruction::Mov {
                 src: asm::Operand::Stack { offset: src_offset },
+                dst: asm::Register::TEMP_SRC.into(),
+            },
+            asm::Instruction::Mov {
+                src: asm::Register::TEMP_SRC.into(),
                 dst: asm::Operand::Stack { offset: dst_offset },
-            } => {
-                instructions[i] = asm::Instruction::Mov {
-                    src: asm::Operand::Stack { offset: src_offset },
-                    dst: asm::Register::TEMP_SRC.into(),
-                };
+            },
+        ]),
 
-                instructions.insert(
-                    i + 1,
-                    asm::Instruction::Mov {
-                        src: asm::Register::TEMP_SRC.into(),
-                        dst: asm::Operand::Stack { offset: dst_offset },
-                    },
-                );
-            }
-
-            // rewrite add instructions with both operands in stack position
+        // rewrite add instructions with both operands in stack position
+        asm::Instruction::Add {
+            src: asm::Operand::Stack { offset: src_offset },
+            dst: asm::Operand::Stack { offset: dst_offset },
+        } => out.extend([
+            asm::Instruction::Mov {
+                src: asm::Operand::Stack { offset: src_offset },
+                dst: asm::Register::TEMP_SRC.into(),
+            },
             asm::Instruction::Add {
-                src: asm::Operand::Stack { offset: src_offset },
+                src: asm::Register::TEMP_SRC.into(),
                 dst: asm::Operand::Stack { offset: dst_offset },
-            } => {
-                instructions[i] = asm::Instruction::Mov {
-                    src: asm::Operand::Stack { offset: src_offset },
-                    dst: asm::Register::TEMP_SRC.into(),
-                };
+            },
+        ]),
 
-                instructions.insert(
-                    i + 1,
-                    asm::Instruction::Add {
-                        src: asm::Register::TEMP_SRC.into(),
-                        dst: asm::Operand::Stack { offset: dst_offset },
-                    },
-                );
-            }
-
-            // rewrite sub instructions with both operands in stack position
+        // rewrite sub instructions with both operands in stack position
+        asm::Instruction::Sub {
+            src: asm::Operand::Stack { offset: src_offset },
+            dst: asm::Operand::Stack { offset: dst_offset },
+        } => out.extend([
+            asm::Instruction::Mov {
+                src: asm::Operand::Stack { offset: src_offset },
+                dst: asm::Register::TEMP_SRC.into(),
+            },
             asm::Instruction::Sub {
-                src: asm::Operand::Stack { offset: src_offset },
+                src: asm::Register::TEMP_SRC.into(),
                 dst: asm::Operand::Stack { offset: dst_offset },
-            } => {
-                instructions[i] = asm::Instruction::Mov {
-                    src: asm::Operand::Stack { offset: src_offset },
-                    dst: asm::Register::TEMP_SRC.into(),
-                };
+            },
+        ]),
 
-                instructions.insert(
-                    i + 1,
-                    asm::Instruction::Sub {
-                        src: asm::Register::TEMP_SRC.into(),
-                        dst: asm::Operand::Stack { offset: dst_offset },
-                    },
-                );
-            }
-
-            // rewrite imul instructions with dst operand in stack position
+        // rewrite imul instructions with dst operand in stack position
+        asm::Instruction::IMul {
+            ref src,
+            dst: asm::Operand::Stack { offset: dst_offset },
+        } => out.extend([
+            asm::Instruction::Mov {
+                src: asm::Operand::Stack { offset: dst_offset },
+                dst: asm::Register::TEMP_DST.into(),
+            },
             asm::Instruction::IMul {
-                ref src,
+                src: src.clone(),
+                dst: asm::Register::TEMP_DST.into(),
+            },
+            asm::Instruction::Mov {
+                src: asm::Register::TEMP_DST.into(),
                 dst: asm::Operand::Stack { offset: dst_offset },
-            } => {
-                let src = src.clone();
+            },
+        ]),
 
-                instructions[i] = asm::Instruction::Mov {
-                    src: asm::Operand::Stack { offset: dst_offset },
-                    dst: asm::Register::TEMP_DST.into(),
-                };
+        // rewrite idiv instructions with constant operand
+        asm::Instruction::IDiv(asm::Operand::Immediate(imm)) => out.extend([
+            asm::Instruction::Mov {
+                src: asm::Operand::Immediate(imm),
+                dst: asm::Register::TEMP_SRC.into(),
+            },
+            asm::Instruction::IDiv(asm::Register::TEMP_SRC.into()),
+        ]),
 
-                instructions.insert(
-                    i + 1,
-                    asm::Instruction::IMul {
-                        src,
-                        dst: asm::Register::TEMP_DST.into(),
-                    },
-                );
-
-                instructions.insert(
-                    i + 2,
-                    asm::Instruction::Mov {
-                        src: asm::Register::TEMP_DST.into(),
-                        dst: asm::Operand::Stack { offset: dst_offset },
-                    },
-                );
-            }
-
-            // rewrite idiv instructions with constant operand
-            asm::Instruction::IDiv(asm::Operand::Immediate(imm)) => {
-                instructions[i] = asm::Instruction::Mov {
-                    src: asm::Operand::Immediate(imm),
-                    dst: asm::Register::TEMP_SRC.into(),
-                };
-
-                instructions.insert(
-                    i + 1,
-                    asm::Instruction::IDiv(asm::Register::TEMP_SRC.into()),
-                );
-            }
-
-            _ => (),
-        }
+        // otherwise, keep the instruction as is
+        instruction => out.push(instruction),
     }
 }
