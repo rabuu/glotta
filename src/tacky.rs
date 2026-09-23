@@ -109,8 +109,7 @@ impl<O: io::Write> Emitter<O> {
     fn emit_function_definition(&mut self, function: &FunctionDefinition) -> io::Result<()> {
         let FunctionDefinition { name, body } = function;
 
-        write!(self.out, "FUNCTION ")?;
-        self.emit_identifier(name)?;
+        write!(self.out, "FUNCTION {name}")?;
         self.newline()?;
 
         for instruction in body {
@@ -120,13 +119,6 @@ impl<O: io::Write> Emitter<O> {
         }
 
         Ok(())
-    }
-
-    fn emit_identifier(&mut self, identifier: &Identifier) -> io::Result<()> {
-        match identifier {
-            Identifier::Named(name) => write!(self.out, "{name}"),
-            Identifier::Temporary { hint, id } => write!(self.out, "{hint}.{id}"),
-        }
     }
 
     fn emit_instruction(&mut self, instruction: &Instruction) -> io::Result<()> {
@@ -156,39 +148,27 @@ impl<O: io::Write> Emitter<O> {
                 self.emit_value(src)?;
                 Ok(())
             }
-            Instruction::Jump(identifier) => {
-                write!(self.out, "JUMP ")?;
-                self.emit_identifier(identifier)?;
-                Ok(())
-            }
+            Instruction::Jump(target) => write!(self.out, "JUMP {target}"),
             Instruction::JumpIfZero { condition, target } => {
-                write!(self.out, "JUMP ")?;
-                self.emit_identifier(target)?;
-                write!(self.out, " IF ")?;
+                write!(self.out, "JUMP {target} IF ")?;
                 self.emit_value(condition)?;
                 write!(self.out, " == 0")?;
                 Ok(())
             }
             Instruction::JumpIfNotZero { condition, target } => {
-                write!(self.out, "JUMP ")?;
-                self.emit_identifier(target)?;
-                write!(self.out, " IF ")?;
+                write!(self.out, "JUMP {target} IF ")?;
                 self.emit_value(condition)?;
                 write!(self.out, " != 0")?;
                 Ok(())
             }
-            Instruction::Label(identifier) => {
-                write!(self.out, "LABEL ")?;
-                self.emit_identifier(identifier)?;
-                Ok(())
-            }
+            Instruction::Label(label) => write!(self.out, "LABEL {label}"),
         }
     }
 
     fn emit_value(&mut self, value: &Value) -> io::Result<()> {
         match value {
             Value::Constant(constant) => write!(self.out, "{constant}"),
-            Value::Variable(identifier) => self.emit_identifier(identifier),
+            Value::Variable(identifier) => write!(self.out, "{identifier}"),
         }
     }
 
