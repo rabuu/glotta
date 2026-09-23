@@ -330,6 +330,30 @@ fn rewrite_invalid_instruction(instruction: asm::Instruction, out: &mut Vec<asm:
             },
         ]),
 
+        // rewrite cmp instructions with both operands in stack position
+        asm::Instruction::Cmp(
+            asm::Operand::Stack { offset: src_offset },
+            asm::Operand::Stack { offset: dst_offset },
+        ) => out.extend([
+            asm::Instruction::Mov {
+                src: asm::Operand::Stack { offset: src_offset },
+                dst: asm::Register::TEMP_SRC.into(),
+            },
+            asm::Instruction::Cmp(
+                asm::Register::TEMP_SRC.into(),
+                asm::Operand::Stack { offset: dst_offset },
+            ),
+        ]),
+
+        // rewrite cmp instructions with immediate second operand
+        asm::Instruction::Cmp(fst, asm::Operand::Immediate(imm)) => out.extend([
+            asm::Instruction::Mov {
+                src: asm::Operand::Immediate(imm),
+                dst: asm::Register::TEMP_DST.into(),
+            },
+            asm::Instruction::Cmp(fst, asm::Register::TEMP_DST.into()),
+        ]),
+
         // rewrite imul instructions with dst operand in stack position
         asm::Instruction::IMul {
             ref src,
