@@ -13,16 +13,38 @@ pub struct FunctionDefinition {
 
 #[derive(Debug, Clone)]
 pub enum Instruction {
-    Mov { src: Operand, dst: Operand },
-    Add { src: Operand, dst: Operand },
-    Sub { src: Operand, dst: Operand },
-    IMul { src: Operand, dst: Operand },
+    Mov {
+        src: Operand,
+        dst: Operand,
+    },
+    Add {
+        src: Operand,
+        dst: Operand,
+    },
+    Sub {
+        src: Operand,
+        dst: Operand,
+    },
+    IMul {
+        src: Operand,
+        dst: Operand,
+    },
+    Cmp(Operand, Operand),
     Not(Operand),
     Neg(Operand),
     IDiv(Operand),
     Push(Operand),
     Pop(Operand),
     Cdq,
+    Jmp(String),
+    JmpCC {
+        flag: ConditionalFlag,
+        label: String,
+    },
+    SetCC {
+        flag: ConditionalFlag,
+        op: Operand,
+    },
     Ret,
 }
 
@@ -57,6 +79,22 @@ pub enum Register {
 impl Register {
     pub const TEMP_SRC: Register = Register::R10D;
     pub const TEMP_DST: Register = Register::R11D;
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum ConditionalFlag {
+    /// equal
+    E,
+    /// not equal
+    NE,
+    /// greater
+    G,
+    /// greater or equal
+    GE,
+    /// less
+    L,
+    /// less or equal
+    LE,
 }
 
 pub struct Emitter<O: io::Write> {
@@ -131,6 +169,13 @@ impl<O: io::Write> Emitter<O> {
                 self.emit_operand(src)?;
                 Ok(())
             }
+            Instruction::Cmp(a, b) => {
+                write!(self.out, "cmp ")?;
+                self.emit_operand(a)?;
+                write!(self.out, ", ")?;
+                self.emit_operand(b)?;
+                Ok(())
+            }
             Instruction::Not(operand) => {
                 write!(self.out, "not ")?;
                 self.emit_operand(operand)?;
@@ -155,6 +200,20 @@ impl<O: io::Write> Emitter<O> {
             Instruction::Pop(operand) => {
                 write!(self.out, "pop ")?;
                 self.emit_operand(operand)?;
+                Ok(())
+            }
+            Instruction::Jmp(label) => write!(self.out, "jmp {label}"),
+            Instruction::JmpCC { flag, label } => {
+                write!(self.out, "jmp")?;
+                self.emit_conditional_flag(flag)?;
+                write!(self.out, " {label}")?;
+                Ok(())
+            }
+            Instruction::SetCC { flag, op } => {
+                write!(self.out, "set")?;
+                self.emit_conditional_flag(flag)?;
+                write!(self.out, " ")?;
+                self.emit_operand(op)?;
                 Ok(())
             }
             Instruction::Ret => write!(self.out, "ret"),
@@ -182,6 +241,17 @@ impl<O: io::Write> Emitter<O> {
             Register::EDX => write!(self.out, "edx"),
             Register::R10D => write!(self.out, "r10d"),
             Register::R11D => write!(self.out, "r11d"),
+        }
+    }
+
+    fn emit_conditional_flag(&mut self, flag: &ConditionalFlag) -> io::Result<()> {
+        match flag {
+            ConditionalFlag::E => write!(self.out, "e"),
+            ConditionalFlag::NE => write!(self.out, "ne"),
+            ConditionalFlag::G => write!(self.out, "g"),
+            ConditionalFlag::GE => write!(self.out, "ge"),
+            ConditionalFlag::L => write!(self.out, "l"),
+            ConditionalFlag::LE => write!(self.out, "le"),
         }
     }
 
