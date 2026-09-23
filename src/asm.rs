@@ -45,6 +45,7 @@ pub enum Instruction {
         flag: ConditionalFlag,
         op: Operand,
     },
+    Label(String),
     Ret,
 }
 
@@ -216,6 +217,7 @@ impl<O: io::Write> Emitter<O> {
                 self.emit_operand(op)?;
                 Ok(())
             }
+            Instruction::Label(label) => write!(self.out, "{label}:"),
             Instruction::Ret => write!(self.out, "ret"),
         }
     }
