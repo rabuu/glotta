@@ -1,5 +1,7 @@
 use std::io;
 
+use crate::asm;
+
 #[derive(Debug, Clone)]
 pub struct Program {
     pub function: FunctionDefinition,
@@ -135,7 +137,9 @@ impl<O: io::Write> Emitter<O> {
         writeln!(self.out, "global {name}")?;
         writeln!(self.out, "{name}:")?;
         for instruction in instructions {
-            self.indent()?;
+            if !matches!(instruction, asm::Instruction::Label(_)) {
+                self.indent()?;
+            }
             self.emit_instruction(instruction)?;
             self.newline()?;
         }
