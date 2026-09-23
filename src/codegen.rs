@@ -63,6 +63,26 @@ fn codegen_instruction(instruction: &tacky::Instruction, instructions: &mut Vec<
 
             instructions.push(asm::Instruction::Ret);
         }
+        tacky::Instruction::Unary(tacky::Unary {
+            op: tacky::UnaryOperator::Not,
+            src,
+            dst,
+        }) => {
+            let src = codegen_value(src);
+            let dst = codegen_value(dst);
+
+            instructions.extend([
+                asm::Instruction::Cmp(asm::Operand::Immediate(0), src),
+                asm::Instruction::Mov {
+                    src: asm::Operand::Immediate(0),
+                    dst: dst.clone(),
+                },
+                asm::Instruction::SetCC {
+                    flag: asm::ConditionalFlag::E,
+                    op: dst,
+                },
+            ])
+        }
         tacky::Instruction::Unary(tacky::Unary { op, src, dst }) => {
             let src = codegen_value(src);
             let dst = codegen_value(dst);
@@ -75,7 +95,7 @@ fn codegen_instruction(instruction: &tacky::Instruction, instructions: &mut Vec<
             match op {
                 tacky::UnaryOperator::BitwiseNot => instructions.push(asm::Instruction::Not(dst)),
                 tacky::UnaryOperator::Negation => instructions.push(asm::Instruction::Neg(dst)),
-                _ => todo!(),
+                tacky::UnaryOperator::Not => unreachable!(),
             }
         }
         tacky::Instruction::Binary(tacky::Binary { op, lhs, rhs, dst }) => {
@@ -129,10 +149,56 @@ fn codegen_instruction(instruction: &tacky::Instruction, instructions: &mut Vec<
                         dst,
                     },
                 ]),
-                _ => todo!(),
+                tacky::BinaryOperator::Equal
+                | tacky::BinaryOperator::NotEqual
+                | tacky::BinaryOperator::LessThan
+                | tacky::BinaryOperator::LessOrEqual
+                | tacky::BinaryOperator::GreaterThan
+                | tacky::BinaryOperator::GreaterOrEqual => instructions.extend([
+                    asm::Instruction::Cmp(rhs, lhs),
+                    asm::Instruction::Mov {
+                        src: asm::Operand::Immediate(0),
+                        dst: dst.clone(),
+                    },
+                    asm::Instruction::SetCC {
+                        flag: binary_operator_to_conditional_flag(op)
+                            .expect("conditional binary operators have corresponding flags"),
+                        op: dst,
+                    },
+                ]),
             }
         }
-        _ => todo!(),
+        tacky::Instruction::Copy { src, dst } => {
+            let src = codegen_value(src);
+            let dst = codegen_value(dst);
+            instructions.push(asm::Instruction::Mov { src, dst })
+        }
+        tacky::Instruction::Jump(target) => {
+            instructions.push(asm::Instruction::Jmp(target.to_string()));
+        }
+        tacky::Instruction::JumpIfZero { condition, target } => {
+            let condition = codegen_value(condition);
+            instructions.extend([
+                asm::Instruction::Cmp(asm::Operand::Immediate(0), condition),
+                asm::Instruction::JmpCC {
+                    flag: asm::ConditionalFlag::E,
+                    label: target.to_string(),
+                },
+            ])
+        }
+        tacky::Instruction::JumpIfNotZero { condition, target } => {
+            let condition = codegen_value(condition);
+            instructions.extend([
+                asm::Instruction::Cmp(asm::Operand::Immediate(0), condition),
+                asm::Instruction::JmpCC {
+                    flag: asm::ConditionalFlag::NE,
+                    label: target.to_string(),
+                },
+            ])
+        }
+        tacky::Instruction::Label(label) => {
+            instructions.push(asm::Instruction::Label(label.to_string()));
+        }
     }
 }
 
@@ -143,27 +209,46 @@ fn codegen_value(value: &tacky::Value) -> asm::Operand {
     }
 }
 
+fn binary_operator_to_conditional_flag(op: &tacky::BinaryOperator) -> Option<asm::ConditionalFlag> {
+    use asm::ConditionalFlag::*;
+    match op {
+        tacky::BinaryOperator::Equal => Some(E),
+        tacky::BinaryOperator::NotEqual => Some(NE),
+        tacky::BinaryOperator::LessThan => Some(L),
+        tacky::BinaryOperator::LessOrEqual => Some(LE),
+        tacky::BinaryOperator::GreaterThan => Some(G),
+        tacky::BinaryOperator::GreaterOrEqual => Some(GE),
+        _ => None,
+    }
+}
+
 fn replace_pseudo_operands(instructions: &mut Vec<asm::Instruction>) -> usize {
     let mut current_offset: usize = 0;
     let mut offset_map: HashMap<String, usize> = HashMap::new();
 
     for instruction in instructions {
         match instruction {
-            asm::Instruction::Mov { src, dst }
-            | asm::Instruction::Add { src, dst }
-            | asm::Instruction::Sub { src, dst }
-            | asm::Instruction::IMul { src, dst } => {
-                replace_pseudo_operand(src, &mut current_offset, &mut offset_map);
-                replace_pseudo_operand(dst, &mut current_offset, &mut offset_map);
+            asm::Instruction::Mov { src: one, dst: two }
+            | asm::Instruction::Add { src: one, dst: two }
+            | asm::Instruction::Sub { src: one, dst: two }
+            | asm::Instruction::IMul { src: one, dst: two }
+            | asm::Instruction::Cmp(one, two) => {
+                replace_pseudo_operand(one, &mut current_offset, &mut offset_map);
+                replace_pseudo_operand(two, &mut current_offset, &mut offset_map);
             }
-            asm::Instruction::Not(operand)
-            | asm::Instruction::Neg(operand)
-            | asm::Instruction::IDiv(operand)
-            | asm::Instruction::Push(operand)
-            | asm::Instruction::Pop(operand) => {
-                replace_pseudo_operand(operand, &mut current_offset, &mut offset_map);
+            asm::Instruction::Not(op)
+            | asm::Instruction::Neg(op)
+            | asm::Instruction::IDiv(op)
+            | asm::Instruction::Push(op)
+            | asm::Instruction::Pop(op)
+            | asm::Instruction::SetCC { flag: _, op } => {
+                replace_pseudo_operand(op, &mut current_offset, &mut offset_map);
             }
-            asm::Instruction::Ret | asm::Instruction::Cdq => (),
+            asm::Instruction::Ret
+            | asm::Instruction::Cdq
+            | asm::Instruction::Jmp(_)
+            | asm::Instruction::JmpCC { flag: _, label: _ }
+            | asm::Instruction::Label(_) => (),
         }
     }
 
