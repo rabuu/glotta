@@ -76,6 +76,13 @@ pub enum Register {
     /// base pointer
     RBP,
 
+    // 1-byte
+    AL,
+    DL,
+    R10B,
+    R11B,
+
+    // 4-byte
     EAX,
     EDX,
     R10D,
@@ -246,6 +253,10 @@ impl<O: io::Write> Emitter<O> {
         match register {
             Register::RSP => write!(self.out, "rsp"),
             Register::RBP => write!(self.out, "rbp"),
+            Register::AL => write!(self.out, "al"),
+            Register::DL => write!(self.out, "dl"),
+            Register::R10B => write!(self.out, "r10b"),
+            Register::R11B => write!(self.out, "r11b"),
             Register::EAX => write!(self.out, "eax"),
             Register::EDX => write!(self.out, "edx"),
             Register::R10D => write!(self.out, "r10d"),

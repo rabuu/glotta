@@ -82,7 +82,7 @@ fn codegen_instruction(instruction: &tacky::Instruction, instructions: &mut Vec<
                 },
                 asm::Instruction::SetCC {
                     flag: asm::ConditionalFlag::E,
-                    op: dst,
+                    op: convert_register_to_1_byte(dst),
                 },
             ])
         }
@@ -166,7 +166,7 @@ fn codegen_instruction(instruction: &tacky::Instruction, instructions: &mut Vec<
                     asm::Instruction::SetCC {
                         flag: binary_operator_to_conditional_flag(op)
                             .expect("conditional binary operators have corresponding flags"),
-                        op: dst,
+                        op: convert_register_to_1_byte(dst),
                     },
                 ]),
             }
@@ -215,6 +215,16 @@ fn codegen_value(value: &tacky::Value) -> asm::Operand {
     match value {
         tacky::Value::Constant(constant) => asm::Operand::Immediate(*constant as isize),
         tacky::Value::Variable(identifier) => asm::Operand::Pseudo(identifier.to_string()),
+    }
+}
+
+fn convert_register_to_1_byte(operand: asm::Operand) -> asm::Operand {
+    match operand {
+        asm::Operand::Register(asm::Register::EAX) => asm::Register::AL.into(),
+        asm::Operand::Register(asm::Register::EDX) => asm::Register::DL.into(),
+        asm::Operand::Register(asm::Register::R10D) => asm::Register::R10B.into(),
+        asm::Operand::Register(asm::Register::R11D) => asm::Register::R11B.into(),
+        op => op,
     }
 }
 
