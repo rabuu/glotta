@@ -42,6 +42,13 @@ pub enum ParsingError {
         #[label]
         span: Span,
     },
+
+    #[error("Encountered unknown builtin `{got}`.")]
+    UnknownBuiltin {
+        got: String,
+        #[label]
+        span: Span,
+    },
 }
 
 pub struct Parser<'src> {
@@ -117,61 +124,16 @@ impl<'src> Parser<'src> {
                 let constant = self.parse_integer_constant()?;
                 Ok(ast::Expression::Constant(constant))
             }
-            TokenKind::Identifier | TokenKind::Hash => {
+            TokenKind::Hash => {
+                let builtin_call = self.parse_builtin_call()?;
+                Ok(ast::Expression::Call(ast::Call::Builtin(builtin_call)))
+            }
+            TokenKind::Identifier => {
                 // for now, an identifier always means a call.
                 // this will change, once variables are implemented.
 
-                let is_builtin = first_token.kind == TokenKind::Hash;
-                if is_builtin {
-                    self.expect(TokenKind::Hash)?;
-                }
-
-                let ident = self.parse_identifier()?;
-                let start = ident.span();
-
-                let arguments = self.parse_arguments()?;
-                let end = arguments.span();
-
-                let span = start.to(end);
-
-                let call = if is_builtin {
-                    let kind = match ident.identifier.as_str() {
-                        "bit_not" => ast::BuiltinOperatorKind::BitwiseNot,
-                        "neg" => ast::BuiltinOperatorKind::Negation,
-                        "not" => ast::BuiltinOperatorKind::Not,
-                        "add" => ast::BuiltinOperatorKind::Addition,
-                        "mul" => ast::BuiltinOperatorKind::Multiplication,
-                        "sub" => ast::BuiltinOperatorKind::Subtraction,
-                        "div" => ast::BuiltinOperatorKind::Division,
-                        "rem" => ast::BuiltinOperatorKind::Remainder,
-                        "and" => ast::BuiltinOperatorKind::And,
-                        "or" => ast::BuiltinOperatorKind::Or,
-                        "eq" => ast::BuiltinOperatorKind::Equal,
-                        "neq" => ast::BuiltinOperatorKind::NotEqual,
-                        "lt" => ast::BuiltinOperatorKind::LessThan,
-                        "leq" => ast::BuiltinOperatorKind::LessOrEqual,
-                        "gt" => ast::BuiltinOperatorKind::GreaterThan,
-                        "geq" => ast::BuiltinOperatorKind::GreaterOrEqual,
-                        x => unimplemented!("{}", x),
-                    };
-
-                    ast::Call::Builtin(ast::BuiltinCall {
-                        operator: ast::BuiltinOperator {
-                            kind,
-                            span: ident.span(),
-                        },
-                        arguments,
-                        span,
-                    })
-                } else {
-                    ast::Call::Function(ast::FunctionCall {
-                        function_name: ident,
-                        arguments,
-                        span,
-                    })
-                };
-
-                Ok(ast::Expression::Call(call))
+                let function_call = self.parse_function_call()?;
+                Ok(ast::Expression::Call(ast::Call::Function(function_call)))
             }
             TokenKind::CurlyL => {
                 let block = self.parse_block()?;
@@ -209,6 +171,60 @@ impl<'src> Parser<'src> {
         Ok(ast::IntegerConstant {
             value,
             span: token.span,
+        })
+    }
+
+    fn parse_builtin_call(&mut self) -> Result<ast::BuiltinCall> {
+        let start = self.expect(TokenKind::Hash)?;
+
+        let builtin = self.parse_identifier()?;
+        let kind = match builtin.identifier.as_str() {
+            "bit_not" => ast::BuiltinOperatorKind::BitwiseNot,
+            "neg" => ast::BuiltinOperatorKind::Negation,
+            "not" => ast::BuiltinOperatorKind::Not,
+            "add" => ast::BuiltinOperatorKind::Addition,
+            "mul" => ast::BuiltinOperatorKind::Multiplication,
+            "sub" => ast::BuiltinOperatorKind::Subtraction,
+            "div" => ast::BuiltinOperatorKind::Division,
+            "rem" => ast::BuiltinOperatorKind::Remainder,
+            "and" => ast::BuiltinOperatorKind::And,
+            "or" => ast::BuiltinOperatorKind::Or,
+            "eq" => ast::BuiltinOperatorKind::Equal,
+            "neq" => ast::BuiltinOperatorKind::NotEqual,
+            "lt" => ast::BuiltinOperatorKind::LessThan,
+            "leq" => ast::BuiltinOperatorKind::LessOrEqual,
+            "gt" => ast::BuiltinOperatorKind::GreaterThan,
+            "geq" => ast::BuiltinOperatorKind::GreaterOrEqual,
+            got => {
+                return Err(ParsingError::UnknownBuiltin {
+                    got: got.to_string(),
+                    span: builtin.span,
+                });
+            }
+        };
+
+        let arguments = self.parse_arguments()?;
+        let end = arguments.span;
+
+        Ok(ast::BuiltinCall {
+            operator: ast::BuiltinOperator {
+                kind,
+                span: start.to(builtin),
+            },
+            arguments,
+            span: start.to(end),
+        })
+    }
+
+    fn parse_function_call(&mut self) -> Result<ast::FunctionCall> {
+        let function_name = self.parse_identifier()?;
+        let arguments = self.parse_arguments()?;
+        let span = function_name.to(&arguments);
+
+        Ok(ast::FunctionCall {
+            function_name,
+            arguments,
+            span,
         })
     }
 
