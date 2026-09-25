@@ -101,7 +101,7 @@ impl<'src> Parser<'src> {
         self.expect(TokenKind::Int)?;
         self.expect(TokenKind::Equals)?;
         let body = self.parse_expression()?;
-        let span = let_kw.span.to(body.span());
+        let span = let_kw.to(&body);
 
         Ok(ast::FunctionDefinition { name, body, span })
     }
@@ -256,7 +256,7 @@ impl<'src> Parser<'src> {
 
         Ok(ast::ArgumentList {
             inner: arguments,
-            span: left.span.to(right.span),
+            span: left.to(right),
         })
     }
 
@@ -281,7 +281,7 @@ impl<'src> Parser<'src> {
         Ok(ast::Block {
             statements,
             final_expression: Box::new(final_expression),
-            span: start.span.to(end.span),
+            span: start.to(end),
         })
     }
 }

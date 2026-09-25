@@ -1,8 +1,10 @@
 use std::fmt;
 
-use crate::span::Span;
+use crate::span::{Span, Spanned};
 
-#[derive(Debug, Clone, Copy)]
+use glotta_macros::Spanned;
+
+#[derive(Debug, Clone, Copy, Spanned)]
 pub struct Token {
     pub kind: TokenKind,
     pub span: Span,

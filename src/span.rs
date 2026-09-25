@@ -2,6 +2,10 @@ use std::fmt;
 
 pub trait Spanned {
     fn span(&self) -> Span;
+
+    fn to(&self, other: impl Spanned) -> Span {
+        self.span().to(other.span())
+    }
 }
 
 #[derive(Clone, Copy, PartialEq)]
@@ -15,9 +19,21 @@ impl Span {
     }
 }
 
+impl Spanned for Span {
+    fn span(&self) -> Span {
+        *self
+    }
+}
+
 impl fmt::Debug for Span {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.inner.fmt(f)
+    }
+}
+
+impl<T: Spanned> Spanned for &T {
+    fn span(&self) -> Span {
+        (*self).span()
     }
 }
 
