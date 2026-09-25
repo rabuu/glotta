@@ -41,6 +41,9 @@ impl Lowerer {
     ) -> tacky::Value {
         match expression {
             ast::Expression::Constant(constant) => self.lower_constant(constant, instructions),
+            ast::Expression::Variable(variable) => todo!(),
+            ast::Expression::Declaration(declaration) => todo!(),
+            ast::Expression::Assignment(assignment) => todo!(),
             ast::Expression::Call(ast::Call::Builtin(call)) => {
                 self.lower_builtin_call(call, instructions)
             }

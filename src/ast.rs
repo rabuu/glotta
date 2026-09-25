@@ -30,6 +30,9 @@ pub struct Identifier {
 #[derive(Debug, Clone, Spanned)]
 pub enum Expression {
     Constant(IntegerConstant),
+    Variable(Variable),
+    Declaration(Declaration),
+    Assignment(Assignment),
     Call(Call),
     Block(Block),
 }
@@ -37,6 +40,26 @@ pub enum Expression {
 #[derive(Debug, Clone, Spanned)]
 pub struct IntegerConstant {
     pub value: i32,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, Spanned)]
+pub struct Variable {
+    pub name: Identifier,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, Spanned)]
+pub struct Declaration {
+    pub variable: Variable,
+    pub initializer: Box<Expression>,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, Spanned)]
+pub struct Assignment {
+    pub lhs: Box<Expression>,
+    pub rhs: Box<Expression>,
     pub span: Span,
 }
 

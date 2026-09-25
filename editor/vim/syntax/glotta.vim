@@ -16,7 +16,7 @@ syn keyword glottaBoolean true false
 syn keyword glottaConditional if then else match
 syn keyword glottaRepeat loop
 syn match glottaOperator "[+*-/<>:=!]"
-syn keyword glottaKeyword let var typ use return
+syn keyword glottaKeyword let set typ use return
 
 syn keyword glottaType Bool Byte Nat Int Float Str Ptr
 syn keyword glottaStructure alias

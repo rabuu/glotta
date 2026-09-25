@@ -119,6 +119,7 @@ impl<'src> Parser<'src> {
                 expected: String::from("an expression"),
             });
         };
+
         match first_token.kind {
             TokenKind::IntegerLiteral => {
                 let constant = self.parse_integer_constant()?;
@@ -129,11 +130,22 @@ impl<'src> Parser<'src> {
                 Ok(ast::Expression::Call(ast::Call::Builtin(builtin_call)))
             }
             TokenKind::Identifier => {
-                // for now, an identifier always means a call.
-                // this will change, once variables are implemented.
-
-                let function_call = self.parse_function_call()?;
-                Ok(ast::Expression::Call(ast::Call::Function(function_call)))
+                let next_token = self.tokens.peek_kind_n(1);
+                if next_token == Some(TokenKind::ParenL) {
+                    let function_call = self.parse_function_call()?;
+                    Ok(ast::Expression::Call(ast::Call::Function(function_call)))
+                } else {
+                    let variable = self.parse_variable()?;
+                    Ok(ast::Expression::Variable(variable))
+                }
+            }
+            TokenKind::Let => {
+                let declaration = self.parse_declaration()?;
+                Ok(ast::Expression::Declaration(declaration))
+            }
+            TokenKind::Set => {
+                let assignment = self.parse_assignment()?;
+                Ok(ast::Expression::Assignment(assignment))
             }
             TokenKind::CurlyL => {
                 let block = self.parse_block()?;
@@ -171,6 +183,41 @@ impl<'src> Parser<'src> {
         Ok(ast::IntegerConstant {
             value,
             span: token.span,
+        })
+    }
+
+    fn parse_variable(&mut self) -> Result<ast::Variable> {
+        let name = self.parse_identifier()?;
+        let span = name.span;
+
+        Ok(ast::Variable { name, span })
+    }
+
+    fn parse_declaration(&mut self) -> Result<ast::Declaration> {
+        let let_kw = self.expect(TokenKind::Let)?;
+        let variable = self.parse_variable()?;
+        self.expect(TokenKind::Equals)?;
+        let initializer = self.parse_expression()?;
+        let span = let_kw.to(&initializer);
+
+        Ok(ast::Declaration {
+            variable,
+            initializer: Box::new(initializer),
+            span,
+        })
+    }
+
+    fn parse_assignment(&mut self) -> Result<ast::Assignment> {
+        let set_kw = self.expect(TokenKind::Set)?;
+        let lhs = self.parse_expression()?;
+        self.expect(TokenKind::Equals)?;
+        let rhs = self.parse_expression()?;
+        let span = set_kw.to(&rhs);
+
+        Ok(ast::Assignment {
+            lhs: Box::new(lhs),
+            rhs: Box::new(rhs),
+            span,
         })
     }
 

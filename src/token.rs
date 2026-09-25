@@ -17,6 +17,7 @@ pub enum TokenKind {
     IntegerLiteral,
 
     Let,
+    Set,
     Int,
 
     ParenL,
@@ -43,6 +44,7 @@ impl fmt::Display for TokenKind {
             TokenKind::Identifier => write!(f, "identifier"),
             TokenKind::IntegerLiteral => write!(f, "integer literal"),
             TokenKind::Let => write!(f, "`let`"),
+            TokenKind::Set => write!(f, "`set`"),
             TokenKind::Int => write!(f, "`Int`"),
             TokenKind::ParenL => write!(f, "`(`"),
             TokenKind::ParenR => write!(f, "`)`"),

@@ -46,6 +46,7 @@ impl<'src> Lexer<'src> {
                 self.eat_while(is_identifier);
                 match self.slice_from(start) {
                     "let" => TokenKind::Let,
+                    "set" => TokenKind::Set,
                     "Int" => TokenKind::Int,
                     _ => TokenKind::Identifier,
                 }
