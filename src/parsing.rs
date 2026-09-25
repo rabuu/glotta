@@ -198,7 +198,7 @@ impl<'src> Parser<'src> {
             got => {
                 return Err(ParsingError::UnknownBuiltin {
                     got: got.to_string(),
-                    span: builtin.span,
+                    span: start.to(builtin),
                 });
             }
         };
