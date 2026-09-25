@@ -30,6 +30,14 @@ impl<'src> TokenStream<'src> {
         self.peek_n(0)
     }
 
+    pub fn peek_kind_n(&mut self, n: usize) -> Option<TokenKind> {
+        self.peek_n(n).map(|token| token.kind)
+    }
+
+    pub fn peek_kind(&mut self) -> Option<TokenKind> {
+        self.peek_kind_n(0)
+    }
+
     fn next_token(&mut self) -> Option<Token> {
         let mut token = self.lexer.next_token()?;
         while self.ignore.contains(&token.kind) {

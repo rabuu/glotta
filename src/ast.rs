@@ -31,6 +31,7 @@ pub struct Identifier {
 pub enum Expression {
     Constant(IntegerConstant),
     Call(Call),
+    Block(Block),
 }
 
 #[derive(Debug, Clone, Spanned)]
@@ -98,4 +99,11 @@ impl ArgumentList {
     pub fn arity(&self) -> usize {
         self.inner.len()
     }
+}
+
+#[derive(Debug, Clone, Spanned)]
+pub struct Block {
+    pub statements: Vec<Expression>,
+    pub final_expression: Box<Expression>,
+    pub span: Span,
 }

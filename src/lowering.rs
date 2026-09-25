@@ -45,6 +45,7 @@ impl Lowerer {
                 self.lower_builtin_call(call, instructions)
             }
             ast::Expression::Call(ast::Call::Function(_)) => todo!(),
+            ast::Expression::Block(block) => self.lower_block(block, instructions),
         }
     }
 
@@ -227,6 +228,24 @@ impl Lowerer {
             ast::BuiltinOperatorKind::GreaterOrEqual => Some(tacky::BinaryOperator::GreaterOrEqual),
             _ => None,
         }
+    }
+
+    fn lower_block(
+        &mut self,
+        block: &ast::Block,
+        instructions: &mut Vec<tacky::Instruction>,
+    ) -> tacky::Value {
+        let ast::Block {
+            statements,
+            final_expression,
+            span: _,
+        } = block;
+
+        for statement in statements {
+            self.lower_expression(statement, instructions);
+        }
+
+        self.lower_expression(final_expression, instructions)
     }
 
     fn fresh_identifier(&mut self, hint: impl ToString) -> tacky::Identifier {

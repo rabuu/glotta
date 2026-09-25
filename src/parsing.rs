@@ -173,6 +173,10 @@ impl<'src> Parser<'src> {
 
                 Ok(ast::Expression::Call(call))
             }
+            TokenKind::CurlyL => {
+                let block = self.parse_block()?;
+                Ok(ast::Expression::Block(block))
+            }
             got => Err(ParsingError::UnexpectedToken {
                 expected: String::from("an expression"),
                 got,
@@ -253,6 +257,31 @@ impl<'src> Parser<'src> {
         Ok(ast::ArgumentList {
             inner: arguments,
             span: left.span.to(right.span),
+        })
+    }
+
+    fn parse_block(&mut self) -> Result<ast::Block> {
+        let start = self.expect(TokenKind::CurlyL)?;
+
+        let mut statements = Vec::new();
+
+        let final_expression = loop {
+            let expression = self.parse_expression()?;
+
+            if self.tokens.peek_kind() == Some(TokenKind::Semicolon) {
+                self.expect(TokenKind::Semicolon)?;
+                statements.push(expression);
+            } else {
+                break expression;
+            }
+        };
+
+        let end = self.expect(TokenKind::CurlyR)?;
+
+        Ok(ast::Block {
+            statements,
+            final_expression: Box::new(final_expression),
+            span: start.span.to(end.span),
         })
     }
 }

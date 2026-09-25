@@ -60,8 +60,11 @@ impl<'src> Lexer<'src> {
             }
             '(' => TokenKind::ParenL,
             ')' => TokenKind::ParenR,
+            '{' => TokenKind::CurlyL,
+            '}' => TokenKind::CurlyR,
             '=' => TokenKind::Equals,
             ':' => TokenKind::Colon,
+            ';' => TokenKind::Semicolon,
             ',' => TokenKind::Comma,
             '#' => TokenKind::Hash,
             _ => TokenKind::Invalid,
