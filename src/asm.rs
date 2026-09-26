@@ -118,7 +118,7 @@ pub struct Emitter<O: io::Write> {
 impl<O: io::Write> Emitter<O> {
     pub fn new(out: O) -> Self {
         Self {
-            e: emitter::Emitter::new(out),
+            e: emitter::Emitter::new(out, 4),
         }
     }
 

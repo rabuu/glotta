@@ -20,16 +20,16 @@ use std::{fmt, io};
 
 pub struct Emitter<O: io::Write> {
     out: O,
+    indent_width: usize,
     indent: usize,
     at_line_start: bool,
 }
 
 impl<O: io::Write> Emitter<O> {
-    const INDENT: &str = "    ";
-
-    pub fn new(out: O) -> Self {
+    pub fn new(out: O, indent_width: usize) -> Self {
         Self {
             out,
+            indent_width,
             indent: 0,
             at_line_start: true,
         }
@@ -37,7 +37,7 @@ impl<O: io::Write> Emitter<O> {
 
     pub fn write(&mut self, args: fmt::Arguments<'_>) -> io::Result<()> {
         if self.at_line_start {
-            write!(self.out, "{}", Self::INDENT.repeat(self.indent))?;
+            write!(self.out, "{}", " ".repeat(self.indent_width * self.indent))?;
             self.at_line_start = false;
         }
         self.out.write_fmt(args)
