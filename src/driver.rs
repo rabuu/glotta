@@ -6,6 +6,7 @@ use miette::Diagnostic;
 use thiserror::Error;
 use tracing::info;
 
+use crate::elaboration::{ElaborationError, elaborate};
 use crate::lexing::Lexer;
 use crate::lowering::Lowerer;
 use crate::parsing::{Parser, ParsingError};
@@ -23,6 +24,10 @@ pub enum DriverError {
     #[error(transparent)]
     #[diagnostic(transparent)]
     Parsing(#[from] ParsingError),
+
+    #[error(transparent)]
+    #[diagnostic(transparent)]
+    Elaboration(#[from] ElaborationError),
 
     #[error("Running `nasm -f elf64 {assembly_path} -o {object_path}` failed.")]
     Nasm {
@@ -75,8 +80,16 @@ impl Driver {
         parser.parse_program().map_err(DriverError::Parsing)
     }
 
+    pub fn elaborate(&self) -> Result<ast::Program> {
+        let mut ast = self.parse()?;
+
+        info!("elaborate '{}'", self.input_path.display());
+        elaborate(&mut ast).map_err(DriverError::Elaboration)?;
+        Ok(ast)
+    }
+
     pub fn tacky(&self) -> Result<tacky::Program> {
-        let ast = self.parse()?;
+        let ast = self.elaborate()?;
 
         info!("lower '{}' to TACKY", self.input_path.display());
         let mut lowerer = Lowerer::default();

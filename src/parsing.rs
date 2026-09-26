@@ -189,9 +189,7 @@ impl<'src> Parser<'src> {
 
     fn parse_variable(&mut self) -> Result<ast::Variable> {
         let name = self.parse_identifier()?;
-        let span = name.span;
-
-        Ok(ast::Variable { name, span })
+        Ok(ast::Variable { name })
     }
 
     fn parse_declaration(&mut self) -> Result<ast::Declaration> {

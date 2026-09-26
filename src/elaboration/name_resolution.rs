@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::ast;
 
-use super::{Result, SemanticError};
+use super::{ElaborationError, Result};
 
 pub struct NameResolver {
     function_names: HashMap<String, usize>,
@@ -49,7 +49,7 @@ impl NameResolver {
         } = name;
 
         if self.function_names.contains_key(identifier) {
-            return Err(SemanticError::DuplicateFunctionName {
+            return Err(ElaborationError::DuplicateFunctionName {
                 name: identifier.to_string(),
                 span: *span,
             });
@@ -86,7 +86,7 @@ impl NameResolver {
             .rev()
             .find_map(|scope| scope.get(variable).copied())
         else {
-            return Err(SemanticError::VariableNotBound {
+            return Err(ElaborationError::VariableNotBound {
                 variable: variable.to_string(),
                 span: *span,
             });
@@ -164,7 +164,7 @@ impl NameResolver {
         } = function_name;
 
         let Some(lookup) = self.function_names.get(function_name).copied() else {
-            return Err(SemanticError::FunctionNotBound {
+            return Err(ElaborationError::FunctionNotBound {
                 function: function_name.to_string(),
                 span: *span,
             });

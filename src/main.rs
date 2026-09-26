@@ -83,6 +83,9 @@ pub enum CliDebugStage {
     #[value(alias = "parse")]
     Parsing,
 
+    #[value(alias = "elab")]
+    Elaboration,
+
     #[value(alias = "tac")]
     Tacky,
 
@@ -149,6 +152,11 @@ fn run(cli: CliArgs) -> miette::Result<()> {
                 }
                 CliDebugStage::Parsing => {
                     let ast = driver.parse().map_err(|err| driver.to_report(err))?;
+                    println!("{ast:#?}");
+                    Ok(())
+                }
+                CliDebugStage::Elaboration => {
+                    let ast = driver.elaborate().map_err(|err| driver.to_report(err))?;
                     println!("{ast:#?}");
                     Ok(())
                 }
