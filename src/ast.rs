@@ -24,6 +24,14 @@ pub struct FunctionDefinition {
 #[derive(Debug, Clone, Spanned)]
 pub struct Identifier {
     pub identifier: String,
+
+    /// Unique name ID
+    ///
+    /// The ID of 0 means "not yet assigned".
+    /// Invariant: Before name resolution _every_ ID is 0;
+    /// after name resolution _no_ ID is 0.
+    pub id: usize,
+
     pub span: Span,
 }
 
@@ -43,10 +51,15 @@ pub struct IntegerConstant {
     pub span: Span,
 }
 
-#[derive(Debug, Clone, Spanned)]
+#[derive(Debug, Clone)]
 pub struct Variable {
     pub name: Identifier,
-    pub span: Span,
+}
+
+impl Spanned for Variable {
+    fn span(&self) -> Span {
+        self.name.span()
+    }
 }
 
 #[derive(Debug, Clone, Spanned)]

@@ -165,6 +165,7 @@ impl<'src> Parser<'src> {
 
         Ok(ast::Identifier {
             identifier,
+            id: 0,
             span: token.span,
         })
     }

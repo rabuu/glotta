@@ -5,6 +5,7 @@ pub mod driver;
 pub mod lexing;
 pub mod lowering;
 pub mod parsing;
+pub mod sema;
 pub mod span;
 pub mod tacky;
 pub mod token;
