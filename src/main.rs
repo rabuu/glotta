@@ -1,13 +1,15 @@
-use std::fmt;
 use std::path::PathBuf;
+use std::{fmt, io};
 
 use clap::{Parser, Subcommand, ValueEnum};
-use glotta::span::SourcePosition;
+use miette::IntoDiagnostic;
 use tracing::level_filters::LevelFilter;
 use tracing_subscriber::EnvFilter;
 
 use glotta::driver::Driver;
+use glotta::span::SourcePosition;
 use glotta::token_stream::TokenStream;
+use glotta::{asm, ast, tacky};
 
 #[derive(Debug, Parser)]
 #[clap(version, about = None, long_about = None)]
@@ -152,20 +154,32 @@ fn run(cli: CliArgs) -> miette::Result<()> {
                 }
                 CliDebugStage::Parsing => {
                     let ast = driver.parse().map_err(|err| driver.to_report(err))?;
-                    println!("{ast:#?}");
-                    Ok(())
+                    let stdout = io::stdout().lock();
+                    let writer = io::BufWriter::new(stdout);
+                    let emitter = ast::Emitter::new(writer);
+                    emitter.emit(&ast).into_diagnostic()
                 }
                 CliDebugStage::Elaboration => {
                     let ast = driver.elaborate().map_err(|err| driver.to_report(err))?;
-                    println!("{ast:#?}");
-                    Ok(())
+                    let stdout = io::stdout().lock();
+                    let writer = io::BufWriter::new(stdout);
+                    let emitter = ast::Emitter::new(writer);
+                    emitter.emit(&ast).into_diagnostic()
                 }
-                CliDebugStage::Tacky => driver
-                    .tacky_to_stdout()
-                    .map_err(|err| driver.to_report(err)),
-                CliDebugStage::Assembly => driver
-                    .assembly_to_stdout()
-                    .map_err(|err| driver.to_report(err)),
+                CliDebugStage::Tacky => {
+                    let tacky = driver.tacky().map_err(|err| driver.to_report(err))?;
+                    let stdout = io::stdout().lock();
+                    let writer = io::BufWriter::new(stdout);
+                    let emitter = tacky::Emitter::new(writer);
+                    emitter.emit(&tacky).into_diagnostic()
+                }
+                CliDebugStage::Assembly => {
+                    let asm = driver.codegen().map_err(|err| driver.to_report(err))?;
+                    let stdout = io::stdout().lock();
+                    let writer = io::BufWriter::new(stdout);
+                    let emitter = asm::Emitter::new(writer);
+                    emitter.emit(&asm).into_diagnostic()
+                }
             }
         }
     }
