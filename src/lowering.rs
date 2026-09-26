@@ -40,23 +40,81 @@ impl Lowerer {
         instructions: &mut Vec<tacky::Instruction>,
     ) -> tacky::Value {
         match expression {
-            ast::Expression::Constant(constant) => self.lower_constant(constant, instructions),
-            ast::Expression::Variable(variable) => todo!(),
-            ast::Expression::Declaration(declaration) => todo!(),
-            ast::Expression::Assignment(assignment) => todo!(),
+            ast::Expression::Constant(constant) => self.lower_constant(constant),
+            ast::Expression::Variable(variable) => self.lower_variable(variable),
+            ast::Expression::Declaration(declaration) => {
+                self.lower_declaration(declaration, instructions)
+            }
+            ast::Expression::Assignment(assignment) => {
+                self.lower_assignment(assignment, instructions)
+            }
             ast::Expression::BuiltinCall(call) => self.lower_builtin_call(call, instructions),
             ast::Expression::FunctionCall(_) => todo!(),
             ast::Expression::Block(block) => self.lower_block(block, instructions),
         }
     }
 
-    fn lower_constant(
-        &self,
-        constant: &ast::IntegerConstant,
-        _instructions: &mut Vec<tacky::Instruction>,
-    ) -> tacky::Value {
+    fn lower_constant(&self, constant: &ast::IntegerConstant) -> tacky::Value {
         let ast::IntegerConstant { value, span: _ } = constant;
         tacky::Value::Constant(*value)
+    }
+
+    fn lower_variable(&self, variable: &ast::Variable) -> tacky::Value {
+        let ast::Variable { name } = variable;
+        let ast::Identifier {
+            identifier: name,
+            id,
+            span: _,
+        } = name;
+
+        let name = tacky::Identifier::Variable {
+            name: name.clone(),
+            id: *id,
+        };
+
+        tacky::Value::Variable(name)
+    }
+
+    fn lower_declaration(
+        &mut self,
+        declaration: &ast::Declaration,
+        instructions: &mut Vec<tacky::Instruction>,
+    ) -> tacky::Value {
+        let ast::Declaration {
+            variable,
+            initializer,
+            span: _,
+        } = declaration;
+
+        let variable = self.lower_variable(variable);
+        let initializer = self.lower_expression(initializer, instructions);
+        instructions.push(tacky::Instruction::Copy {
+            src: initializer,
+            dst: variable.clone(),
+        });
+
+        variable
+    }
+
+    fn lower_assignment(
+        &mut self,
+        assignment: &ast::Assignment,
+        instructions: &mut Vec<tacky::Instruction>,
+    ) -> tacky::Value {
+        let ast::Assignment { lhs, rhs, span: _ } = assignment;
+
+        let ast::Expression::Variable(variable) = &**lhs else {
+            todo!("complex lvalue handling");
+        };
+        let variable = self.lower_variable(variable);
+
+        let rhs = self.lower_expression(rhs, instructions);
+        instructions.push(tacky::Instruction::Copy {
+            src: rhs,
+            dst: variable.clone(),
+        });
+
+        variable
     }
 
     fn lower_builtin_call(
