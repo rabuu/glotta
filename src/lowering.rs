@@ -22,7 +22,7 @@ impl Lowerer {
             span: _,
         } = function;
 
-        let name = tacky::Identifier::Named(name.identifier.clone());
+        let name = tacky::Identifier::Function(name.identifier.clone());
 
         let mut instructions = Vec::new();
         let body = self.lower_expression(body, &mut instructions);
@@ -80,7 +80,7 @@ impl Lowerer {
                 let arg = &arguments.inner[0];
 
                 let src = self.lower_expression(arg, instructions);
-                let dst = self.fresh_variable();
+                let dst = self.tmp_variable();
                 let op = self
                     .lower_unary_operator(operator)
                     .expect("pattern matching ensures this is a unary operator");
@@ -110,7 +110,7 @@ impl Lowerer {
 
                 let lhs = self.lower_expression(lhs, instructions);
                 let rhs = self.lower_expression(rhs, instructions);
-                let dst = self.fresh_variable();
+                let dst = self.tmp_variable();
                 let op = self
                     .lower_binary_operator(operator)
                     .expect("pattern matching ensures this is a binary operator");
@@ -129,9 +129,9 @@ impl Lowerer {
                 let lhs = &arguments.inner[0];
                 let rhs = &arguments.inner[1];
 
-                let false_label = self.fresh_identifier("and.false");
-                let end_label = self.fresh_identifier("and.end");
-                let result = self.fresh_variable();
+                let false_label = self.tmp_name("and.false");
+                let end_label = self.tmp_name("and.end");
+                let result = self.tmp_variable();
 
                 let lhs = self.lower_expression(lhs, instructions);
                 instructions.push(tacky::Instruction::JumpIfZero {
@@ -166,9 +166,9 @@ impl Lowerer {
                 let lhs = &arguments.inner[0];
                 let rhs = &arguments.inner[1];
 
-                let true_label = self.fresh_identifier("or.true");
-                let end_label = self.fresh_identifier("or.end");
-                let result = self.fresh_variable();
+                let true_label = self.tmp_name("or.true");
+                let end_label = self.tmp_name("or.end");
+                let result = self.tmp_variable();
 
                 let lhs = self.lower_expression(lhs, instructions);
                 instructions.push(tacky::Instruction::JumpIfNotZero {
@@ -251,7 +251,7 @@ impl Lowerer {
         self.lower_expression(final_expression, instructions)
     }
 
-    fn fresh_identifier(&mut self, hint: impl ToString) -> tacky::Identifier {
+    fn tmp_name(&mut self, hint: impl ToString) -> tacky::Identifier {
         let ident = tacky::Identifier::Temporary {
             hint: hint.to_string(),
             id: self.fresh,
@@ -260,8 +260,8 @@ impl Lowerer {
         ident
     }
 
-    fn fresh_variable(&mut self) -> tacky::Value {
-        let ident = self.fresh_identifier("var");
-        tacky::Value::Variable(ident)
+    fn tmp_variable(&mut self) -> tacky::Value {
+        let name = self.tmp_name("var");
+        tacky::Value::Variable(name)
     }
 }
