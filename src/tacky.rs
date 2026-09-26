@@ -88,7 +88,7 @@ pub enum Identifier {
 impl fmt::Display for Identifier {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Identifier::Function(name) => write!(f, ".fun.{name}"),
+            Identifier::Function(name) => write!(f, "{name}"),
             Identifier::Variable { name, id } => write!(f, ".var.{id}.{name}"),
             Identifier::Temporary { hint, id } => write!(f, ".tmp.{id}.{hint}"),
         }
