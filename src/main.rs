@@ -79,10 +79,10 @@ impl fmt::Display for CliOutputFormat {
 
 #[derive(Debug, Clone, Copy, ValueEnum)]
 pub enum CliDebugStage {
-    #[value(alias = "lex")]
+    #[value(alias = "lex", alias = "tokens")]
     Lexing,
 
-    #[value(alias = "parse")]
+    #[value(alias = "parse", alias = "ast")]
     Parsing,
 
     #[value(alias = "elab")]
@@ -153,14 +153,16 @@ fn run(cli: CliArgs) -> miette::Result<()> {
                     Ok(())
                 }
                 CliDebugStage::Parsing => {
-                    let ast = driver.parse().map_err(|err| driver.to_report(err))?;
+                    let ast = driver.ast().map_err(|err| driver.to_report(err))?;
                     let stdout = io::stdout().lock();
                     let writer = io::BufWriter::new(stdout);
                     let emitter = ast::Emitter::new(writer);
                     emitter.emit(&ast).into_diagnostic()
                 }
                 CliDebugStage::Elaboration => {
-                    let ast = driver.elaborate().map_err(|err| driver.to_report(err))?;
+                    let ast = driver
+                        .elaborated_ast()
+                        .map_err(|err| driver.to_report(err))?;
                     let stdout = io::stdout().lock();
                     let writer = io::BufWriter::new(stdout);
                     let emitter = ast::Emitter::new(writer);
@@ -174,7 +176,7 @@ fn run(cli: CliArgs) -> miette::Result<()> {
                     emitter.emit(&tacky).into_diagnostic()
                 }
                 CliDebugStage::Assembly => {
-                    let asm = driver.codegen().map_err(|err| driver.to_report(err))?;
+                    let asm = driver.assembly().map_err(|err| driver.to_report(err))?;
                     let stdout = io::stdout().lock();
                     let writer = io::BufWriter::new(stdout);
                     let emitter = asm::Emitter::new(writer);

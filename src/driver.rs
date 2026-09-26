@@ -73,15 +73,15 @@ impl Driver {
         Lexer::new(&self.source)
     }
 
-    pub fn parse(&self) -> Result<ast::Program> {
+    pub fn ast(&self) -> Result<ast::Program> {
         info!("parse '{}'", self.input_path.display());
         let lexer = self.lexer();
         let parser = Parser::new(lexer);
         parser.parse().map_err(DriverError::Parsing)
     }
 
-    pub fn elaborate(&self) -> Result<ast::Program> {
-        let mut ast = self.parse()?;
+    pub fn elaborated_ast(&self) -> Result<ast::Program> {
+        let mut ast = self.ast()?;
 
         info!("elaborate '{}'", self.input_path.display());
         elaborate(&mut ast).map_err(DriverError::Elaboration)?;
@@ -89,7 +89,7 @@ impl Driver {
     }
 
     pub fn tacky(&self) -> Result<tacky::Program> {
-        let ast = self.elaborate()?;
+        let ast = self.elaborated_ast()?;
 
         info!("lower '{}' to TACKY", self.input_path.display());
         let mut lowerer = Lowerer::default();
@@ -97,7 +97,7 @@ impl Driver {
         Ok(tacky)
     }
 
-    pub fn codegen(&self) -> Result<asm::Program> {
+    pub fn assembly(&self) -> Result<asm::Program> {
         let tacky = self.tacky()?;
 
         info!("codegen '{}'", self.input_path.display());
@@ -111,7 +111,7 @@ impl Driver {
             None => self.default_output_path(OutputFormat::Assembly)?,
         };
 
-        let asm = self.codegen()?;
+        let asm = self.assembly()?;
 
         info!(
             "emit assembly from '{}' to '{}'",
