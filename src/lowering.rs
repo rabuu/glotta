@@ -77,7 +77,7 @@ impl Lowerer {
             | ast::BuiltinOperatorKind::Negation
             | ast::BuiltinOperatorKind::Not => {
                 assert_eq!(arguments.arity(), 1, "Known by type checking");
-                let arg = &arguments.inner[0];
+                let arg = &arguments.arguments[0];
 
                 let src = self.lower_expression(arg, instructions);
                 let dst = self.tmp_variable();
@@ -105,8 +105,8 @@ impl Lowerer {
             | ast::BuiltinOperatorKind::GreaterThan
             | ast::BuiltinOperatorKind::GreaterOrEqual => {
                 assert_eq!(arguments.arity(), 2, "Known by type checking");
-                let lhs = &arguments.inner[0];
-                let rhs = &arguments.inner[1];
+                let lhs = &arguments.arguments[0];
+                let rhs = &arguments.arguments[1];
 
                 let lhs = self.lower_expression(lhs, instructions);
                 let rhs = self.lower_expression(rhs, instructions);
@@ -126,8 +126,8 @@ impl Lowerer {
             }
             ast::BuiltinOperatorKind::And => {
                 assert_eq!(arguments.arity(), 2, "Known by type checking");
-                let lhs = &arguments.inner[0];
-                let rhs = &arguments.inner[1];
+                let lhs = &arguments.arguments[0];
+                let rhs = &arguments.arguments[1];
 
                 let false_label = self.tmp_name("and.false");
                 let end_label = self.tmp_name("and.end");
@@ -163,8 +163,8 @@ impl Lowerer {
             }
             ast::BuiltinOperatorKind::Or => {
                 assert_eq!(arguments.arity(), 2, "Known by type checking");
-                let lhs = &arguments.inner[0];
-                let rhs = &arguments.inner[1];
+                let lhs = &arguments.arguments[0];
+                let rhs = &arguments.arguments[1];
 
                 let true_label = self.tmp_name("or.true");
                 let end_label = self.tmp_name("or.end");

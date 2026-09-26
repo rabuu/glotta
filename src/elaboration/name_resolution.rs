@@ -178,10 +178,7 @@ impl NameResolver {
     }
 
     fn resolve_arguments(&mut self, arguments: &mut ast::ArgumentList) -> Result<()> {
-        let ast::ArgumentList {
-            inner: arguments,
-            span: _,
-        } = arguments;
+        let ast::ArgumentList { arguments, span: _ } = arguments;
 
         for argument in arguments {
             self.resolve_expression(argument)?;
