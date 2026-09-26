@@ -6,13 +6,13 @@ use miette::Diagnostic;
 use thiserror::Error;
 use tracing::info;
 
+use crate::codegen::codegen;
 use crate::elaboration::{ElaborationError, elaborate};
 use crate::lexing::Lexer;
 use crate::lowering::Lowerer;
 use crate::parsing::{Parser, ParsingError};
 use crate::span::{SourcePosition, Span};
-use crate::{asm, codegen};
-use crate::{ast, tacky};
+use crate::{asm, ast, tacky};
 
 type Result<T> = std::result::Result<T, DriverError>;
 
@@ -77,7 +77,7 @@ impl Driver {
         info!("parse '{}'", self.input_path.display());
         let lexer = self.lexer();
         let parser = Parser::new(lexer);
-        parser.parse_program().map_err(DriverError::Parsing)
+        parser.parse().map_err(DriverError::Parsing)
     }
 
     pub fn elaborate(&self) -> Result<ast::Program> {
@@ -93,7 +93,7 @@ impl Driver {
 
         info!("lower '{}' to TACKY", self.input_path.display());
         let mut lowerer = Lowerer::default();
-        let tacky = lowerer.lower_program(&ast);
+        let tacky = lowerer.lower(&ast);
         Ok(tacky)
     }
 
@@ -108,7 +108,7 @@ impl Driver {
         let stdout = io::stdout().lock();
         let writer = io::BufWriter::new(stdout);
         let emitter = tacky::Emitter::new(writer);
-        emitter.emit_program(&tacky)?;
+        emitter.emit(&tacky)?;
 
         Ok(())
     }
@@ -117,7 +117,7 @@ impl Driver {
         let tacky = self.tacky()?;
 
         info!("codegen '{}'", self.input_path.display());
-        let asm = codegen::codegen_program(&tacky);
+        let asm = codegen(&tacky);
         Ok(asm)
     }
 
@@ -138,7 +138,7 @@ impl Driver {
         let file = fs::File::create(&assembly_path)?;
         let writer = io::BufWriter::new(file);
         let emitter = asm::Emitter::new(writer);
-        emitter.emit_program(&asm)?;
+        emitter.emit(&asm)?;
 
         Ok(assembly_path)
     }
@@ -154,7 +154,7 @@ impl Driver {
         let stdout = io::stdout().lock();
         let writer = io::BufWriter::new(stdout);
         let emitter = asm::Emitter::new(writer);
-        emitter.emit_program(&asm)?;
+        emitter.emit(&asm)?;
 
         Ok(())
     }

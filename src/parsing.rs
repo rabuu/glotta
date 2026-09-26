@@ -92,7 +92,7 @@ impl<'src> Parser<'src> {
         }
     }
 
-    pub fn parse_program(mut self) -> Result<ast::Program> {
+    pub fn parse(mut self) -> Result<ast::Program> {
         let function = self.parse_function_definition()?;
         self.expect_eof()?;
         Ok(ast::Program { function })

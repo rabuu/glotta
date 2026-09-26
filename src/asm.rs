@@ -121,7 +121,7 @@ impl<O: io::Write> Emitter<O> {
         Self { out }
     }
 
-    pub fn emit_program(mut self, program: &Program) -> io::Result<()> {
+    pub fn emit(mut self, program: &Program) -> io::Result<()> {
         let Program { function } = program;
 
         writeln!(self.out, "section .text\n")?;

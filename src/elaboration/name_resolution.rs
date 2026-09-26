@@ -19,7 +19,7 @@ impl NameResolver {
         }
     }
 
-    pub fn resolve_program(&mut self, program: &mut ast::Program) -> Result<()> {
+    pub fn resolve(&mut self, program: &mut ast::Program) -> Result<()> {
         let ast::Program { function } = program;
         self.resolve_function_definition(function)
     }

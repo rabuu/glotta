@@ -6,7 +6,7 @@ use crate::{asm, tacky};
 /// For now, every variable is an Int.
 const INT_BYTES: usize = 4;
 
-pub fn codegen_program(program: &tacky::Program) -> asm::Program {
+pub fn codegen(program: &tacky::Program) -> asm::Program {
     let tacky::Program { function } = program;
     let function = codegen_function_definition(function);
     asm::Program { function }

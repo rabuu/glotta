@@ -36,7 +36,7 @@ pub enum ElaborationError {
 
 pub fn elaborate(program: &mut ast::Program) -> Result<()> {
     let mut name_resolver = NameResolver::new();
-    name_resolver.resolve_program(program)?;
+    name_resolver.resolve(program)?;
 
     Ok(())
 }
