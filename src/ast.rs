@@ -41,7 +41,8 @@ pub enum Expression {
     Variable(Variable),
     Declaration(Declaration),
     Assignment(Assignment),
-    Call(Call),
+    BuiltinCall(BuiltinCall),
+    FunctionCall(FunctionCall),
     Block(Block),
 }
 
@@ -74,12 +75,6 @@ pub struct Assignment {
     pub lhs: Box<Expression>,
     pub rhs: Box<Expression>,
     pub span: Span,
-}
-
-#[derive(Debug, Clone, Spanned)]
-pub enum Call {
-    Builtin(BuiltinCall),
-    Function(FunctionCall),
 }
 
 #[derive(Debug, Clone, Spanned)]

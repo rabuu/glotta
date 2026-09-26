@@ -44,10 +44,8 @@ impl Lowerer {
             ast::Expression::Variable(variable) => todo!(),
             ast::Expression::Declaration(declaration) => todo!(),
             ast::Expression::Assignment(assignment) => todo!(),
-            ast::Expression::Call(ast::Call::Builtin(call)) => {
-                self.lower_builtin_call(call, instructions)
-            }
-            ast::Expression::Call(ast::Call::Function(_)) => todo!(),
+            ast::Expression::BuiltinCall(call) => self.lower_builtin_call(call, instructions),
+            ast::Expression::FunctionCall(_) => todo!(),
             ast::Expression::Block(block) => self.lower_block(block, instructions),
         }
     }

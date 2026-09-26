@@ -67,7 +67,8 @@ impl NameResolver {
             ast::Expression::Variable(variable) => self.resolve_variable(variable),
             ast::Expression::Declaration(declaration) => self.resolve_declaration(declaration),
             ast::Expression::Assignment(assignment) => self.resolve_assignment(assignment),
-            ast::Expression::Call(call) => self.resolve_call(call),
+            ast::Expression::BuiltinCall(call) => self.resolve_builtin_call(call),
+            ast::Expression::FunctionCall(call) => self.resolve_function_call(call),
             ast::Expression::Block(block) => self.resolve_block(block),
         }
     }
@@ -129,13 +130,6 @@ impl NameResolver {
         self.resolve_expression(&mut *rhs)?;
 
         Ok(())
-    }
-
-    fn resolve_call(&mut self, call: &mut ast::Call) -> Result<()> {
-        match call {
-            ast::Call::Builtin(builtin_call) => self.resolve_builtin_call(builtin_call),
-            ast::Call::Function(function_call) => self.resolve_function_call(function_call),
-        }
     }
 
     fn resolve_builtin_call(&mut self, builtin_call: &mut ast::BuiltinCall) -> Result<()> {

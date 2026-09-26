@@ -127,13 +127,13 @@ impl<'src> Parser<'src> {
             }
             TokenKind::Hash => {
                 let builtin_call = self.parse_builtin_call()?;
-                Ok(ast::Expression::Call(ast::Call::Builtin(builtin_call)))
+                Ok(ast::Expression::BuiltinCall(builtin_call))
             }
             TokenKind::Identifier => {
                 let next_token = self.tokens.peek_kind_n(1);
                 if next_token == Some(TokenKind::ParenL) {
                     let function_call = self.parse_function_call()?;
-                    Ok(ast::Expression::Call(ast::Call::Function(function_call)))
+                    Ok(ast::Expression::FunctionCall(function_call))
                 } else {
                     let variable = self.parse_variable()?;
                     Ok(ast::Expression::Variable(variable))
