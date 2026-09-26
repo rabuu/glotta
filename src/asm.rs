@@ -1,6 +1,7 @@
 use std::io;
 
-use crate::asm;
+use crate::emitter;
+use emitter::{emit, emitln};
 
 #[derive(Debug, Clone)]
 pub struct Program {
@@ -111,29 +112,29 @@ pub enum ConditionalFlag {
 }
 
 pub struct Emitter<O: io::Write> {
-    out: O,
+    e: emitter::Emitter<O>,
 }
 
 impl<O: io::Write> Emitter<O> {
-    const INDENT: &str = "    ";
-
     pub fn new(out: O) -> Self {
-        Self { out }
+        Self {
+            e: emitter::Emitter::new(out),
+        }
     }
 
     pub fn emit(mut self, program: &Program) -> io::Result<()> {
         let Program { function } = program;
 
-        writeln!(self.out, "section .text\n")?;
+        emitln!(self.e, "section .text\n")?;
         self.emit_function_definition(function)?;
 
-        self.newline()?;
-        writeln!(
-            self.out,
+        emitln!(self.e)?;
+        emitln!(
+            self.e,
             "section .note.GNU-stack noalloc noexec nowrite progbits"
         )?;
 
-        self.out.flush()?;
+        self.e.flush()?;
 
         Ok(())
     }
@@ -141,15 +142,15 @@ impl<O: io::Write> Emitter<O> {
     fn emit_function_definition(&mut self, function: &FunctionDefinition) -> io::Result<()> {
         let FunctionDefinition { name, instructions } = function;
 
-        writeln!(self.out, "global {name}")?;
-        writeln!(self.out, "{name}:")?;
+        emitln!(self.e, "global {name}")?;
+        emitln!(self.e, "{name}:")?;
+
+        self.e.indent();
         for instruction in instructions {
-            if !matches!(instruction, asm::Instruction::Label(_)) {
-                self.indent()?;
-            }
             self.emit_instruction(instruction)?;
-            self.newline()?;
+            emitln!(self.e)?;
         }
+        self.e.dedent();
 
         Ok(())
     }
@@ -157,129 +158,126 @@ impl<O: io::Write> Emitter<O> {
     fn emit_instruction(&mut self, instruction: &Instruction) -> io::Result<()> {
         match instruction {
             Instruction::Mov { src, dst } => {
-                write!(self.out, "mov ")?;
+                emit!(self.e, "mov ")?;
                 self.emit_operand(dst)?;
-                write!(self.out, ", ")?;
+                emit!(self.e, ", ")?;
                 self.emit_operand(src)?;
                 Ok(())
             }
             Instruction::Sub { src, dst } => {
-                write!(self.out, "sub ")?;
+                emit!(self.e, "sub ")?;
                 self.emit_operand(dst)?;
-                write!(self.out, ", ")?;
+                emit!(self.e, ", ")?;
                 self.emit_operand(src)?;
                 Ok(())
             }
             Instruction::Add { src, dst } => {
-                write!(self.out, "add ")?;
+                emit!(self.e, "add ")?;
                 self.emit_operand(dst)?;
-                write!(self.out, ", ")?;
+                emit!(self.e, ", ")?;
                 self.emit_operand(src)?;
                 Ok(())
             }
             Instruction::IMul { src, dst } => {
-                write!(self.out, "imul ")?;
+                emit!(self.e, "imul ")?;
                 self.emit_operand(dst)?;
-                write!(self.out, ", ")?;
+                emit!(self.e, ", ")?;
                 self.emit_operand(src)?;
                 Ok(())
             }
             Instruction::Cmp { src, dst } => {
-                write!(self.out, "cmp ")?;
+                emit!(self.e, "cmp ")?;
                 self.emit_operand(dst)?;
-                write!(self.out, ", ")?;
+                emit!(self.e, ", ")?;
                 self.emit_operand(src)?;
                 Ok(())
             }
             Instruction::Not(operand) => {
-                write!(self.out, "not ")?;
+                emit!(self.e, "not ")?;
                 self.emit_operand(operand)?;
                 Ok(())
             }
             Instruction::Neg(operand) => {
-                write!(self.out, "neg ")?;
+                emit!(self.e, "neg ")?;
                 self.emit_operand(operand)?;
                 Ok(())
             }
             Instruction::IDiv(operand) => {
-                write!(self.out, "idiv ")?;
+                emit!(self.e, "idiv ")?;
                 self.emit_operand(operand)?;
                 Ok(())
             }
-            Instruction::Cdq => write!(self.out, "cdq"),
+            Instruction::Cdq => emit!(self.e, "cdq"),
             Instruction::Push(operand) => {
-                write!(self.out, "push ")?;
+                emit!(self.e, "push ")?;
                 self.emit_operand(operand)?;
                 Ok(())
             }
             Instruction::Pop(operand) => {
-                write!(self.out, "pop ")?;
+                emit!(self.e, "pop ")?;
                 self.emit_operand(operand)?;
                 Ok(())
             }
-            Instruction::Jmp(label) => write!(self.out, "jmp .L{label}"),
+            Instruction::Jmp(label) => emit!(self.e, "jmp .L{label}"),
             Instruction::JmpCC { flag, label } => {
-                write!(self.out, "j")?;
+                emit!(self.e, "j")?;
                 self.emit_conditional_flag(flag)?;
-                write!(self.out, " .L{label}")?;
+                emit!(self.e, " .L{label}")?;
                 Ok(())
             }
             Instruction::SetCC { flag, op } => {
-                write!(self.out, "set")?;
+                emit!(self.e, "set")?;
                 self.emit_conditional_flag(flag)?;
-                write!(self.out, " ")?;
+                emit!(self.e, " ")?;
                 self.emit_operand(op)?;
                 Ok(())
             }
-            Instruction::Label(label) => write!(self.out, ".L{label}:"),
-            Instruction::Ret => write!(self.out, "ret"),
+            Instruction::Label(label) => {
+                self.e.dedent();
+                emit!(self.e, ".L{label}:")?;
+                self.e.indent();
+                Ok(())
+            }
+            Instruction::Ret => emit!(self.e, "ret"),
         }
     }
 
     fn emit_operand(&mut self, operand: &Operand) -> io::Result<()> {
         match operand {
-            Operand::Immediate(int) => write!(self.out, "{int}"),
+            Operand::Immediate(int) => emit!(self.e, "{int}"),
             Operand::Register(register) => self.emit_register(register),
-            Operand::Pseudo(pseudo) => write!(self.out, "<{pseudo}>"),
+            Operand::Pseudo(pseudo) => emit!(self.e, "<{pseudo}>"),
             Operand::Stack { offset } => {
                 let sign = if offset.is_negative() { "-" } else { "+" };
                 let abs = offset.abs();
-                write!(self.out, "[rbp {sign} {abs}]")
+                emit!(self.e, "[rbp {sign} {abs}]")
             }
         }
     }
 
     fn emit_register(&mut self, register: &Register) -> io::Result<()> {
         match register {
-            Register::RSP => write!(self.out, "rsp"),
-            Register::RBP => write!(self.out, "rbp"),
-            Register::AL => write!(self.out, "al"),
-            Register::DL => write!(self.out, "dl"),
-            Register::R10B => write!(self.out, "r10b"),
-            Register::R11B => write!(self.out, "r11b"),
-            Register::EAX => write!(self.out, "eax"),
-            Register::EDX => write!(self.out, "edx"),
-            Register::R10D => write!(self.out, "r10d"),
-            Register::R11D => write!(self.out, "r11d"),
+            Register::RSP => emit!(self.e, "rsp"),
+            Register::RBP => emit!(self.e, "rbp"),
+            Register::AL => emit!(self.e, "al"),
+            Register::DL => emit!(self.e, "dl"),
+            Register::R10B => emit!(self.e, "r10b"),
+            Register::R11B => emit!(self.e, "r11b"),
+            Register::EAX => emit!(self.e, "eax"),
+            Register::EDX => emit!(self.e, "edx"),
+            Register::R10D => emit!(self.e, "r10d"),
+            Register::R11D => emit!(self.e, "r11d"),
         }
     }
 
     fn emit_conditional_flag(&mut self, flag: &ConditionalFlag) -> io::Result<()> {
         match flag {
-            ConditionalFlag::E => write!(self.out, "e"),
-            ConditionalFlag::NE => write!(self.out, "ne"),
-            ConditionalFlag::G => write!(self.out, "g"),
-            ConditionalFlag::GE => write!(self.out, "ge"),
-            ConditionalFlag::L => write!(self.out, "l"),
-            ConditionalFlag::LE => write!(self.out, "le"),
+            ConditionalFlag::E => emit!(self.e, "e"),
+            ConditionalFlag::NE => emit!(self.e, "ne"),
+            ConditionalFlag::G => emit!(self.e, "g"),
+            ConditionalFlag::GE => emit!(self.e, "ge"),
+            ConditionalFlag::L => emit!(self.e, "l"),
+            ConditionalFlag::LE => emit!(self.e, "le"),
         }
-    }
-
-    fn newline(&mut self) -> io::Result<()> {
-        writeln!(self.out)
-    }
-
-    fn indent(&mut self) -> io::Result<()> {
-        write!(self.out, "{}", Self::INDENT)
     }
 }

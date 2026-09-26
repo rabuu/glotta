@@ -1,5 +1,8 @@
 use std::{fmt, io};
 
+use crate::emitter;
+use crate::emitter::{emit, emitln};
+
 #[derive(Debug, Clone)]
 pub struct Program {
     pub function: FunctionDefinition,
@@ -93,32 +96,34 @@ impl fmt::Display for Identifier {
 }
 
 pub struct Emitter<O: io::Write> {
-    out: O,
+    e: emitter::Emitter<O>,
 }
 
 impl<O: io::Write> Emitter<O> {
-    const INDENT: &str = "    ";
-
     pub fn new(out: O) -> Self {
-        Self { out }
+        Self {
+            e: emitter::Emitter::new(out),
+        }
     }
 
     pub fn emit(mut self, program: &Program) -> io::Result<()> {
         let Program { function } = program;
-        self.emit_function_definition(function)
+        self.emit_function_definition(function)?;
+        self.e.flush()?;
+        Ok(())
     }
 
     fn emit_function_definition(&mut self, function: &FunctionDefinition) -> io::Result<()> {
         let FunctionDefinition { name, body } = function;
 
-        write!(self.out, "FUNCTION {name}")?;
-        self.newline()?;
+        emitln!(self.e, "FUNCTION {name}")?;
 
+        self.e.indent();
         for instruction in body {
-            self.indent()?;
             self.emit_instruction(instruction)?;
-            self.newline()?;
+            emitln!(self.e)?;
         }
+        self.e.dedent();
 
         Ok(())
     }
@@ -126,59 +131,51 @@ impl<O: io::Write> Emitter<O> {
     fn emit_instruction(&mut self, instruction: &Instruction) -> io::Result<()> {
         match instruction {
             Instruction::Return(value) => {
-                write!(self.out, "RETURN ")?;
+                emit!(self.e, "RETURN ")?;
                 self.emit_value(value)?;
                 Ok(())
             }
             Instruction::Unary(Unary { op, src, dst }) => {
                 self.emit_value(dst)?;
-                write!(self.out, " <- {op:?} ")?;
+                emit!(self.e, " <- {op:?} ")?;
                 self.emit_value(src)?;
                 Ok(())
             }
             Instruction::Binary(Binary { op, lhs, rhs, dst }) => {
                 self.emit_value(dst)?;
-                write!(self.out, " <- {op:?} ")?;
+                emit!(self.e, " <- {op:?} ")?;
                 self.emit_value(lhs)?;
-                write!(self.out, ", ")?;
+                emit!(self.e, ", ")?;
                 self.emit_value(rhs)?;
                 Ok(())
             }
             Instruction::Copy { src, dst } => {
                 self.emit_value(dst)?;
-                write!(self.out, " <- ")?;
+                emit!(self.e, " <- ")?;
                 self.emit_value(src)?;
                 Ok(())
             }
-            Instruction::Jump(target) => write!(self.out, "JUMP {target}"),
+            Instruction::Jump(target) => emit!(self.e, "JUMP {target}"),
             Instruction::JumpIfZero { condition, target } => {
-                write!(self.out, "JUMP {target} IF ")?;
+                emit!(self.e, "JUMP {target} IF ")?;
                 self.emit_value(condition)?;
-                write!(self.out, " == 0")?;
+                emit!(self.e, " == 0")?;
                 Ok(())
             }
             Instruction::JumpIfNotZero { condition, target } => {
-                write!(self.out, "JUMP {target} IF ")?;
+                emit!(self.e, "JUMP {target} IF ")?;
                 self.emit_value(condition)?;
-                write!(self.out, " != 0")?;
+                emit!(self.e, " != 0")?;
                 Ok(())
             }
-            Instruction::Label(label) => write!(self.out, "LABEL {label}"),
+            Instruction::Label(label) => emit!(self.e, "LABEL {label}"),
         }
     }
 
     fn emit_value(&mut self, value: &Value) -> io::Result<()> {
         match value {
-            Value::Constant(constant) => write!(self.out, "{constant}"),
-            Value::Variable(identifier) => write!(self.out, "{identifier}"),
+            Value::Constant(constant) => emit!(self.e, "{constant}"),
+            Value::Variable(identifier) => emit!(self.e, "{identifier}"),
         }
-    }
-
-    fn newline(&mut self) -> io::Result<()> {
-        writeln!(self.out)
-    }
-
-    fn indent(&mut self) -> io::Result<()> {
-        write!(self.out, "{}", Self::INDENT)
     }
 }

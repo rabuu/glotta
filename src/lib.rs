@@ -3,6 +3,7 @@ pub mod ast;
 pub mod codegen;
 pub mod driver;
 pub mod elaboration;
+pub mod emitter;
 pub mod lexing;
 pub mod lowering;
 pub mod parsing;
