@@ -18,6 +18,9 @@ pub enum TokenKind {
 
     Let,
     Set,
+    If,
+    Then,
+    Else,
     Int,
 
     ParenL,
@@ -45,6 +48,9 @@ impl fmt::Display for TokenKind {
             TokenKind::IntegerLiteral => write!(f, "integer literal"),
             TokenKind::Let => write!(f, "`let`"),
             TokenKind::Set => write!(f, "`set`"),
+            TokenKind::If => write!(f, "`if`"),
+            TokenKind::Then => write!(f, "`then`"),
+            TokenKind::Else => write!(f, "`else`"),
             TokenKind::Int => write!(f, "`Int`"),
             TokenKind::ParenL => write!(f, "`(`"),
             TokenKind::ParenR => write!(f, "`)`"),

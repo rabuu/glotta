@@ -50,6 +50,9 @@ impl Lowerer {
             }
             ast::Expression::BuiltinCall(call) => self.lower_builtin_call(call, instructions),
             ast::Expression::FunctionCall(_) => todo!(),
+            ast::Expression::Conditional(conditional) => {
+                self.lower_conditional(conditional, instructions)
+            }
             ast::Expression::Block(block) => self.lower_block(block, instructions),
         }
     }
@@ -287,6 +290,53 @@ impl Lowerer {
             ast::BuiltinOperatorKind::GreaterOrEqual => Some(tacky::BinaryOperator::GreaterOrEqual),
             _ => None,
         }
+    }
+
+    fn lower_conditional(
+        &mut self,
+        conditional: &ast::Conditional,
+        instructions: &mut Vec<tacky::Instruction>,
+    ) -> tacky::Value {
+        let ast::Conditional {
+            condition,
+            then_branch,
+            else_branch,
+            span: _,
+        } = conditional;
+
+        let else_label = self.tmp_name("if.else");
+        let end_label = self.tmp_name("if.end");
+        let result = self.tmp_variable();
+
+        let condition = self.lower_expression(condition, instructions);
+
+        instructions.push(tacky::Instruction::JumpIfZero {
+            condition,
+            target: else_label.clone(),
+        });
+
+        let then_branch = self.lower_expression(then_branch, instructions);
+
+        instructions.extend([
+            tacky::Instruction::Copy {
+                src: then_branch,
+                dst: result.clone(),
+            },
+            tacky::Instruction::Jump(end_label.clone()),
+            tacky::Instruction::Label(else_label),
+        ]);
+
+        let else_branch = self.lower_expression(else_branch, instructions);
+
+        instructions.extend([
+            tacky::Instruction::Copy {
+                src: else_branch,
+                dst: result.clone(),
+            },
+            tacky::Instruction::Label(end_label),
+        ]);
+
+        result
     }
 
     fn lower_block(

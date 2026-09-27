@@ -147,6 +147,10 @@ impl<'src> Parser<'src> {
                 let assignment = self.parse_assignment()?;
                 Ok(ast::Expression::Assignment(assignment))
             }
+            TokenKind::If => {
+                let conditional = self.parse_conditional()?;
+                Ok(ast::Expression::Conditional(conditional))
+            }
             TokenKind::CurlyL => {
                 let block = self.parse_block()?;
                 Ok(ast::Expression::Block(block))
@@ -319,6 +323,24 @@ impl<'src> Parser<'src> {
         Ok(ast::ArgumentList {
             arguments,
             span: left.to(right),
+        })
+    }
+
+    fn parse_conditional(&mut self) -> Result<ast::Conditional> {
+        let if_kw = self.expect(TokenKind::If)?;
+        let condition = self.parse_expression()?;
+        let _then_kw = self.expect(TokenKind::Then)?;
+        let then_branch = self.parse_expression()?;
+        let _else_kw = self.expect(TokenKind::Else)?;
+        let else_branch = self.parse_expression()?;
+
+        let span = if_kw.to(&else_branch);
+
+        Ok(ast::Conditional {
+            condition: Box::new(condition),
+            then_branch: Box::new(then_branch),
+            else_branch: Box::new(else_branch),
+            span,
         })
     }
 

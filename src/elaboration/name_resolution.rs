@@ -69,6 +69,7 @@ impl NameResolver {
             ast::Expression::Assignment(assignment) => self.resolve_assignment(assignment),
             ast::Expression::BuiltinCall(call) => self.resolve_builtin_call(call),
             ast::Expression::FunctionCall(call) => self.resolve_function_call(call),
+            ast::Expression::Conditional(conditional) => self.resolve_conditional(conditional),
             ast::Expression::Block(block) => self.resolve_block(block),
         }
     }
@@ -177,6 +178,21 @@ impl NameResolver {
         for argument in arguments {
             self.resolve_expression(argument)?;
         }
+
+        Ok(())
+    }
+
+    fn resolve_conditional(&mut self, conditional: &mut ast::Conditional) -> Result<()> {
+        let ast::Conditional {
+            condition,
+            then_branch,
+            else_branch,
+            span: _,
+        } = conditional;
+
+        self.resolve_expression(condition)?;
+        self.resolve_expression(then_branch)?;
+        self.resolve_expression(else_branch)?;
 
         Ok(())
     }

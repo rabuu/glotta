@@ -47,6 +47,7 @@ pub enum Expression {
     Assignment(Assignment),
     BuiltinCall(BuiltinCall),
     FunctionCall(FunctionCall),
+    Conditional(Conditional),
     Block(Block),
 }
 
@@ -137,6 +138,14 @@ impl ArgumentList {
 }
 
 #[derive(Debug, Clone, Spanned)]
+pub struct Conditional {
+    pub condition: Box<Expression>,
+    pub then_branch: Box<Expression>,
+    pub else_branch: Box<Expression>,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, Spanned)]
 pub struct Block {
     pub statements: Vec<Expression>,
     pub final_expression: Box<Expression>,
@@ -202,6 +211,7 @@ impl<O: io::Write> Emitter<O> {
             Expression::Assignment(assignment) => self.emit_assignment(assignment),
             Expression::BuiltinCall(call) => self.emit_builtin_call(call),
             Expression::FunctionCall(call) => self.emit_function_call(call),
+            Expression::Conditional(conditional) => self.emit_conditional(conditional),
             Expression::Block(block) => self.emit_block(block),
         }
     }
@@ -300,6 +310,40 @@ impl<O: io::Write> Emitter<O> {
                 emitln!(self.e)?;
             }
         }
+
+        Ok(())
+    }
+
+    fn emit_conditional(&mut self, conditional: &ast::Conditional) -> io::Result<()> {
+        let ast::Conditional {
+            condition,
+            then_branch,
+            else_branch,
+            span: _,
+        } = conditional;
+
+        emitln!(self.e, "CONDITIONAL")?;
+
+        self.e.indent();
+
+        emitln!(self.e, "IF")?;
+        self.e.indent();
+        self.emit_expression(condition)?;
+        emitln!(self.e)?;
+        self.e.dedent();
+
+        emitln!(self.e, "THEN")?;
+        self.e.indent();
+        self.emit_expression(then_branch)?;
+        emitln!(self.e)?;
+        self.e.dedent();
+
+        emitln!(self.e, "ELSE")?;
+        self.e.indent();
+        self.emit_expression(else_branch)?;
+        self.e.dedent();
+
+        self.e.dedent();
 
         Ok(())
     }

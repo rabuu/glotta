@@ -47,6 +47,9 @@ impl<'src> Lexer<'src> {
                 match self.slice_from(start) {
                     "let" => TokenKind::Let,
                     "set" => TokenKind::Set,
+                    "if" => TokenKind::If,
+                    "then" => TokenKind::Then,
+                    "else" => TokenKind::Else,
                     "Int" => TokenKind::Int,
                     _ => TokenKind::Identifier,
                 }
