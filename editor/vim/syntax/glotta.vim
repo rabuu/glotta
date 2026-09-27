@@ -14,7 +14,7 @@ syn match glottaFloat "-\=\<[0-9]*\.[0-9]*\>"
 syn keyword glottaBoolean true false
 
 syn keyword glottaConditional if then else match
-syn keyword glottaRepeat loop
+syn keyword glottaRepeat loop break continue
 syn match glottaOperator "[+*-/<>:=!]"
 syn keyword glottaKeyword let set typ use return
 

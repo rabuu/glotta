@@ -81,16 +81,18 @@ pub enum Value {
 #[derive(Debug, Clone)]
 pub enum Identifier {
     Function(String),
-    Variable { name: String, id: usize },
-    Temporary { hint: String, id: usize },
+    Variable { id: usize, name: String },
+    Loop { id: usize, kind: String },
+    Temporary { id: usize, hint: String },
 }
 
 impl fmt::Display for Identifier {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Identifier::Function(name) => write!(f, "{name}"),
-            Identifier::Variable { name, id } => write!(f, ".var.{id}.{name}"),
-            Identifier::Temporary { hint, id } => write!(f, ".tmp.{id}.{hint}"),
+            Identifier::Variable { id, name } => write!(f, ".var.{id}.{name}"),
+            Identifier::Loop { id, kind } => write!(f, ".loop.{id}.{kind}"),
+            Identifier::Temporary { id, hint } => write!(f, ".tmp.{id}.{hint}"),
         }
     }
 }

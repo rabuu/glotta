@@ -27,15 +27,11 @@ pub struct FunctionDefinition {
 
 #[derive(Debug, Clone, Spanned)]
 pub struct Identifier {
-    pub identifier: String,
-
-    /// Unique name ID
-    ///
-    /// The ID of 0 means "not yet assigned".
+    /// The ID gets assigned in the name resolution pass.
     /// Invariant: Before name resolution _every_ ID is 0;
     /// after name resolution _no_ ID is 0.
     pub id: usize,
-
+    pub identifier: String,
     pub span: Span,
 }
 
@@ -49,6 +45,9 @@ pub enum Expression {
     FunctionCall(FunctionCall),
     Conditional(Conditional),
     Block(Block),
+    Loop(Loop),
+    Break(Break),
+    Continue(Continue),
 }
 
 #[derive(Debug, Clone, Spanned)]
@@ -152,6 +151,34 @@ pub struct Block {
     pub span: Span,
 }
 
+#[derive(Debug, Clone, Spanned)]
+pub struct Loop {
+    /// The ID gets assigned in the loop labeling pass.
+    /// Invariant: Before loop labeling _every_ ID is 0;
+    /// afterwards _no_ ID is 0.
+    pub id: usize,
+    pub body: Box<Expression>,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, Spanned)]
+pub struct Break {
+    /// The ID gets assigned in the loop labeling pass.
+    /// Invariant: Before loop labeling _every_ ID is 0;
+    /// afterwards _no_ ID is 0.
+    pub id: usize,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, Spanned)]
+pub struct Continue {
+    /// The ID gets assigned in the loop labeling pass.
+    /// Invariant: Before loop labeling _every_ ID is 0;
+    /// afterwards _no_ ID is 0.
+    pub id: usize,
+    pub span: Span,
+}
+
 pub struct Emitter<O: io::Write> {
     e: emitter::Emitter<O>,
 }
@@ -213,6 +240,9 @@ impl<O: io::Write> Emitter<O> {
             Expression::FunctionCall(call) => self.emit_function_call(call),
             Expression::Conditional(conditional) => self.emit_conditional(conditional),
             Expression::Block(block) => self.emit_block(block),
+            Expression::Loop(loop_expr) => self.emit_loop(loop_expr),
+            Expression::Break(break_expr) => self.emit_break(break_expr),
+            Expression::Continue(continue_expr) => self.emit_continue(continue_expr),
         }
     }
 
@@ -366,6 +396,44 @@ impl<O: io::Write> Emitter<O> {
         self.emit_expression(final_expression)?;
 
         self.e.dedent();
+
+        Ok(())
+    }
+
+    fn emit_loop(&mut self, loop_expr: &ast::Loop) -> io::Result<()> {
+        let ast::Loop { id, body, span: _ } = loop_expr;
+
+        emit!(self.e, "LOOP")?;
+        if *id != 0 {
+            emit!(self.e, " {id}")?;
+        }
+        emitln!(self.e)?;
+
+        self.e.indent();
+        self.emit_expression(body)?;
+        self.e.dedent();
+
+        Ok(())
+    }
+
+    fn emit_break(&mut self, break_expr: &ast::Break) -> io::Result<()> {
+        let ast::Break { id, span: _ } = break_expr;
+
+        emit!(self.e, "BREAK")?;
+        if *id != 0 {
+            emit!(self.e, " {id}")?;
+        }
+
+        Ok(())
+    }
+
+    fn emit_continue(&mut self, continue_expr: &ast::Continue) -> io::Result<()> {
+        let ast::Continue { id, span: _ } = continue_expr;
+
+        emit!(self.e, "CONTINUE")?;
+        if *id != 0 {
+            emit!(self.e, " {id}")?;
+        }
 
         Ok(())
     }

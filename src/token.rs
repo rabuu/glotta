@@ -23,6 +23,10 @@ pub enum TokenKind {
     If,
     Then,
     Else,
+    Loop,
+    Break,
+    Continue,
+
     Int,
 
     ParenL,
@@ -53,6 +57,9 @@ impl fmt::Display for TokenKind {
             TokenKind::If => write!(f, "`if`"),
             TokenKind::Then => write!(f, "`then`"),
             TokenKind::Else => write!(f, "`else`"),
+            TokenKind::Loop => write!(f, "`loop`"),
+            TokenKind::Break => write!(f, "`break`"),
+            TokenKind::Continue => write!(f, "`continue`"),
             TokenKind::Int => write!(f, "`Int`"),
             TokenKind::ParenL => write!(f, "`(`"),
             TokenKind::ParenR => write!(f, "`)`"),

@@ -71,6 +71,9 @@ impl NameResolver {
             ast::Expression::FunctionCall(call) => self.resolve_function_call(call),
             ast::Expression::Conditional(conditional) => self.resolve_conditional(conditional),
             ast::Expression::Block(block) => self.resolve_block(block),
+            ast::Expression::Loop(loop_expr) => self.resolve_loop(loop_expr),
+            ast::Expression::Break(ast::Break { id: _, span: _ }) => Ok(()),
+            ast::Expression::Continue(_) => Ok(()),
         }
     }
 
@@ -214,6 +217,16 @@ impl NameResolver {
         self.scopes.pop();
 
         Ok(())
+    }
+
+    fn resolve_loop(&mut self, loop_expr: &mut ast::Loop) -> Result<()> {
+        let ast::Loop {
+            id: _,
+            body,
+            span: _,
+        } = loop_expr;
+
+        self.resolve_expression(body)
     }
 
     fn fresh_id(&mut self) -> usize {

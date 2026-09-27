@@ -54,6 +54,11 @@ impl Lowerer {
                 self.lower_conditional(conditional, instructions)
             }
             ast::Expression::Block(block) => self.lower_block(block, instructions),
+            ast::Expression::Loop(loop_expr) => self.lower_loop(loop_expr, instructions),
+            ast::Expression::Break(break_expr) => self.lower_break(break_expr, instructions),
+            ast::Expression::Continue(continue_expr) => {
+                self.lower_continue(continue_expr, instructions)
+            }
         }
     }
 
@@ -355,6 +360,67 @@ impl Lowerer {
         }
 
         self.lower_expression(final_expression, instructions)
+    }
+
+    fn lower_loop(
+        &mut self,
+        loop_expr: &ast::Loop,
+        instructions: &mut Vec<tacky::Instruction>,
+    ) -> tacky::Value {
+        let ast::Loop { id, body, span: _ } = loop_expr;
+
+        let continue_label = tacky::Identifier::Loop {
+            id: *id,
+            kind: "continue".to_string(),
+        };
+
+        let break_label = tacky::Identifier::Loop {
+            id: *id,
+            kind: "break".to_string(),
+        };
+
+        instructions.push(tacky::Instruction::Label(continue_label.clone()));
+
+        self.lower_expression(body, instructions);
+
+        instructions.extend([
+            tacky::Instruction::Jump(continue_label),
+            tacky::Instruction::Label(break_label),
+        ]);
+
+        tacky::Value::Constant(0)
+    }
+
+    fn lower_break(
+        &mut self,
+        break_expr: &ast::Break,
+        instructions: &mut Vec<tacky::Instruction>,
+    ) -> tacky::Value {
+        let ast::Break { id, span: _ } = break_expr;
+
+        let break_label = tacky::Identifier::Loop {
+            id: *id,
+            kind: "break".to_string(),
+        };
+        instructions.push(tacky::Instruction::Jump(break_label));
+
+        tacky::Value::Constant(0)
+    }
+
+    fn lower_continue(
+        &mut self,
+        continue_expr: &ast::Continue,
+        instructions: &mut Vec<tacky::Instruction>,
+    ) -> tacky::Value {
+        let ast::Continue { id, span: _ } = continue_expr;
+
+        let continue_label = tacky::Identifier::Loop {
+            id: *id,
+            kind: "continue".to_string(),
+        };
+        instructions.push(tacky::Instruction::Jump(continue_label));
+
+        tacky::Value::Constant(0)
     }
 
     fn tmp_name(&mut self, hint: impl ToString) -> tacky::Identifier {

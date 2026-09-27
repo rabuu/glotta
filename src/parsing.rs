@@ -154,6 +154,18 @@ impl<'src> Parser<'src> {
                 let block = self.parse_block()?;
                 Ok(ast::Expression::Block(block))
             }
+            TokenKind::Loop => {
+                let loop_expr = self.parse_loop()?;
+                Ok(ast::Expression::Loop(loop_expr))
+            }
+            TokenKind::Break => {
+                let break_expr = self.parse_break()?;
+                Ok(ast::Expression::Break(break_expr))
+            }
+            TokenKind::Continue => {
+                let continue_expr = self.parse_continue()?;
+                Ok(ast::Expression::Continue(continue_expr))
+            }
             got => Err(ParsingError::UnexpectedToken {
                 expected: String::from("an expression"),
                 got,
@@ -167,8 +179,8 @@ impl<'src> Parser<'src> {
         let identifier = self.slice(token.span).to_owned();
 
         Ok(ast::Identifier {
-            identifier,
             id: 0,
+            identifier,
             span: token.span,
         })
     }
@@ -366,5 +378,29 @@ impl<'src> Parser<'src> {
             final_expression: Box::new(final_expression),
             span: start.to(end),
         })
+    }
+
+    fn parse_loop(&mut self) -> Result<ast::Loop> {
+        let loop_kw = self.expect(TokenKind::Loop)?;
+        let body = self.parse_expression()?;
+        let span = loop_kw.to(&body);
+
+        Ok(ast::Loop {
+            id: 0,
+            body: Box::new(body),
+            span,
+        })
+    }
+
+    fn parse_break(&mut self) -> Result<ast::Break> {
+        let break_kw = self.expect(TokenKind::Break)?;
+        let span = break_kw.span();
+        Ok(ast::Break { id: 0, span })
+    }
+
+    fn parse_continue(&mut self) -> Result<ast::Continue> {
+        let continue_kw = self.expect(TokenKind::Continue)?;
+        let span = continue_kw.span();
+        Ok(ast::Continue { id: 0, span })
     }
 }

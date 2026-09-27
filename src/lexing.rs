@@ -50,6 +50,9 @@ impl<'src> Lexer<'src> {
                     "if" => TokenKind::If,
                     "then" => TokenKind::Then,
                     "else" => TokenKind::Else,
+                    "loop" => TokenKind::Loop,
+                    "break" => TokenKind::Break,
+                    "continue" => TokenKind::Continue,
                     "Int" => TokenKind::Int,
                     _ => TokenKind::Identifier,
                 }
