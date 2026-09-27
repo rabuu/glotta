@@ -64,24 +64,104 @@ impl<'src> Parser<'src> {
     }
 
     pub fn parse(mut self) -> Result<ast::Program> {
-        let function = self.parse_function_definition()?;
+        let mut functions = Vec::new();
+
+        while self.tokens.peek().is_some() {
+            let function = self.parse_function_definition()?;
+            functions.push(function);
+        }
+
         self.expect_eof()?;
-        Ok(ast::Program { function })
+
+        let span = if let Some(first) = functions.first() {
+            let last = functions
+                .last()
+                .expect("there must be at least one function");
+            first.to(last)
+        } else {
+            Span::from(0..0)
+        };
+
+        Ok(ast::Program { functions, span })
     }
 
     fn parse_function_definition(&mut self) -> Result<ast::FunctionDefinition> {
         let let_kw = self.expect(TokenKind::Let)?;
         let name = self.parse_identifier()?;
         self.expect(TokenKind::Colon)?;
-        self.expect(TokenKind::ParenL)?;
-        self.expect(TokenKind::ParenR)?;
+        let parameters = self.parse_parameters()?;
         self.expect(TokenKind::Arrow)?;
         self.expect(TokenKind::Int)?;
         self.expect(TokenKind::Equals)?;
         let body = self.parse_expression()?;
+
         let span = let_kw.to(&body);
 
-        Ok(ast::FunctionDefinition { name, body, span })
+        Ok(ast::FunctionDefinition {
+            name,
+            parameters,
+            body,
+            span,
+        })
+    }
+
+    fn parse_parameters(&mut self) -> Result<ast::ParameterList> {
+        let left = self.expect(TokenKind::ParenL)?;
+
+        let mut parameters = Vec::new();
+
+        loop {
+            let Some(next_token) = self.tokens.peek() else {
+                return Err(ParsingError::UnexpectedEof {
+                    expected: "parameter list".to_string(),
+                });
+            };
+
+            if next_token.kind == TokenKind::ParenR {
+                break;
+            }
+
+            let parameter = self.parse_parameter()?;
+            parameters.push(parameter);
+
+            let Some(next_token) = self.tokens.peek() else {
+                return Err(ParsingError::UnexpectedEof {
+                    expected: format!("{} or {}", TokenKind::ParenR, TokenKind::Comma),
+                });
+            };
+
+            match next_token.kind {
+                TokenKind::ParenR => break,
+                TokenKind::Comma => {
+                    self.expect(TokenKind::Comma).unwrap();
+                    continue;
+                }
+                _ => {
+                    return Err(ParsingError::UnexpectedToken {
+                        expected: format!("{} or {}", TokenKind::ParenR, TokenKind::Comma),
+                        got: next_token.kind,
+                        span: next_token.span,
+                    });
+                }
+            }
+        }
+
+        let right = self.expect(TokenKind::ParenR)?;
+
+        Ok(ast::ParameterList {
+            parameters: parameters,
+            span: left.to(right),
+        })
+    }
+
+    fn parse_parameter(&mut self) -> Result<ast::Parameter> {
+        let name = self.parse_identifier()?;
+        self.expect(TokenKind::Colon)?;
+        let typ = self.expect(TokenKind::Int)?;
+
+        let span = name.to(typ);
+
+        Ok(ast::Parameter { name, span })
     }
 
     fn parse_expression(&mut self) -> Result<ast::Expression> {
@@ -267,35 +347,36 @@ impl<'src> Parser<'src> {
         let mut arguments = Vec::new();
 
         loop {
-            match self.tokens.peek().map(|tok| tok.kind) {
-                Some(TokenKind::ParenR) => break,
-                Some(_) => {
-                    let expr = self.parse_expression()?;
-                    arguments.push(expr);
+            let Some(next_token) = self.tokens.peek() else {
+                return Err(ParsingError::UnexpectedEof {
+                    expected: "argument list".to_string(),
+                });
+            };
 
-                    match self.tokens.peek() {
-                        Some(token) if token.kind == TokenKind::ParenR => break,
-                        Some(token) if token.kind == TokenKind::Comma => {
-                            self.tokens.next().unwrap();
-                            continue;
-                        }
-                        Some(token) => {
-                            return Err(ParsingError::UnexpectedToken {
-                                expected: format!("{} or {}", TokenKind::ParenR, TokenKind::Comma),
-                                got: token.kind,
-                                span: token.span,
-                            });
-                        }
-                        None => {
-                            return Err(ParsingError::UnexpectedEof {
-                                expected: format!("{} or {}", TokenKind::ParenR, TokenKind::Comma),
-                            });
-                        }
-                    }
+            if next_token.kind == TokenKind::ParenR {
+                break;
+            }
+
+            let argument = self.parse_expression()?;
+            arguments.push(argument);
+
+            let Some(next_token) = self.tokens.peek() else {
+                return Err(ParsingError::UnexpectedEof {
+                    expected: format!("{} or {}", TokenKind::ParenR, TokenKind::Comma),
+                });
+            };
+
+            match next_token.kind {
+                TokenKind::ParenR => break,
+                TokenKind::Comma => {
+                    self.expect(TokenKind::Comma).unwrap();
+                    continue;
                 }
-                None => {
-                    return Err(ParsingError::UnexpectedEof {
-                        expected: "argument list".to_string(),
+                _ => {
+                    return Err(ParsingError::UnexpectedToken {
+                        expected: format!("{} or {}", TokenKind::ParenR, TokenKind::Comma),
+                        got: next_token.kind,
+                        span: next_token.span,
                     });
                 }
             }

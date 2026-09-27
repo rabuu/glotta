@@ -7,9 +7,8 @@ pub struct Lowerer {
 
 impl Lowerer {
     pub fn lower(&mut self, program: &ast::Program) -> tacky::Program {
-        let ast::Program { function } = program;
-        let function = self.lower_function_definition(function);
-        tacky::Program { function }
+        let ast::Program { functions, span: _ } = program;
+        todo!()
     }
 
     fn lower_function_definition(
@@ -18,6 +17,7 @@ impl Lowerer {
     ) -> tacky::FunctionDefinition {
         let ast::FunctionDefinition {
             name,
+            parameters,
             body,
             span: _,
         } = function;

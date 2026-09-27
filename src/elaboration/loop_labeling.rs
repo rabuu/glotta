@@ -16,13 +16,19 @@ impl LoopLabeler {
     }
 
     pub fn label(&mut self, program: &mut ast::Program) -> Result<()> {
-        let ast::Program { function } = program;
-        self.label_function_definition(function)
+        let ast::Program { functions, span: _ } = program;
+
+        for function in functions {
+            self.label_function_definition(function)?;
+        }
+
+        Ok(())
     }
 
     fn label_function_definition(&mut self, function: &mut ast::FunctionDefinition) -> Result<()> {
         let ast::FunctionDefinition {
             name: _,
+            parameters: _,
             body,
             span: _,
         } = function;

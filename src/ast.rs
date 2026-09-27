@@ -6,22 +6,30 @@ use crate::{ast, emitter};
 
 use glotta_macros::Spanned;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Spanned)]
 pub struct Program {
-    pub function: FunctionDefinition,
-}
-
-impl Spanned for Program {
-    fn span(&self) -> Span {
-        let Self { function } = self;
-        function.span()
-    }
+    pub functions: Vec<FunctionDefinition>,
+    pub span: Span,
 }
 
 #[derive(Debug, Clone, Spanned)]
 pub struct FunctionDefinition {
     pub name: Identifier,
+    pub parameters: ParameterList,
     pub body: Expression,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, Spanned)]
+pub struct ParameterList {
+    pub parameters: Vec<Parameter>,
+    pub span: Span,
+}
+
+#[derive(Debug, Clone, Spanned)]
+pub struct Parameter {
+    pub name: Identifier,
+    // pub typ: Typ,
     pub span: Span,
 }
 
@@ -191,19 +199,26 @@ impl<O: io::Write> Emitter<O> {
     }
 
     pub fn emit(mut self, program: &ast::Program) -> io::Result<()> {
-        let ast::Program { function } = program;
-        self.emit_function_definition(function)
+        let ast::Program { functions, span: _ } = program;
+
+        for function in functions {
+            self.emit_function_definition(function)?;
+        }
+
+        Ok(())
     }
 
     fn emit_function_definition(&mut self, function: &ast::FunctionDefinition) -> io::Result<()> {
         let ast::FunctionDefinition {
             name,
+            parameters,
             body,
             span: _,
         } = function;
 
         emit!(self.e, "FUNCTION ")?;
         self.emit_identifier(name)?;
+        self.emit_parameters(parameters)?;
         emitln!(self.e)?;
 
         self.e.indent();
@@ -212,6 +227,26 @@ impl<O: io::Write> Emitter<O> {
         self.e.dedent();
 
         Ok(())
+    }
+
+    fn emit_parameters(&mut self, parameters: &ast::ParameterList) -> io::Result<()> {
+        let ast::ParameterList {
+            parameters,
+            span: _,
+        } = parameters;
+
+        emit!(self.e, "(")?;
+        for parameter in parameters {
+            self.emit_parameter(parameter)?;
+        }
+        emit!(self.e, ")")?;
+
+        Ok(())
+    }
+
+    fn emit_parameter(&mut self, parameter: &ast::Parameter) -> io::Result<()> {
+        let ast::Parameter { name, span: _ } = parameter;
+        self.emit_identifier(name)
     }
 
     fn emit_identifier(&mut self, identifier: &ast::Identifier) -> io::Result<()> {

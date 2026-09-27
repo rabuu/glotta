@@ -20,8 +20,9 @@ impl NameResolver {
     }
 
     pub fn resolve(&mut self, program: &mut ast::Program) -> Result<()> {
-        let ast::Program { function } = program;
-        self.resolve_function_definition(function)
+        let ast::Program { functions, span: _ } = program;
+
+        todo!()
     }
 
     fn resolve_function_definition(
@@ -30,15 +31,12 @@ impl NameResolver {
     ) -> Result<()> {
         let ast::FunctionDefinition {
             name,
+            parameters,
             body,
             span: _,
         } = function;
 
-        // TODO: with multiple functions, we need to resolve all function definitions first
-        self.resolve_function_name(name)?;
-        self.resolve_expression(body)?;
-
-        Ok(())
+        todo!()
     }
 
     fn resolve_function_name(&mut self, name: &mut ast::Identifier) -> Result<()> {
