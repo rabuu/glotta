@@ -8,7 +8,7 @@ use tracing_subscriber::EnvFilter;
 
 use glotta::driver::Driver;
 use glotta::span::SourcePosition;
-use glotta::token_stream::TokenStream;
+use glotta::token::TokenStream;
 use glotta::{asm, ast, tacky};
 
 #[derive(Debug, Parser)]
