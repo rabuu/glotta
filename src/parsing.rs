@@ -63,34 +63,6 @@ impl<'src> Parser<'src> {
         }
     }
 
-    fn slice(&self, span: Span) -> &'src str {
-        &self.source[span.inner]
-    }
-
-    fn expect(&mut self, kind: TokenKind) -> Result<Token> {
-        match self.tokens.next() {
-            Some(token) if token.kind == kind => Ok(token),
-            Some(token) => Err(ParsingError::UnexpectedToken {
-                expected: kind.to_string(),
-                got: token.kind,
-                span: token.span,
-            }),
-            None => Err(ParsingError::UnexpectedEof {
-                expected: kind.to_string(),
-            }),
-        }
-    }
-
-    fn expect_eof(&mut self) -> Result<()> {
-        match self.tokens.next() {
-            None => Ok(()),
-            Some(token) => Err(ParsingError::ExtraToken {
-                token: token.kind,
-                span: token.span,
-            }),
-        }
-    }
-
     pub fn parse(mut self) -> Result<ast::Program> {
         let function = self.parse_function_definition()?;
         self.expect_eof()?;
@@ -402,5 +374,33 @@ impl<'src> Parser<'src> {
         let continue_kw = self.expect(TokenKind::Continue)?;
         let span = continue_kw.span();
         Ok(ast::Continue { id: 0, span })
+    }
+
+    fn slice(&self, span: Span) -> &'src str {
+        &self.source[span.inner]
+    }
+
+    fn expect(&mut self, kind: TokenKind) -> Result<Token> {
+        match self.tokens.next() {
+            Some(token) if token.kind == kind => Ok(token),
+            Some(token) => Err(ParsingError::UnexpectedToken {
+                expected: kind.to_string(),
+                got: token.kind,
+                span: token.span,
+            }),
+            None => Err(ParsingError::UnexpectedEof {
+                expected: kind.to_string(),
+            }),
+        }
+    }
+
+    fn expect_eof(&mut self) -> Result<()> {
+        match self.tokens.next() {
+            None => Ok(()),
+            Some(token) => Err(ParsingError::ExtraToken {
+                token: token.kind,
+                span: token.span,
+            }),
+        }
     }
 }
