@@ -1,20 +1,23 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use crate::ast;
 
 use super::{ElaborationError, Result};
 
+type Id = usize;
+type Scope = HashMap<String, Id>;
+
 pub struct NameResolver {
-    function_names: HashMap<String, usize>,
-    scopes: Vec<HashMap<String, usize>>,
-    fresh: usize,
+    scopes: Vec<Scope>,
+    functions: HashSet<Id>,
+    fresh: Id,
 }
 
 impl NameResolver {
     pub fn new() -> Self {
         NameResolver {
-            function_names: HashMap::default(),
-            scopes: vec![HashMap::default()],
+            scopes: Vec::default(),
+            functions: HashSet::default(),
             fresh: 1,
         }
     }
@@ -22,7 +25,47 @@ impl NameResolver {
     pub fn resolve(&mut self, program: &mut ast::Program) -> Result<()> {
         let ast::Program { functions, span: _ } = program;
 
-        todo!()
+        let global_scope = self.resolve_top_level_items(functions)?;
+        self.scopes.push(global_scope);
+
+        for function in functions {
+            self.resolve_function_definition(function)?;
+        }
+
+        Ok(())
+    }
+
+    fn resolve_top_level_items(
+        &mut self,
+        functions: &mut [ast::FunctionDefinition],
+    ) -> Result<Scope> {
+        let mut global_scope = HashMap::with_capacity(functions.len());
+
+        for function in functions {
+            let ast::FunctionDefinition {
+                name,
+                parameters: _,
+                body: _,
+                span: _,
+            } = function;
+
+            let ast::Identifier {
+                id,
+                identifier: name,
+                span: _,
+            } = name;
+
+            *id = self.fresh_id();
+
+            if global_scope.insert(name.clone(), *id).is_some() {
+                return Err(ElaborationError::DuplicateFunctionName {
+                    name: name.clone(),
+                    span: function.name.span,
+                });
+            }
+        }
+
+        Ok(global_scope)
     }
 
     fn resolve_function_definition(
@@ -36,27 +79,47 @@ impl NameResolver {
             span: _,
         } = function;
 
-        todo!()
-    }
+        debug_assert!(name.id != 0);
 
-    fn resolve_function_name(&mut self, name: &mut ast::Identifier) -> Result<()> {
-        let ast::Identifier {
-            identifier,
-            id,
-            span,
-        } = name;
+        self.functions.insert(name.id);
 
-        if self.function_names.contains_key(identifier) {
-            return Err(ElaborationError::DuplicateFunctionName {
-                name: identifier.to_string(),
-                span: *span,
-            });
-        }
+        let function_scope = self.resolve_parameters(parameters)?;
+        self.scopes.push(function_scope);
 
-        *id = self.fresh_id();
-        self.function_names.insert(identifier.to_owned(), *id);
+        self.resolve_expression(body)?;
+
+        self.scopes.pop().expect("function scope");
 
         Ok(())
+    }
+
+    fn resolve_parameters(&mut self, parameters: &mut ast::ParameterList) -> Result<Scope> {
+        let ast::ParameterList {
+            parameters,
+            span: _,
+        } = parameters;
+
+        let mut function_scope = HashMap::new();
+
+        for parameter in parameters {
+            let ast::Parameter { name, span: _ } = parameter;
+            let ast::Identifier {
+                id,
+                identifier: name,
+                span,
+            } = name;
+
+            *id = self.fresh_id();
+
+            if function_scope.insert(name.clone(), *id).is_some() {
+                return Err(ElaborationError::DuplicateParameterName {
+                    name: name.clone(),
+                    span: *span,
+                });
+            }
+        }
+
+        Ok(function_scope)
     }
 
     fn resolve_expression(&mut self, expression: &mut ast::Expression) -> Result<()> {
@@ -77,27 +140,7 @@ impl NameResolver {
 
     fn resolve_variable(&mut self, variable: &mut ast::Variable) -> Result<()> {
         let ast::Variable { name } = variable;
-        let ast::Identifier {
-            identifier: variable,
-            id,
-            span,
-        } = name;
-
-        let Some(lookup) = self
-            .scopes
-            .iter()
-            .rev()
-            .find_map(|scope| scope.get(variable).copied())
-        else {
-            return Err(ElaborationError::VariableNotBound {
-                variable: variable.to_string(),
-                span: *span,
-            });
-        };
-
-        *id = lookup;
-
-        Ok(())
+        self.resolve_identifier(name)
     }
 
     fn resolve_declaration(&mut self, declaration: &mut ast::Declaration) -> Result<()> {
@@ -153,20 +196,14 @@ impl NameResolver {
             span: _,
         } = function_call;
 
-        let ast::Identifier {
-            identifier: function_name,
-            id,
-            span,
-        } = function_name;
+        self.resolve_identifier(function_name)?;
 
-        let Some(lookup) = self.function_names.get(function_name).copied() else {
-            return Err(ElaborationError::FunctionNotBound {
-                function: function_name.to_string(),
-                span: *span,
+        if !self.functions.contains(&function_name.id) {
+            return Err(ElaborationError::NotAFunction {
+                name: function_name.identifier.clone(),
+                span: function_name.span,
             });
-        };
-
-        *id = lookup;
+        }
 
         self.resolve_arguments(arguments)?;
 
@@ -227,7 +264,31 @@ impl NameResolver {
         self.resolve_expression(body)
     }
 
-    fn fresh_id(&mut self) -> usize {
+    fn resolve_identifier(&self, identifier: &mut ast::Identifier) -> Result<()> {
+        let ast::Identifier {
+            id,
+            identifier,
+            span,
+        } = identifier;
+
+        match self
+            .scopes
+            .iter()
+            .rev()
+            .find_map(|scope| scope.get(identifier).copied())
+        {
+            Some(lookup) => {
+                *id = lookup;
+                Ok(())
+            }
+            None => Err(ElaborationError::NameNotBound {
+                name: identifier.clone(),
+                span: *span,
+            }),
+        }
+    }
+
+    fn fresh_id(&mut self) -> Id {
         let id = self.fresh;
         self.fresh += 1;
         id

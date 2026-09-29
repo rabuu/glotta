@@ -21,16 +21,23 @@ pub enum ElaborationError {
         span: Span,
     },
 
-    #[error("The variable `{variable}` is not bound.")]
-    VariableNotBound {
-        variable: String,
+    #[error("The parameter name `{name}` is declared multiple times.")]
+    DuplicateParameterName {
+        name: String,
         #[label]
         span: Span,
     },
 
-    #[error("The function `{function}` is not bound.")]
-    FunctionNotBound {
-        function: String,
+    #[error("The name `{name}` is not bound.")]
+    NameNotBound {
+        name: String,
+        #[label]
+        span: Span,
+    },
+
+    #[error("The name `{name}` is not a function.")]
+    NotAFunction {
+        name: String,
         #[label]
         span: Span,
     },
