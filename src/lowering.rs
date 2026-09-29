@@ -1,12 +1,15 @@
 use crate::{ast, tacky};
 
-#[derive(Default)]
-pub struct Lowerer {
+pub fn lower(program: &ast::Program) -> tacky::Program {
+    Lowerer { fresh: 0 }.lower_program(program)
+}
+
+struct Lowerer {
     fresh: usize,
 }
 
 impl Lowerer {
-    pub fn lower(&mut self, program: &ast::Program) -> tacky::Program {
+    fn lower_program(&mut self, program: &ast::Program) -> tacky::Program {
         let ast::Program { functions, span: _ } = program;
         todo!()
     }

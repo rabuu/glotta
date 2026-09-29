@@ -9,8 +9,8 @@ use tracing::info;
 use crate::codegen::codegen;
 use crate::elaboration::{ElaborationError, elaborate};
 use crate::lexing::Lexer;
-use crate::lowering::Lowerer;
-use crate::parsing::{Parser, ParsingError};
+use crate::lowering::lower;
+use crate::parsing::{ParsingError, parse};
 use crate::span::{SourcePosition, Span};
 use crate::{asm, ast, tacky};
 
@@ -76,8 +76,7 @@ impl Driver {
     pub fn ast(&self) -> Result<ast::Program> {
         info!("parse '{}'", self.input_path.display());
         let lexer = self.lexer();
-        let parser = Parser::new(lexer);
-        parser.parse().map_err(DriverError::Parsing)
+        parse(lexer).map_err(DriverError::Parsing)
     }
 
     pub fn elaborated_ast(&self) -> Result<ast::Program> {
@@ -92,8 +91,7 @@ impl Driver {
         let ast = self.elaborated_ast()?;
 
         info!("lower '{}' to TACKY", self.input_path.display());
-        let mut lowerer = Lowerer::default();
-        let tacky = lowerer.lower(&ast);
+        let tacky = lower(&ast);
         Ok(tacky)
     }
 

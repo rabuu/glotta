@@ -50,20 +50,21 @@ pub enum ParsingError {
     },
 }
 
-pub struct Parser<'src> {
+pub fn parse<'src>(lexer: Lexer<'src>) -> Result<ast::Program> {
+    Parser {
+        source: lexer.source(),
+        tokens: TokenStream::new(lexer, vec![TokenKind::Whitespace, TokenKind::Comment]),
+    }
+    .parse_program()
+}
+
+struct Parser<'src> {
     source: &'src str,
     tokens: TokenStream<'src>,
 }
 
 impl<'src> Parser<'src> {
-    pub fn new(lexer: Lexer<'src>) -> Self {
-        Self {
-            source: lexer.source(),
-            tokens: TokenStream::new(lexer, vec![TokenKind::Whitespace, TokenKind::Comment]),
-        }
-    }
-
-    pub fn parse(mut self) -> Result<ast::Program> {
+    fn parse_program(mut self) -> Result<ast::Program> {
         let mut functions = Vec::new();
 
         while self.tokens.peek().is_some() {

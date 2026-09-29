@@ -2,20 +2,21 @@ use crate::ast;
 
 use super::{ElaborationError, Result};
 
-pub struct LoopLabeler {
+pub fn label_loops(program: &mut ast::Program) -> Result<()> {
+    LoopLabeler {
+        fresh: 1,
+        current_loop_id: None,
+    }
+    .label_program(program)
+}
+
+struct LoopLabeler {
     fresh: usize,
     current_loop_id: Option<usize>,
 }
 
 impl LoopLabeler {
-    pub fn new() -> Self {
-        Self {
-            fresh: 1,
-            current_loop_id: None,
-        }
-    }
-
-    pub fn label(&mut self, program: &mut ast::Program) -> Result<()> {
+    fn label_program(&mut self, program: &mut ast::Program) -> Result<()> {
         let ast::Program { functions, span: _ } = program;
 
         for function in functions {

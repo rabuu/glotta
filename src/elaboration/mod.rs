@@ -7,8 +7,8 @@ use thiserror::Error;
 use crate::ast;
 use crate::span::Span;
 
-use loop_labeling::LoopLabeler;
-use name_resolution::NameResolver;
+use loop_labeling::label_loops;
+use name_resolution::resolve_names;
 
 type Result<T> = std::result::Result<T, ElaborationError>;
 
@@ -49,11 +49,7 @@ pub enum ElaborationError {
 }
 
 pub fn elaborate(program: &mut ast::Program) -> Result<()> {
-    let mut name_resolver = NameResolver::new();
-    name_resolver.resolve(program)?;
-
-    let mut loop_labeler = LoopLabeler::new();
-    loop_labeler.label(program)?;
-
+    resolve_names(program)?;
+    label_loops(program)?;
     Ok(())
 }

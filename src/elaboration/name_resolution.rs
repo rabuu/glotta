@@ -7,20 +7,21 @@ use super::{ElaborationError, Result};
 type Id = usize;
 type Scope = HashMap<String, Id>;
 
-pub struct NameResolver {
+pub fn resolve_names(program: &mut ast::Program) -> Result<()> {
+    NameResolver {
+        scopes: Vec::default(),
+        fresh: 1,
+    }
+    .resolve_program(program)
+}
+
+struct NameResolver {
     scopes: Vec<Scope>,
     fresh: Id,
 }
 
 impl NameResolver {
-    pub fn new() -> Self {
-        NameResolver {
-            scopes: Vec::default(),
-            fresh: 1,
-        }
-    }
-
-    pub fn resolve(&mut self, program: &mut ast::Program) -> Result<()> {
+    fn resolve_program(&mut self, program: &mut ast::Program) -> Result<()> {
         let ast::Program { functions, span: _ } = program;
 
         let global_scope = self.resolve_top_level_items(functions)?;
