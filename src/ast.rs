@@ -236,7 +236,10 @@ impl<O: io::Write> Emitter<O> {
         } = parameters;
 
         emit!(self.e, "(")?;
-        for parameter in parameters {
+        for (i, parameter) in parameters.iter().enumerate() {
+            if i > 0 {
+                emit!(self.e, ", ")?;
+            }
             self.emit_parameter(parameter)?;
         }
         emit!(self.e, ")")?;
@@ -334,7 +337,6 @@ impl<O: io::Write> Emitter<O> {
 
         emit!(self.e, "BUILTIN CALL ")?;
         self.emit_builtin_operator(operator)?;
-        emitln!(self.e)?;
 
         self.e.indent();
         self.emit_arguments(arguments)?;
@@ -357,7 +359,6 @@ impl<O: io::Write> Emitter<O> {
 
         emit!(self.e, "FUNCTION CALL ")?;
         self.emit_identifier(function_name)?;
-        emitln!(self.e)?;
 
         self.e.indent();
         self.emit_arguments(arguments)?;
@@ -369,11 +370,9 @@ impl<O: io::Write> Emitter<O> {
     fn emit_arguments(&mut self, arguments: &ast::ArgumentList) -> io::Result<()> {
         let ast::ArgumentList { arguments, span: _ } = arguments;
 
-        for (i, argument) in arguments.iter().enumerate() {
+        for argument in arguments {
+            emitln!(self.e)?;
             self.emit_expression(argument)?;
-            if i < arguments.len() - 1 {
-                emitln!(self.e)?;
-            }
         }
 
         Ok(())
