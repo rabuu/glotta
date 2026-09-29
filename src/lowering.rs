@@ -69,7 +69,7 @@ impl Lowerer {
 
     fn lower_variable(&self, variable: &ast::Variable) -> tacky::Value {
         let ast::Variable { name } = variable;
-        let ast::Identifier {
+        let ast::Name {
             identifier: name,
             id,
             span: _,

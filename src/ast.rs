@@ -14,7 +14,7 @@ pub struct Program {
 
 #[derive(Debug, Clone, Spanned)]
 pub struct FunctionDefinition {
-    pub name: Identifier,
+    pub name: Name,
     pub parameters: ParameterList,
     pub body: Expression,
     pub span: Span,
@@ -28,13 +28,13 @@ pub struct ParameterList {
 
 #[derive(Debug, Clone, Spanned)]
 pub struct Parameter {
-    pub name: Identifier,
+    pub name: Name,
     // pub typ: Typ,
     pub span: Span,
 }
 
 #[derive(Debug, Clone, Spanned)]
-pub struct Identifier {
+pub struct Name {
     /// The ID gets assigned in the name resolution pass.
     /// Invariant: Before name resolution _every_ ID is 0;
     /// after name resolution _no_ ID is 0.
@@ -66,7 +66,7 @@ pub struct IntegerConstant {
 
 #[derive(Debug, Clone)]
 pub struct Variable {
-    pub name: Identifier,
+    pub name: Name,
 }
 
 impl Spanned for Variable {
@@ -127,7 +127,7 @@ pub enum BuiltinOperatorKind {
 
 #[derive(Debug, Clone, Spanned)]
 pub struct FunctionCall {
-    pub function_name: Identifier,
+    pub function_name: Name,
     pub arguments: ArgumentList,
     pub span: Span,
 }
@@ -217,7 +217,7 @@ impl<O: io::Write> Emitter<O> {
         } = function;
 
         emit!(self.e, "FUNCTION ")?;
-        self.emit_identifier(name)?;
+        self.emit_name(name)?;
         self.emit_parameters(parameters)?;
         emitln!(self.e)?;
 
@@ -249,15 +249,15 @@ impl<O: io::Write> Emitter<O> {
 
     fn emit_parameter(&mut self, parameter: &ast::Parameter) -> io::Result<()> {
         let ast::Parameter { name, span: _ } = parameter;
-        self.emit_identifier(name)
+        self.emit_name(name)
     }
 
-    fn emit_identifier(&mut self, identifier: &ast::Identifier) -> io::Result<()> {
-        let ast::Identifier {
+    fn emit_name(&mut self, name: &ast::Name) -> io::Result<()> {
+        let ast::Name {
             identifier,
             id,
             span: _,
-        } = identifier;
+        } = name;
 
         emit!(self.e, "{identifier}")?;
 
@@ -291,7 +291,7 @@ impl<O: io::Write> Emitter<O> {
 
     fn emit_variable(&mut self, variable: &ast::Variable) -> io::Result<()> {
         let ast::Variable { name } = variable;
-        self.emit_identifier(name)
+        self.emit_name(name)
     }
 
     fn emit_declaration(&mut self, declaration: &ast::Declaration) -> io::Result<()> {
@@ -358,7 +358,7 @@ impl<O: io::Write> Emitter<O> {
         } = call;
 
         emit!(self.e, "FUNCTION CALL ")?;
-        self.emit_identifier(function_name)?;
+        self.emit_name(function_name)?;
 
         self.e.indent();
         self.emit_arguments(arguments)?;

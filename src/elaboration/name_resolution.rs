@@ -49,7 +49,7 @@ impl NameResolver {
                 span: _,
             } = function;
 
-            let ast::Identifier {
+            let ast::Name {
                 id,
                 identifier: name,
                 span: _,
@@ -103,7 +103,7 @@ impl NameResolver {
 
         for parameter in parameters {
             let ast::Parameter { name, span: _ } = parameter;
-            let ast::Identifier {
+            let ast::Name {
                 id,
                 identifier: name,
                 span,
@@ -140,7 +140,7 @@ impl NameResolver {
 
     fn resolve_variable(&mut self, variable: &mut ast::Variable) -> Result<()> {
         let ast::Variable { name } = variable;
-        self.resolve_identifier(name)
+        self.resolve_name(name)
     }
 
     fn resolve_declaration(&mut self, declaration: &mut ast::Declaration) -> Result<()> {
@@ -150,7 +150,7 @@ impl NameResolver {
             span: _,
         } = declaration;
         let ast::Variable { name: variable } = variable;
-        let ast::Identifier {
+        let ast::Name {
             identifier: variable,
             id,
             span: _,
@@ -196,7 +196,7 @@ impl NameResolver {
             span: _,
         } = function_call;
 
-        self.resolve_identifier(function_name)?;
+        self.resolve_name(function_name)?;
 
         if !self.functions.contains(&function_name.id) {
             return Err(ElaborationError::NotAFunction {
@@ -264,12 +264,12 @@ impl NameResolver {
         self.resolve_expression(body)
     }
 
-    fn resolve_identifier(&self, identifier: &mut ast::Identifier) -> Result<()> {
-        let ast::Identifier {
+    fn resolve_name(&self, name: &mut ast::Name) -> Result<()> {
+        let ast::Name {
             id,
             identifier,
             span,
-        } = identifier;
+        } = name;
 
         match self
             .scopes

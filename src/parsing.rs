@@ -87,7 +87,7 @@ impl<'src> Parser<'src> {
 
     fn parse_function_definition(&mut self) -> Result<ast::FunctionDefinition> {
         let let_kw = self.expect(TokenKind::Let)?;
-        let name = self.parse_identifier()?;
+        let name = self.parse_name()?;
         self.expect(TokenKind::Colon)?;
         let parameters = self.parse_parameters()?;
         self.expect(TokenKind::Arrow)?;
@@ -155,7 +155,7 @@ impl<'src> Parser<'src> {
     }
 
     fn parse_parameter(&mut self) -> Result<ast::Parameter> {
-        let name = self.parse_identifier()?;
+        let name = self.parse_name()?;
         self.expect(TokenKind::Colon)?;
         let typ = self.expect(TokenKind::Int)?;
 
@@ -226,11 +226,11 @@ impl<'src> Parser<'src> {
         }
     }
 
-    fn parse_identifier(&mut self) -> Result<ast::Identifier> {
+    fn parse_name(&mut self) -> Result<ast::Name> {
         let token = self.expect(TokenKind::Identifier)?;
         let identifier = self.slice(token.span).to_owned();
 
-        Ok(ast::Identifier {
+        Ok(ast::Name {
             id: 0,
             identifier,
             span: token.span,
@@ -255,7 +255,7 @@ impl<'src> Parser<'src> {
     }
 
     fn parse_variable(&mut self) -> Result<ast::Variable> {
-        let name = self.parse_identifier()?;
+        let name = self.parse_name()?;
         Ok(ast::Variable { name })
     }
 
@@ -290,7 +290,7 @@ impl<'src> Parser<'src> {
     fn parse_builtin_call(&mut self) -> Result<ast::BuiltinCall> {
         let start = self.expect(TokenKind::Hash)?;
 
-        let builtin = self.parse_identifier()?;
+        let builtin = self.parse_name()?;
         let kind = match builtin.identifier.as_str() {
             "bit_not" => ast::BuiltinOperatorKind::BitwiseNot,
             "neg" => ast::BuiltinOperatorKind::Negation,
@@ -330,7 +330,7 @@ impl<'src> Parser<'src> {
     }
 
     fn parse_function_call(&mut self) -> Result<ast::FunctionCall> {
-        let function_name = self.parse_identifier()?;
+        let function_name = self.parse_name()?;
         let arguments = self.parse_arguments()?;
         let span = function_name.to(&arguments);
 
