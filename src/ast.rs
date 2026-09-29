@@ -1,5 +1,6 @@
 use std::io;
 
+use crate::elaboration::SymbolTable;
 use crate::emitter::{emit, emitln};
 use crate::span::{Span, Spanned};
 use crate::{ast, emitter};
@@ -24,6 +25,12 @@ pub struct FunctionDefinition {
 pub struct ParameterList {
     pub parameters: Vec<Parameter>,
     pub span: Span,
+}
+
+impl ParameterList {
+    pub fn arity(&self) -> usize {
+        self.parameters.len()
+    }
 }
 
 #[derive(Debug, Clone, Spanned)]
@@ -189,13 +196,20 @@ pub struct Continue {
 
 pub struct Emitter<O: io::Write> {
     e: emitter::Emitter<O>,
+    symbol_table: Option<SymbolTable>,
 }
 
 impl<O: io::Write> Emitter<O> {
     pub fn new(out: O) -> Self {
         Self {
             e: emitter::Emitter::new(out, 2),
+            symbol_table: None,
         }
+    }
+
+    pub fn with_symbol_table(mut self, symbol_table: SymbolTable) -> Self {
+        self.symbol_table = Some(symbol_table);
+        self
     }
 
     pub fn emit(mut self, program: &ast::Program) -> io::Result<()> {
@@ -263,6 +277,12 @@ impl<O: io::Write> Emitter<O> {
 
         if *id != 0 {
             emit!(self.e, ".{id}")?;
+
+            if let Some(symbol_table) = &self.symbol_table {
+                if let Some(typ) = symbol_table.get(id) {
+                    emit!(self.e, "[{typ}]")?;
+                }
+            }
         }
 
         Ok(())

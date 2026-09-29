@@ -2,9 +2,8 @@ use std::collections::HashMap;
 
 use crate::ast;
 
-use super::{ElaborationError, Result};
+use super::{ElaborationError, Id, Result};
 
-type Id = usize;
 type Scope = HashMap<String, Id>;
 
 pub fn resolve_names(program: &mut ast::Program) -> Result<()> {

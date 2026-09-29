@@ -10,3 +10,4 @@ pub mod parsing;
 pub mod span;
 pub mod tacky;
 pub mod token;
+pub mod typ;

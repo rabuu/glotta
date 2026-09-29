@@ -7,7 +7,7 @@ use thiserror::Error;
 use tracing::info;
 
 use crate::codegen::codegen;
-use crate::elaboration::{ElaborationError, elaborate};
+use crate::elaboration::{ElaborationError, SymbolTable, elaborate};
 use crate::lexing::Lexer;
 use crate::lowering::lower;
 use crate::parsing::{ParsingError, parse};
@@ -79,16 +79,16 @@ impl Driver {
         parse(lexer).map_err(DriverError::Parsing)
     }
 
-    pub fn elaborated_ast(&self) -> Result<ast::Program> {
+    pub fn elaborated_ast(&self) -> Result<(ast::Program, SymbolTable)> {
         let mut ast = self.ast()?;
 
         info!("elaborate '{}'", self.input_path.display());
-        elaborate(&mut ast).map_err(DriverError::Elaboration)?;
-        Ok(ast)
+        let symbol_table = elaborate(&mut ast).map_err(DriverError::Elaboration)?;
+        Ok((ast, symbol_table))
     }
 
     pub fn tacky(&self) -> Result<tacky::Program> {
-        let ast = self.elaborated_ast()?;
+        let (ast, _) = self.elaborated_ast()?;
 
         info!("lower '{}' to TACKY", self.input_path.display());
         let tacky = lower(&ast);

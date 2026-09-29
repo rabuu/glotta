@@ -160,12 +160,12 @@ fn run(cli: CliArgs) -> miette::Result<()> {
                     emitter.emit(&ast).into_diagnostic()
                 }
                 CliDebugStage::Elaboration => {
-                    let ast = driver
+                    let (ast, symbol_table) = driver
                         .elaborated_ast()
                         .map_err(|err| driver.to_report(err))?;
                     let stdout = io::stdout().lock();
                     let writer = io::BufWriter::new(stdout);
-                    let emitter = ast::Emitter::new(writer);
+                    let emitter = ast::Emitter::new(writer).with_symbol_table(symbol_table);
                     emitter.emit(&ast).into_diagnostic()
                 }
                 CliDebugStage::Tacky => {
