@@ -35,13 +35,6 @@ pub enum ElaborationError {
         span: Span,
     },
 
-    #[error("The name `{name}` is not a function.")]
-    NotAFunction {
-        name: String,
-        #[label]
-        span: Span,
-    },
-
     #[error("The `break` expression is not enclosed by a loop.")]
     OrphanedBreak {
         #[label]

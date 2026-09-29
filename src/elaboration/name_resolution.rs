@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use crate::ast;
 
@@ -9,7 +9,6 @@ type Scope = HashMap<String, Id>;
 
 pub struct NameResolver {
     scopes: Vec<Scope>,
-    functions: HashSet<Id>,
     fresh: Id,
 }
 
@@ -17,7 +16,6 @@ impl NameResolver {
     pub fn new() -> Self {
         NameResolver {
             scopes: Vec::default(),
-            functions: HashSet::default(),
             fresh: 1,
         }
     }
@@ -80,8 +78,6 @@ impl NameResolver {
         } = function;
 
         debug_assert!(name.id != 0);
-
-        self.functions.insert(name.id);
 
         let function_scope = self.resolve_parameters(parameters)?;
         self.scopes.push(function_scope);
@@ -197,14 +193,6 @@ impl NameResolver {
         } = function_call;
 
         self.resolve_name(function_name)?;
-
-        if !self.functions.contains(&function_name.id) {
-            return Err(ElaborationError::NotAFunction {
-                name: function_name.identifier.clone(),
-                span: function_name.span,
-            });
-        }
-
         self.resolve_arguments(arguments)?;
 
         Ok(())
