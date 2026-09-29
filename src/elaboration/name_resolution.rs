@@ -57,7 +57,7 @@ impl NameResolver {
             *id = self.fresh_id();
 
             if global_scope.insert(name.clone(), *id).is_some() {
-                return Err(ElaborationError::DuplicateFunctionName {
+                return Err(ElaborationError::DuplicateFunction {
                     name: name.clone(),
                     span: function.name.span,
                 });
@@ -109,7 +109,7 @@ impl NameResolver {
             *id = self.fresh_id();
 
             if function_scope.insert(name.clone(), *id).is_some() {
-                return Err(ElaborationError::DuplicateParameterName {
+                return Err(ElaborationError::DuplicateParameter {
                     name: name.clone(),
                     span: *span,
                 });

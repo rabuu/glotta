@@ -14,15 +14,15 @@ type Result<T> = std::result::Result<T, ElaborationError>;
 
 #[derive(Debug, Error, Diagnostic)]
 pub enum ElaborationError {
-    #[error("The function name `{name}` is declared multiple times.")]
-    DuplicateFunctionName {
+    #[error("The function `{name}` is declared multiple times.")]
+    DuplicateFunction {
         name: String,
         #[label]
         span: Span,
     },
 
-    #[error("The parameter name `{name}` is declared multiple times.")]
-    DuplicateParameterName {
+    #[error("The parameter `{name}` is declared multiple times.")]
+    DuplicateParameter {
         name: String,
         #[label]
         span: Span,
