@@ -35,7 +35,7 @@ impl ParameterList {
 
 #[derive(Debug, Clone, Spanned)]
 pub struct Parameter {
-    pub name: Name,
+    pub variable: Variable,
     // pub typ: Typ,
     pub span: Span,
 }
@@ -262,8 +262,8 @@ impl<O: io::Write> Emitter<O> {
     }
 
     fn emit_parameter(&mut self, parameter: &ast::Parameter) -> io::Result<()> {
-        let ast::Parameter { name, span: _ } = parameter;
-        self.emit_name(name)
+        let ast::Parameter { variable, span: _ } = parameter;
+        self.emit_variable(variable)
     }
 
     fn emit_name(&mut self, name: &ast::Name) -> io::Result<()> {

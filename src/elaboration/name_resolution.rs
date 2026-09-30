@@ -98,7 +98,8 @@ impl NameResolver {
         let mut function_scope = HashMap::new();
 
         for parameter in parameters {
-            let ast::Parameter { name, span: _ } = parameter;
+            let ast::Parameter { variable, span: _ } = parameter;
+            let ast::Variable { name } = variable;
             let ast::Name {
                 id,
                 identifier: name,

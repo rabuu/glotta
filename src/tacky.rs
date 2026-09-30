@@ -5,12 +5,13 @@ use crate::emitter::{emit, emitln};
 
 #[derive(Debug, Clone)]
 pub struct Program {
-    pub function: FunctionDefinition,
+    pub functions: Vec<FunctionDefinition>,
 }
 
 #[derive(Debug, Clone)]
 pub struct FunctionDefinition {
     pub name: Identifier,
+    pub parameters: Vec<Identifier>,
     pub body: Vec<Instruction>,
 }
 
@@ -19,6 +20,7 @@ pub enum Instruction {
     Return(Value),
     Unary(Unary),
     Binary(Binary),
+    FunctionCall(FunctionCall),
     Copy {
         src: Value,
         dst: Value,
@@ -73,6 +75,13 @@ pub enum BinaryOperator {
 }
 
 #[derive(Debug, Clone)]
+pub struct FunctionCall {
+    pub function_name: Identifier,
+    pub arguments: Vec<Value>,
+    pub dst: Value,
+}
+
+#[derive(Debug, Clone)]
 pub enum Value {
     Constant(i32),
     Variable(Identifier),
@@ -109,16 +118,31 @@ impl<O: io::Write> Emitter<O> {
     }
 
     pub fn emit(mut self, program: &Program) -> io::Result<()> {
-        let Program { function } = program;
-        self.emit_function_definition(function)?;
+        let Program { functions } = program;
+
+        for function in functions {
+            self.emit_function_definition(function)?;
+        }
+
         self.e.flush()?;
+
         Ok(())
     }
 
     fn emit_function_definition(&mut self, function: &FunctionDefinition) -> io::Result<()> {
-        let FunctionDefinition { name, body } = function;
+        let FunctionDefinition {
+            name,
+            parameters,
+            body,
+        } = function;
 
-        emitln!(self.e, "FUNCTION {name}")?;
+        let parameters: Vec<String> = parameters
+            .iter()
+            .map(|parameter| parameter.to_string())
+            .collect();
+        let parameters = parameters.join(", ");
+
+        emitln!(self.e, "FUNCTION {name}({parameters})")?;
 
         self.e.indent();
         for instruction in body {
@@ -149,6 +173,22 @@ impl<O: io::Write> Emitter<O> {
                 self.emit_value(lhs)?;
                 emit!(self.e, ", ")?;
                 self.emit_value(rhs)?;
+                Ok(())
+            }
+            Instruction::FunctionCall(FunctionCall {
+                function_name,
+                arguments,
+                dst,
+            }) => {
+                self.emit_value(dst)?;
+                emit!(self.e, " <- CALL {function_name}(")?;
+                for (i, argument) in arguments.iter().enumerate() {
+                    if i != 0 {
+                        emit!(self.e, ", ")?;
+                    }
+                    self.emit_value(argument)?;
+                }
+                emit!(self.e, ")")?;
                 Ok(())
             }
             Instruction::Copy { src, dst } => {

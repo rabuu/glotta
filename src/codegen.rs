@@ -7,13 +7,20 @@ use crate::{asm, tacky};
 const INT_BYTES: usize = 4;
 
 pub fn codegen(program: &tacky::Program) -> asm::Program {
-    let tacky::Program { function } = program;
-    let function = codegen_function_definition(function);
-    asm::Program { function }
+    let tacky::Program { functions } = program;
+    // let function = codegen_function_definition(function);
+    // asm::Program { function }
+    todo!()
 }
 
 fn codegen_function_definition(function: &tacky::FunctionDefinition) -> asm::FunctionDefinition {
-    let tacky::FunctionDefinition { name, body } = function;
+    let tacky::FunctionDefinition {
+        name,
+        parameters,
+        body,
+    } = function;
+
+    todo!();
 
     let name = name.to_string();
 
@@ -171,6 +178,7 @@ fn codegen_instruction(instruction: &tacky::Instruction, instructions: &mut Vec<
                 ]),
             }
         }
+        tacky::Instruction::FunctionCall(function_call) => todo!(),
         tacky::Instruction::Copy { src, dst } => {
             let src = codegen_value(src);
             let dst = codegen_value(dst);

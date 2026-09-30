@@ -66,8 +66,8 @@ impl Typechecker {
         } = parameters;
 
         for parameter in parameters {
-            let ast::Parameter { name, span: _ } = parameter;
-            self.symbol_table.insert(name.id, Type::Int);
+            let ast::Parameter { variable, span: _ } = parameter;
+            self.symbol_table.insert(variable.name.id, Type::Int);
         }
     }
 

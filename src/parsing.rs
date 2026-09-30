@@ -156,13 +156,13 @@ impl<'src> Parser<'src> {
     }
 
     fn parse_parameter(&mut self) -> Result<ast::Parameter> {
-        let name = self.parse_name()?;
+        let variable = self.parse_variable()?;
         self.expect(TokenKind::Colon)?;
         let typ = self.expect(TokenKind::Int)?;
 
-        let span = name.to(typ);
+        let span = variable.to(typ);
 
-        Ok(ast::Parameter { name, span })
+        Ok(ast::Parameter { variable, span })
     }
 
     fn parse_expression(&mut self) -> Result<ast::Expression> {

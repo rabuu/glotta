@@ -11,7 +11,13 @@ struct Lowerer {
 impl Lowerer {
     fn lower_program(&mut self, program: &ast::Program) -> tacky::Program {
         let ast::Program { functions, span: _ } = program;
-        todo!()
+
+        let functions = functions
+            .iter()
+            .map(|function| self.lower_function_definition(function))
+            .collect();
+
+        tacky::Program { functions }
     }
 
     fn lower_function_definition(
@@ -26,6 +32,7 @@ impl Lowerer {
         } = function;
 
         let name = tacky::Identifier::Function(name.identifier.clone());
+        let parameters = self.lower_parameters(parameters);
 
         let mut instructions = Vec::new();
         let body = self.lower_expression(body, &mut instructions);
@@ -33,8 +40,25 @@ impl Lowerer {
 
         tacky::FunctionDefinition {
             name,
+            parameters,
             body: instructions,
         }
+    }
+
+    fn lower_parameters(&self, parameters: &ast::ParameterList) -> Vec<tacky::Identifier> {
+        let ast::ParameterList {
+            parameters,
+            span: _,
+        } = parameters;
+
+        let mut tacky_parameters = Vec::with_capacity(parameters.len());
+        for parameter in parameters {
+            let ast::Parameter { variable, span: _ } = parameter;
+            let parameter = self.lower_variable_name(variable);
+            tacky_parameters.push(parameter);
+        }
+
+        tacky_parameters
     }
 
     fn lower_expression(
@@ -52,7 +76,7 @@ impl Lowerer {
                 self.lower_assignment(assignment, instructions)
             }
             ast::Expression::BuiltinCall(call) => self.lower_builtin_call(call, instructions),
-            ast::Expression::FunctionCall(_) => todo!(),
+            ast::Expression::FunctionCall(call) => self.lower_function_call(call, instructions),
             ast::Expression::Conditional(conditional) => {
                 self.lower_conditional(conditional, instructions)
             }
@@ -71,6 +95,11 @@ impl Lowerer {
     }
 
     fn lower_variable(&self, variable: &ast::Variable) -> tacky::Value {
+        let name = self.lower_variable_name(variable);
+        tacky::Value::Variable(name)
+    }
+
+    fn lower_variable_name(&self, variable: &ast::Variable) -> tacky::Identifier {
         let ast::Variable { name } = variable;
         let ast::Name {
             identifier: name,
@@ -78,12 +107,10 @@ impl Lowerer {
             span: _,
         } = name;
 
-        let name = tacky::Identifier::Variable {
+        tacky::Identifier::Variable {
             name: name.clone(),
             id: *id,
-        };
-
-        tacky::Value::Variable(name)
+        }
     }
 
     fn lower_declaration(
@@ -298,6 +325,48 @@ impl Lowerer {
             ast::BuiltinOperatorKind::GreaterOrEqual => Some(tacky::BinaryOperator::GreaterOrEqual),
             _ => None,
         }
+    }
+
+    fn lower_function_call(
+        &mut self,
+        function_call: &ast::FunctionCall,
+        instructions: &mut Vec<tacky::Instruction>,
+    ) -> tacky::Value {
+        let ast::FunctionCall {
+            function_name,
+            arguments,
+            span: _,
+        } = function_call;
+
+        let result = self.tmp_variable();
+
+        let function_name = tacky::Identifier::Function(function_name.identifier.clone());
+        let arguments = self.lower_arguments(arguments, instructions);
+
+        instructions.push(tacky::Instruction::FunctionCall(tacky::FunctionCall {
+            function_name,
+            arguments,
+            dst: result.clone(),
+        }));
+
+        result
+    }
+
+    fn lower_arguments(
+        &mut self,
+        arguments: &ast::ArgumentList,
+        instructions: &mut Vec<tacky::Instruction>,
+    ) -> Vec<tacky::Value> {
+        let ast::ArgumentList { arguments, span: _ } = arguments;
+
+        let mut tacky_arguments = Vec::with_capacity(arguments.len());
+
+        for argument in arguments {
+            let argument = self.lower_expression(argument, instructions);
+            tacky_arguments.push(argument);
+        }
+
+        tacky_arguments
     }
 
     fn lower_conditional(
