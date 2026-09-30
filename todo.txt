@@ -1,0 +1,39 @@
+syntax:
+- uniform function call syntax: a.foo(b) = foo(a, b)
+- also for types: T.Ptr = Ptr(T)
+
+type system:
+- different integer types: Int, Nat, Byte, Int32, Int64, Nat32, Nat64, ...
+- Bool
+- tuple types (), (T), (T, U), ...
+- unit type as ()
+- bottom type: Never (simple subtyping)
+- ADTs
+- pointer / reference types
+- Str, Char, ...
+- slice types
+- type classes
+
+more features:
+- pattern matching
+
+CST compiler stage:
+- tokens --parsing--> CST --desugaring--> AST
+- includes whitespace and comment information
+- simple desugarings
+- use for formatting
+
+module system:
+- file <-> module
+- everything is one compilation unit, circular dependencies allowed
+- qualified identifiers
+- visibility modifiers (@public)
+- think about where modules are assembled (propably in CST)
+
+parametric polymorphism:
+- monomorphization or more like comptime?
+
+meta-programming?
+
+notes:
+- perhaps no overloading and only explicit type classes
